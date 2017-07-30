@@ -5,16 +5,13 @@
 #' Uses data.table for speed given the large
 #' size of the data (700MB).
 #'
-#' @param data: a vector with doy values 1 - 365(6)
+#' @param file: path to a zooniverse generated CSV
+#' @param date: date before which to discard all data (demo data)
 #' @keywords data, io, transformation
 #' @export
-#' @examples
-#'
-#' \dontrun{
-#' }
 
-
-read_data <- function(file = NULL){
+read_zoo_data <- function(file = NULL,
+                          date = "2015-12-13"){
 
   # check if file exists
   # if so read in the data
@@ -25,6 +22,9 @@ read_data <- function(file = NULL){
   }
 
   # subset the data based upon a date
+  # 13 Dec. was the launch date of the project
+  dt <- dt[which(as.Date(dt$created_at)>as.Date(date)),]
 
-
+  # return the data table
+  return(dt)
 }
