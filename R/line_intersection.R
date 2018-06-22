@@ -14,7 +14,7 @@ line_intersection = function(coord1 = NULL,
                              coord3 = NULL,
                              coord4 = NULL){
 
-  if (any(c(coord1,coord2,coord3,coord4))){
+  if (any(is.null(c(coord1,coord2,coord3,coord4)))){
     stop("Four coordinates must be provided !")
   }
 

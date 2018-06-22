@@ -1,7 +1,10 @@
 #' orthogonal projection of a point onto a line (2D)
 #'
-#'
-#'
+#' @param coord1 start coordinate of a line
+#' @param coord2 end coordinate fo a line
+#' @param coord3 coordinates of a point
+#' @export
+#' @return coordinates x,y
 
 proj_point_on_line = function(coord1, coord2, coord3){
 
@@ -22,5 +25,6 @@ proj_point_on_line = function(coord1, coord2, coord3){
   y = (m^2 * y0 + m*x0 + b)/(m^2+1)
 
   # return the value
-  return(cbind(x,y))
+  return(data.frame("x" = x,
+                    "y" = y))
 }

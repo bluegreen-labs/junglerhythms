@@ -5,13 +5,14 @@ Version: 0.1.0
 Author: Koen Hufkens
 Maintainer: Koen Hufkens <koen.hufkens@gmail.com>
 Description: 
-	This package gatheres all the code necessary to process all the classification results as contributed by citizen scientists on the Zooniverse Jungle Rhythms project.
+	Gathers all the code necessary to process all the classification results
+	as contributed by citizen scientists on the Zooniverse Jungle Rhythms project.
 Depends:
-    R (>= 3.2.5),
+    R (>= 3.4)
 Imports:
     jsonlite,
     data.table,
     raster
-License: AGPL-3.0
+License: CC-BY
 Encoding: UTF-8
-LazyData: true
+RoxygenNote: 6.0.1
