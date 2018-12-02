@@ -7,11 +7,13 @@
 #' @export
 #'
 
-phenology_dates = function(data = "~/Dropbox/Research_Projects/code_repository/bitbucket/junglerhythms/data/jungle_rhythms_annotations.rds",
-                           plot = TRUE,
-                           image_path = "~/Dropbox/Research_Projects/working/congo_phenology/data/yearly_subsets_jpg/",
-                           output_path  = "/scratch/tmp/",
-                           internal = FALSE){
+phenology_dates = function(
+  data = "~/Dropbox/Research_Projects/code_repository/bitbucket/junglerhythms/data/jungle_rhythms_annotations.rds",
+  plot = TRUE,
+  image_path = "~/Dropbox/Research_Projects/working/congo_phenology/data/yearly_subsets_jpg/",
+  output_path  = "/scratch/tmp/",
+  internal = FALSE
+  ){
 
   # read in data
   if(file.exists(data)){

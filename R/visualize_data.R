@@ -1,42 +1,49 @@
 # plot things
 
+# create summary graphs for all species with Plant List accepted names
+# combine a linear and circular plots
+
+source('/data/Dropbox/Research_Projects/code_repository/bitbucket/junglerhythms/R/linear_plot.R')
+source('/data/Dropbox/Research_Projects/code_repository/bitbucket/junglerhythms/R/circular_plot.r')
+
+# load libraries
 library(tidyverse)
 library(ggthemes)
+library(gridExtra)
 
-#k <- readRDS("data/jungle_rhythms_weekly_annotations.rds")
+# read in the original
+original_data <- readRDS("data/jungle_rhythms_weekly_annotations.rds")
 
-my_species <- "Millettia laurentii"
+# read in the meta-data
+meta_data <- read.table("data/species_meta_data.csv",
+                        header = TRUE, sep = ",")
 
-d = k %>% filter(grepl(tolower(my_species),
-                       tolower(paste(genus, species)))) %>%
-  mutate(value=ifelse(value == 0, NA, 1)) %>%
-  na.omit()
+meta_data <- meta_data[which(tolower(meta_data$genus) == "millettia"),]
 
-d$date <- as.Date(paste(d$year,round(d$week*7.6),sep="-"), "%Y-%j")
+# list full species name
+species_list <- paste(meta_data$genus,
+                      meta_data$species)
 
-l <- length(unique(d$id))
+lapply(species_list[1:length(species_list)], function(species){
 
-species <- unique(d$species)
+  message(sprintf("processing: %s", species))
 
-loc <- which(d$phenophase == "flowers")
-d$value[loc] <- d$value[loc] * 2.5
+  p1 <- try(linear_plot(data = original_data,
+                        species_name = species))
+  p2 <- try(circle_plot(data = original_data,
+                        threshold = 0.1,
+                        species_name = species))
 
-loc <- which(d$phenophase == "fruit")
-d$value[loc] <- d$value[loc] * 2
+  if(inherits(p1,"try-error") || inherits(p2,"try-error")){
+    warning(paste("failed to process:", species))
+    return(NULL)
+  }
 
-loc <- which(d$phenophase == "fruit_drop")
-d$value[loc] <- d$value[loc] * 1.5
+  filename <- sprintf("~/Desktop/tmp/%s.png",tolower(species))
+  filename <- gsub(" ","_", filename)
 
-loc <- which(d$phenophase == "senescence")
-d$value[loc] <- d$value[loc] * 1
-
-p = ggplot(d, aes(x = date,
-             y = value,
-             colour = phenophase,
-             group = phenophase)) +
-  geom_point(stat = "identity") +
-  theme_minimal() +
-  scale_y_continuous(breaks = NULL) +
-  labs(title = species, x = "Year") +
-  facet_wrap( ~ id, nrow = l, strip.position = "left")
-plot(p)
+  # write stuff to file
+  png(filename,1000,500)
+    grid.arrange(p1, p2, ncol = 2)
+  dev.off()
+})

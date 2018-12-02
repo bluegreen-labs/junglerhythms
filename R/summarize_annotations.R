@@ -1,9 +1,23 @@
-summarize_annotations <- function(df = "data/jungle_rhythms_raw_converted_annotations.rds",
-                                  plot = TRUE,
-                                  image_index =
-                                    "data/phenology_archives_species_test.csv",
-                                  internal = TRUE,
-                                  output_path = "./data/"){
+#' summarize annotations into weekly values
+#'
+#' weekly values assume a 48 week year
+#'
+#' @param df junglerhythms raw annotation file
+#' @param image_index image index data meta-data
+#' @param plot plot output TRUE or FALSE
+#' @param internal output results to R workspace, TRUE or FALSE
+#' @param output_path
+#' @export
+#' @return ggplot object
+
+
+summarize_annotations <- function(
+  df = "data/jungle_rhythms_raw_converted_annotations.rds",
+  image_index = "data/phenology_archives_species_test.csv",
+  plot = TRUE,
+  internal = TRUE,
+  output_path = "./data/"
+  ){
 
   # read in data directly from file path if
   # not a data frame
