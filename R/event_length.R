@@ -11,7 +11,7 @@
 #' @return timing of when an event (value) switches between no event (0)
 #' and a observation of an event (1)
 
-event_length <- function(year, week, value){
+event_length <- function(df){
 
   # full frame
   full_df <- data.frame(year = sort(rep(1930:1965, 48)),
@@ -23,10 +23,17 @@ event_length <- function(year, week, value){
                         sep = "-")
 
   # date vector from provided data frame
-  date_df <- paste(year, week, sep = "-")
+  date_df <- paste(df$year, df$week, sep = "-")
 
-  # fill values which match
-  full_df$value[which(date %in% date_df)] <- value
+  # correction
+  loc <- which(full_df$date %in% date_df)
+
+  if(length(loc)!= length(df$value)){
+    print(unique(df$image))
+    print(unique(df$id))
+  }
+
+  full_df$value[loc] <- df$value
 
   # get first differences
   diff_values <- diff(full_df$value)
@@ -52,17 +59,13 @@ event_length <- function(year, week, value){
                     phenophase_length = phenophase_length))
 }
 
-# library(tidyverse)
-#
-# # read in the weekly data
-# df <- readRDS("data/jungle_rhythms_weekly_annotations.rds")
-# df <- df[which(df$value != 0),]
+library(tidyverse)
+
+# read in the weekly data
+#df <- readRDS("data/jungle_rhythms_weekly_annotations.rds")
+#df <- df[which(df$value != 0),]
 #
 # test <- df %>%
-#   filter(genus == "Millettia",
-#          species == "laurentii"
-#          ) %>%
-#   group_by(id, phenophase) %>%
-#   do(event_length(.$year,.$week, .$value))
-#
+#   group_by(genus, species, id, phenophase) %>%
+#   do(event_length(.))
 # print(test)
