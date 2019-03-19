@@ -27,6 +27,12 @@ event_length <- function(df){
 
   # correction
   loc <- which(full_df$date %in% date_df)
+
+  if(length(loc)!= length(df$value)){
+    print(unique(df$image))
+    print(unique(df$id))
+  }
+
   full_df$value[loc] <- df$value
 
   # get first differences
@@ -61,6 +67,5 @@ library(tidyverse)
 #
 # test <- df %>%
 #   group_by(genus, species, id, phenophase) %>%
-#   #do(event_length(.$year,.$week, .$value, .$id))
 #   do(event_length(.))
 # print(test)
