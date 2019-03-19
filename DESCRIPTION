@@ -1,7 +1,7 @@
 Package: junglerhythms
 Type: Package
-Title: processes Zooniverse's Jungle Rhythms data
-Version: 0.1.0
+Title: process and screen raw Zooniverse's Jungle Rhythms data
+Version: 0.1.1
 Author: Koen Hufkens
 Maintainer: Koen Hufkens <koen.hufkens@gmail.com>
 Description: 
@@ -12,7 +12,12 @@ Depends:
 Imports:
     jsonlite,
     data.table,
-    raster
-License: CC-BY
+    raster,
+    tidyverse,
+    shiny,
+    shinydashboard,
+    ggplot2,
+    ggthemes
+License: 
 Encoding: UTF-8
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
