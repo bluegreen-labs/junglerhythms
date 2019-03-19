@@ -62,10 +62,10 @@ event_length <- function(df){
 library(tidyverse)
 
 # read in the weekly data
-#df <- readRDS("data/jungle_rhythms_weekly_annotations.rds")
-#df <- df[which(df$value != 0),]
-#
-# test <- df %>%
-#   group_by(genus, species, id, phenophase) %>%
-#   do(event_length(.))
-# print(test)
+df <- readRDS("data/jungle_rhythms_weekly_annotations.rds")
+df <- df[which(df$value != 0),]
+
+test <- df %>%
+  group_by(genus, species, id, phenophase) %>%
+  do(event_length(.))
+print(test)

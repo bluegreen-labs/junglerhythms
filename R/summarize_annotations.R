@@ -121,7 +121,11 @@ summarize_annotations <- function(
   }
 
   # grab starting year
-  starting_year <- as.numeric(index$starting_year[loc])
+  if(is.na(index$starting_year[loc])){
+    return(NULL)
+    } else {
+    starting_year <- as.numeric(index$starting_year[loc])
+  }
 
   # correct starting year for double image tags
   img_tag <- unlist(strsplit(index$image[loc],"/"))
@@ -130,10 +134,10 @@ summarize_annotations <- function(
   # collate meta-data
   values$year <- starting_year + (image_col - 1)
   values$week <- 1:48
-  values$family <- index$family_plantlist[loc]
-  values$genus <- index$genus_plantlist[loc]
-  values$species <- index$species_plantlist[loc]
-  values$plantlist_status <- index$plantlist_status[loc]
+  values$family <- index$family_Meise[loc]
+  values$genus <- index$genus_Meise[loc]
+  values$species <- index$species_Meise[loc]
+  values$status_meise <- index$status_Meise[loc]
   values$image <- image_nr
   values$image_col <- image_col
   values$image_row <- image_row
@@ -163,12 +167,13 @@ summarize_annotations <- function(
                 -image_col,
                 -image_row,
                 -id,
-                -plantlist_status,
+                -status_meise,
                 -annotations)
 
   # return data
   if(!internal){
-    saveRDS(output, paste0(output_path, "/jungle_rhythms_weekly_annotations.rds"))
+    saveRDS(output, paste0(output_path,
+                           "/jungle_rhythms_weekly_annotations.rds"))
   } else {
     return(output)
   }
