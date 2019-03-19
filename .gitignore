@@ -1,4 +1,9 @@
 .Rproj.user
 .Rhistory
 .RData
+.dropbox
+data/
+data-raw/
+inst/
+manuscript/
 ~*
