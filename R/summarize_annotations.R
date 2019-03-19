@@ -1,4 +1,4 @@
-#' summarize annotations into weekly values
+#' Summarize annotations into weekly values
 #'
 #' weekly values assume a 48 week year
 #'
@@ -6,16 +6,15 @@
 #' @param image_index image index data meta-data
 #' @param plot plot output TRUE or FALSE
 #' @param internal output results to R workspace, TRUE or FALSE
-#' @param output_path
+#' @param output_path output path where to store data
 #' @export
 #' @return ggplot object
 
-
 summarize_annotations <- function(
-  df = "data/jungle_rhythms_raw_converted_annotations.rds",
-  image_index = "data/phenology_archives_species_test.csv",
+  df = "data/jungle_rhythms_daily_annotations.rds",
+  image_index = "data/phenology_archives_species_long_format_20181224.csv",
   plot = TRUE,
-  internal = TRUE,
+  internal = FALSE,
   output_path = "./data/"
   ){
 
@@ -26,9 +25,6 @@ summarize_annotations <- function(
     df <- readRDS(df)
     }
   }
-
-  # set labels
-  labels <- c("flowers","fruit","fruit_drop","senescence")
 
   # read in phenology archive image index
   index <- read.csv2(image_index,
@@ -46,7 +42,7 @@ summarize_annotations <- function(
   env <- environment()
   i = 1
 
-  #output <- do.call("rbind",lapply("1066222 6 1",
+  #output <- do.call("rbind",lapply("1066198 6 2",
   output <- do.call("rbind",lapply(unique(image_names),
                                    function(image_name){
 
@@ -59,23 +55,31 @@ summarize_annotations <- function(
     # subset the data based upon image name
     # includes all phenology observations
     subset <- df[which(image_names == image_name),]
-    subset$labels <- labels
 
-    # loop over all phenology observations
-    values <- do.call("cbind",lapply(labels,
-                                     function(label){
+    # get labels
+    labels <- subset$labels
+
+    # loop over all phenology phenophases
+    values <- do.call(
+      "cbind",
+        lapply(labels, function(label){
 
       # subset based upon label and doy
       x <- subset[which(subset$labels == label),
                   grep("doy",names(df))]
 
-      if(nrow(x) == 0){
-        print(image_name)
+      # convert to numeric
+      x <- as.vector(apply(x, 1:2, as.numeric))
+
+      if(all(x == 0)){
         return(rep(0,48))
       }
 
       # calculate relative majority vote
-      v <- max(x, na.rm = TRUE) * 0.66
+      # assumes "unity", the assumption that if there
+      # is a visible marking all people will mark it with
+      # a varying degree of accuracy for a particular row (phenophase)
+      v <- floor(max(x, na.rm = TRUE) * 0.5)
 
         if(v <= 2 | is.na(v)){
           x[] <- NA
@@ -84,19 +88,22 @@ summarize_annotations <- function(
           x[!is.na(x)] <- 1
         }
 
-      # rescale to 48 week year
+      # rescale to 48 week year from a 336 DOY notation
       weeks <- sort(rep(1:48,7))
+
       x_week <- as.vector(aggregate(unlist(x),
                           by = list(weeks),
                           FUN = function(x_subset){
         c <- length(which(!is.na(x_subset)))
         ifelse(c >= 3, 1, 0)
       }))$x
+
+      # return data
       return(x_week)
     }))
 
   values <- as.data.frame(values)
-  colnames(values) <- rev(labels)
+  colnames(values) <- labels
 
   # find meta-data
   loc <- as.numeric(unlist(strsplit(image_name," ")))
@@ -127,21 +134,24 @@ summarize_annotations <- function(
   values$genus <- index$genus_plantlist[loc]
   values$species <- index$species_plantlist[loc]
   values$plantlist_status <- index$plantlist_status[loc]
-  values$validated <- index$digitized[loc]
   values$image <- image_nr
   values$image_col <- image_col
   values$image_row <- image_row
   values$id <- index$id[loc]
 
-  return(values)
+  # check if there are annotated values, even if
+  # thresholds are not reached
+  x <- as.numeric(unlist(subset[,grep("doy",names(subset))]))
+  values$annotations <- ifelse(any(x > 0), TRUE, FALSE)
 
+  return(values)
   }))
 
   # close progress bar
   close(pb)
 
   # convert to a tidy format
-  output = gather(output,
+  output <- tidyr::gather(output,
                 key = phenophase,
                 value = value,
                 -year,
@@ -154,14 +164,12 @@ summarize_annotations <- function(
                 -image_row,
                 -id,
                 -plantlist_status,
-                -validated)
+                -annotations)
 
   # return data
-  if(internal){
+  if(!internal){
     saveRDS(output, paste0(output_path, "/jungle_rhythms_weekly_annotations.rds"))
   } else {
     return(output)
   }
 }
-
-summarize_annotations()

@@ -9,9 +9,9 @@
 #' @keywords data, io, transformation
 #' @export
 
-read_zoo_data = function(file = NULL,
+format_zoo_data = function(file = NULL,
                          image_file = "data/jungle_rhythms_subsets.rds",
-                         date = "2015-12-13",
+                         date = "2015-12-10",
                          path = NULL){
 
   # read subset dimensions
