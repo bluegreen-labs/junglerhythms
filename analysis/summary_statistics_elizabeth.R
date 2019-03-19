@@ -10,7 +10,7 @@ df <- readRDS("data/jungle_rhythms_weekly_annotations.rds")
 df <- df[which(df$value != 0),]
 df$join_id <- paste0("R",df$image,"-",df$image_row)
 
-metadata <- read.csv("data/phenology_archives_species_long_format_20190314.csv",
+metadata <- read.csv("data/phenology_archives_species_long_format_20190319.csv",
                      header = TRUE, sep = ",")
 metadata$join_id <- paste(metadata$image,metadata$row, sep = "-")
 
@@ -103,12 +103,62 @@ out <- merge(out, traits, by = "species_full", all.x = TRUE)
 # remove rows (species) not included in the Yangambi mixed forest census
 final <- out[!(is.na(out$BAperc)),]
 
+
+
+# now also include the average length of an event
+event <- df %>%
+  filter(phenophase == "leaf_dormancy" | phenophase == "leaf_turnover") %>%
+  group_by(species_full, id, phenophase) %>%
+  do(event_length(.))
+
+event_duration <- event %>%
+  group_by(phenophase, species_full) %>%
+  dplyr::summarise(duration = mean(phenophase_length),
+                   duration_sd = sd(phenophase_length),
+                   nr_events = length(phenophase_length))
+
+
+# calculate the synchrony between events as mean and SD of onset
+# then reformat those taking the year - date line into
+# consideration
+transition_dates <- event %>%
+  mutate(degree = week_start * 360/48) %>%
+  filter(species_full == "Afzelia bella")
+
+
+
+onset <- transition_dates %>%
+  filter(length(week_start) > 5) %>%    # only species with more than 10 events
+  summarise(
+    mean_degree = mean.circular(
+      circular(degree, units = "degrees")
+    ),
+    sd_degree = sd.circular(
+      circular(degree, units = "degrees")
+    ),
+    nr_events = length(week_start),
+    mean_test = mean(degree),
+    sd_test = sd(degree)
+  )
+# rescaling between 0 and 360 degrees
+onset$mean_rescaled <- ifelse(onset$mean_degree < 0, onset$mean_degree +360, onset$mean_degree)
+
+onset <- onset %>%
+  mutate(onset_week = mean_rescaled * 48/360)
+
+
+
+#--------------------------------------------------------------------
+#--------------------------------------------------------------------
 # write to file
+#--------------------------------------------------------------------
+#--------------------------------------------------------------------
 write.table(final, "data/species_meta_data.csv",
           quote = FALSE,
           col.names = TRUE,
           row.names = FALSE,
           sep = ",")
+#--------------------------------------------------------------------
 
 
 
