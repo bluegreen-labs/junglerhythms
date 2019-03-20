@@ -57,19 +57,42 @@ VI_s <- VI %>%
          doy = as.numeric(format(as.Date(calendar_date), "%j")),
          site = toupper(site)) %>%
   group_by(site, doy) %>%
-  summarize(EVI = mean(value, na.rm = TRUE),
+  summarise(EVI = mean(value, na.rm = TRUE),
             EVI_sd = sd(value, na.rm = TRUE))
 
 # plot EVI by site
-p <- ggplot(VI_s) +
-  geom_smooth(aes(doy, EVI), span = 0.3, se = FALSE, col = "grey") +
-  geom_point(aes(doy, EVI, shape = site)) +
+p_modis <- ggplot(VI_s) +
+  geom_point(aes(doy, EVI, shape = site), col = "grey40") +
+  geom_smooth(aes(doy, EVI), span = 0.3, se = FALSE, col = "black") +
   #geom_line(aes(doy, EVI + EVI_sd)) +
   #geom_line(aes(doy, EVI - EVI_sd)) +
   labs(title = "MOD13Q1",
        subtitle = "mean ...",
-       x = "DOY",
-       y = "EVI")
+       x = "",
+       y = "EVI") +
+  scale_x_continuous(limits = c(0,365),
+                     breaks = seq(0,365,30.5),
+                     labels = month.abb) +
+  scale_y_continuous(limits = c(0.4,0.6),
+                     breaks = c(0.4,0.5,0.6),
+                     labels = scales::number_format(accuracy = 0.1)) +
+  annotate("rect", xmin = 0, xmax = 61, ymin = 0.4, ymax = 0.6, alpha = .2) + # jan - febr
+  annotate("rect", xmin = 152.5, xmax = 213.5, ymin = 0.4, ymax = 0.6, alpha = .2) + # jun - jul
+  annotate("rect", xmin = 335.5, xmax = 365, ymin = 0.4, ymax = 0.6, alpha = .2) + # dec
+  theme_minimal() +
+  theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
+        panel.grid.minor.x =  element_blank(),
+        panel.grid.minor.y = element_blank(),
+        panel.background = element_blank(),
+        plot.background = element_rect(fill = 'white', colour = 'white'),
+        strip.text = element_text(hjust = 0),
+        axis.line.x = element_blank(),
+        # axis.text.x = element_text(angle = 90, hjust = 1),
+        axis.text.x=element_blank(),
+        axis.title.x=element_blank(),
+        legend.position = "none",
+        plot.margin=unit(c(0,0,0,0.2),"cm")
+  )
 
-print(p)
+print(p_modis)
 
