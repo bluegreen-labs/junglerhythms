@@ -354,25 +354,25 @@ write.table(final, "data/species_meta_data.csv",
 
 
 
-# sum the basal area of the observed species
-# if >30 good coverage
-# message(sum(final$BA, na.rm = TRUE))
-
-hist1 <- ggplot(final, aes(nr_years_full)) +
-  geom_histogram(bins = 15) +
-  labs(x = "Site Years",
-       y = "Frequency") +
-  theme_minimal() +
-  theme(text = element_text(size=20))
-
-hist2 <- ggplot(final, aes(nr_indiv)) +
-  geom_histogram(bins = 15) +
-  labs(x = "Individuals per species",
-       y = "Frequency") +
-  theme_minimal() +
-  theme(text = element_text(size=20))
-
-# ggsave("site_year_histogram.png", hist1)
-# ggsave("individuals_histogram.png", hist2)
+# # sum the basal area of the observed species
+# # if >30 good coverage
+# # message(sum(final$BA, na.rm = TRUE))
+#
+# hist1 <- ggplot(final, aes(site_years)) +
+#   geom_histogram(bins = 15) +
+#   labs(x = "Site Years",
+#        y = "Frequency") +
+#   theme_minimal() +
+#   theme(text = element_text(size=20))
+#
+# hist2 <- ggplot(final, aes(nr_indiv)) +
+#   geom_histogram(bins = 15) +
+#   labs(x = "Individuals per species",
+#        y = "Frequency") +
+#   theme_minimal() +
+#   theme(text = element_text(size=20))
+#
+# # ggsave("site_year_histogram.png", hist1)
+# # ggsave("individuals_histogram.png", hist2)
 
 
