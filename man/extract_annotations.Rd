@@ -7,7 +7,7 @@
 extract_annotations(data = "./data-raw/jungle_rhythms_annotations.rds",
   plot = FALSE,
   image_path = "~/Dropbox/Research_Projects/working/congo_phenology/data/yearly_subsets_jpg/",
-  output_path = "/scratch/tmp/", internal = FALSE)
+  output_path = "/scratch/tmp/", internal = TRUE)
 }
 \arguments{
 \item{data}{raw annotation data to process (pre-processed with

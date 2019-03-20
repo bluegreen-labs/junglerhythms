@@ -10,14 +10,12 @@ Description:
 Depends:
     R (>= 3.4)
 Imports:
+    MODISTools,
     jsonlite,
-    data.table,
     raster,
     tidyverse,
-    shiny,
-    shinydashboard,
     ggplot2,
     ggthemes
 License: 
 Encoding: UTF-8
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1

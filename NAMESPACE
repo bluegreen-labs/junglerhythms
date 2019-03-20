@@ -3,6 +3,7 @@
 export(bounding_box)
 export(dist_point_to_line)
 export(dist_point_to_point)
+export(event_length)
 export(extract_annotations)
 export(format_zoo_data)
 export(intersect_line_circle)
