@@ -4,6 +4,7 @@
 library(zoo)
 library(tidyverse)
 library(circular)
+source("R/event_length.R")
 
 #----------------------------------------------------------------------
 #--------   Phenology data - species correction Meise   ---------------
@@ -17,8 +18,14 @@ metadata <- read.csv("data/phenology_archives_species_long_format_20190319.csv",
 metadata$join_id <- paste(metadata$image,metadata$row, sep = "-")
 
 # test merge the two tables based upon the unique join ID
-data <- merge(df, metadata, by = c("join_id","id"), all.x = TRUE)
+data <- merge(df, metadata, by = c("join_id"), all.x = TRUE)
 data$species_full <- paste(data$genus_Meise, data$species_Meise)
+
+# remove column id.x and rename id.y to id (--> in id.y, empty ids are renamed to EK1, EK2, etc...)
+data = data[,!(names(data) %in% "id.x")]
+data <- data %>%
+  rename("id" = id.y)
+data$id <- as.character(data$id)
 #----------------------------------------------------------------------
 
 # read in census data
