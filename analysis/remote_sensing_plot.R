@@ -1,6 +1,6 @@
 library(tidyverse)
 library(ggplot2)
-library(MODISTools)
+#library(MODISTools)
 library(ggthemes)
 
 # load sites
@@ -9,7 +9,7 @@ sites <- read.table("data-raw/yangambi_sites.csv",
                     sep = ",")
 
 # download and/or read data
-if(file.exists("data-raw/yangambi_mod13q1_evi_values.csv")){
+if(!file.exists("data-raw/yangambi_mod13q1_evi_values.csv")){
   VI <- mt_batch_subset(sites,
                 product = "MOD13Q1",
                 start = "2001-01-01",
@@ -28,7 +28,7 @@ if(file.exists("data-raw/yangambi_mod13q1_evi_values.csv")){
                    sep = ",")
 }
 
-if(file.exists("data-raw/yangambi_mod13q1_qa_values.csv")){
+if(!file.exists("data-raw/yangambi_mod13q1_qa_values.csv")){
   QA <- mt_batch_subset(sites,
                       product = "MOD13Q1",
                       band = "250m_16_days_pixel_reliability",
@@ -43,7 +43,7 @@ if(file.exists("data-raw/yangambi_mod13q1_qa_values.csv")){
             sep = ",")
 
 } else {
-  VI <- read.table("data-raw/yangambi_mod13q1_evi_values.csv",
+  QA <- read.table("data-raw/yangambi_mod13q1_qa_values.csv",
                    header = TRUE,
                    sep = ",")
 }
@@ -57,13 +57,19 @@ VI_s <- VI %>%
          doy = as.numeric(format(as.Date(calendar_date), "%j")),
          site = toupper(site)) %>%
   group_by(site, doy) %>%
-  summarize(EVI = mean(value, na.rm = TRUE))
+  summarize(EVI = mean(value, na.rm = TRUE),
+            EVI_sd = sd(value, na.rm = TRUE))
 
 # plot EVI by site
-p <- ggplot(VI_s, aes(doy, EVI)) +
-  geom_point(col = "green") +
-  geom_smooth(method = "loess", span = 0.3) +
-  facet_wrap(~site)
+p <- ggplot(VI_s) +
+  geom_smooth(aes(doy, EVI), span = 0.3, se = FALSE, col = "grey") +
+  geom_point(aes(doy, EVI, shape = site)) +
+  #geom_line(aes(doy, EVI + EVI_sd)) +
+  #geom_line(aes(doy, EVI - EVI_sd)) +
+  labs(title = "MOD13Q1",
+       subtitle = "mean ...",
+       x = "DOY",
+       y = "EVI")
 
 print(p)
 
