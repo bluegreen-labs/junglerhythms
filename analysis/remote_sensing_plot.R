@@ -66,10 +66,10 @@ p_modis <- ggplot(VI_s) +
   geom_smooth(aes(doy, EVI), span = 0.3, se = FALSE, col = "black") +
   #geom_line(aes(doy, EVI + EVI_sd)) +
   #geom_line(aes(doy, EVI - EVI_sd)) +
-  labs(title = "MOD13Q1",
-       subtitle = "mean ...",
+  labs(#title = "MOD13Q1",
+       #subtitle = "mean ...",
        x = "",
-       y = "EVI") +
+       y = "EVI - MOD13Q1") +
   scale_x_continuous(limits = c(0,365),
                      breaks = seq(0,365,30.5),
                      labels = month.abb) +

@@ -133,11 +133,11 @@ climate <- read.table("~/Dropbox/Phenology_JR/Manuscript/Phenology_Leaf_draft/Cl
 # #-----------------------------------------------------------------------
 
 #-----------------------------------------------------------------------
-#------------ Leaf turnover  -------------------------------------------
+#------------ Leaf dormancy  -------------------------------------------
 #------------ Rescaled signal at species-level    ----------------------
 #-----------------------------------------------------------------------
 data_LT <- data %>%
-  filter(phenophase == "flowers") %>%
+  filter(phenophase == "leaf_turnover") %>%
   # filter(layer == "canopy") %>%
   # filter(Ecology == "shade") %>%
   na.omit()
@@ -188,7 +188,7 @@ final_LT_all <- data_LT %>%
 #------------ Rescaled signal at species-level    ----------------------
 #-----------------------------------------------------------------------
 data_LD <- data %>%
-  filter(phenophase == "fruit") %>%
+  filter(phenophase == "leaf_dormancy") %>%
   # filter(layer == "canopy") %>%
   # filter(Ecology == "shade") %>%
   na.omit()
@@ -291,7 +291,7 @@ p_dormancy <- ggplot() + #final_LD) +
   annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 2.5, alpha = .2) + # jan - febr
   annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 2.5, alpha = .2) + # jun - jul
   annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 2.5, alpha = .2) + # dec
-  labs(y = "freq. fruiting",
+  labs(y = "freq. canopy dormancy",
        x = "") +
   theme_minimal() +
   theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
@@ -321,7 +321,7 @@ p_turnover <- ggplot() + #final_LT) +
   annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 2.5, alpha = .2) + # jan - febr
   annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 2.5, alpha = .2) + # jun - jul
   annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 2.5, alpha = .2) + # dec
-  labs(y = "freq. flowering",
+  labs(y = "freq. canopy turnover",
        x = "") +
   theme_minimal() +
   theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),

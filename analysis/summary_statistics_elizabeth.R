@@ -46,7 +46,7 @@ df$id <- as.character(df$id)
 # df$species <- ifelse(df$species == "","Unknown",df$species)
 
 # read in census data
-census <- read.csv2("data/yangambi_mixed_forest_species_list.csv",
+census <- read.csv("data/yangambi_mixed_forest_species_list.csv",
                      header = TRUE,
                      sep = ",",
                      stringsAsFactors = FALSE)
@@ -60,7 +60,7 @@ census <- census %>%
          "dbh_max_cm_census" = DBHmax)
 
 # read in trait data from Steven Janssens
-traits <- read.csv2("data/Dataset_traits_African_trees.csv",
+traits <- read.csv("data/Dataset_traits_African_trees.csv",
                     header = TRUE,
                     sep = ",",
                     stringsAsFactors = FALSE)
@@ -285,7 +285,8 @@ onset_ind_LD <- onset_ind_LD %>%
 synchrony_ind_LD <- onset_ind_LD %>%
   group_by(species_full) %>%
   summarise(mean_synchrony_individuals_onset_leaf_dormancy_weeks = mean(onset_sd_weeks,na.rm=TRUE),
-            sd_synchrony_individuals_onset_leaf_dormancy_weeks = sd(onset_sd_weeks,na.rm=TRUE))
+            sd_synchrony_individuals_onset_leaf_dormancy_weeks = sd(onset_sd_weeks,na.rm=TRUE),
+            mean_nr_events_within_individuals_leaf_dormancy = mean(nr_events_onset))
 #-------------------------------------------------------------------------------
 onset_ind_LT <- transition_dates_LT %>%
   group_by(id, species_full) %>%
@@ -311,7 +312,8 @@ onset_ind_LT <- onset_ind_LT %>%
 synchrony_ind_LT <- onset_ind_LT %>%
   group_by(species_full) %>%
   summarise(mean_synchrony_individuals_onset_leaf_turnover_weeks = mean(onset_sd_weeks,na.rm=TRUE),
-            sd_synchrony_individuals_onset_leaf_turnover_weeks = sd(onset_sd_weeks,na.rm=TRUE))
+            sd_synchrony_individuals_onset_leaf_turnover_weeks = sd(onset_sd_weeks,na.rm=TRUE),
+            mean_nr_events_within_individuals_leaf_turnover = mean(nr_events_onset))
 #-------------------------------------------------------------------------------
 
 
