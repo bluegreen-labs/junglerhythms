@@ -94,5 +94,5 @@ p_modis <- ggplot(VI_s) +
         plot.margin=unit(c(0,0,0,0.2),"cm")
   )
 
-print(p_modis)
+# print(p_modis)
 

@@ -1,11 +1,27 @@
-# extract transition dates from JR
-# weekly annotations to be ingested by the
-# format_csv() function of phenor
+#----- reset your R session. ---------------------------------------------------#
+rm(list=ls())
+# graphics.off()
+#----- load required packages --------------------------------------------------#
 library(zoo)
 library(tidyverse)
 library(circular)
-source("R/event_length.R")
 library(scales)
+#----- source required functions -----------------------------------------------#
+source("R/event_length.R")
+#-------------------------------------------------------------------------------#
+
+
+#----------------------------------------------------------------------
+#-------- input that you can change   ---------------------------------
+#----------------------------------------------------------------------
+#----------------------------------------------------------------------
+phenophase_selected = "leaf_turnover"
+minimum_events = 5    # species will only be included in this analysis
+# when they have a minimum set of events
+#----------------------------------------------------------------------
+
+
+
 #----------------------------------------------------------------------
 #--------   Phenology data - species correction Meise   ---------------
 #----------------------------------------------------------------------
@@ -27,13 +43,16 @@ data <- data %>%
   rename("id" = id.y)
 data$id <- as.character(data$id)
 #----------------------------------------------------------------------
-
-# read in census data
-census <- read.csv2("data/yangambi_mixed_forest_species_list.csv",
+#-------- read in census data  ----------------------------------------
+#----------------------------------------------------------------------
+census <- read.csv("data/yangambi_mixed_forest_species_list.csv",
                     header = TRUE,
                     sep = ",",
                     stringsAsFactors = FALSE)
 colnames(census)[1] <- 'species_full'
+#----------------------------------------------------------------------
+
+
 
 
 #--------------------------------------------------------------------------
@@ -42,22 +61,20 @@ colnames(census)[1] <- 'species_full'
 #--------------------------------------------------------------------------
 #--------------------------------------------------------------------------
 #--------------------------------------------------------------------------
+# use function event_length to get the starting week of an event
 transition_dates <- data %>%
-  filter(phenophase == "leaf_turnover" ) %>% #| phenophase == "leaf_turnover"
+  filter(phenophase == phenophase_selected) %>%
   group_by(species_full, id, phenophase) %>%
   do(event_length(.))
 
-# transition_dates <- transition_dates %>%
-#   mutate(date = as.Date(sprintf("%s-%02d-1",year_start, week_start),
-#                         "%Y-%W-%u"))  # new column 'date' with year-month-day
-
 # weeks to degrees
 transition_dates <- transition_dates %>%
-  mutate(degree = (week_start-1) * 360/48) # so that week 1 in janurari is degree 0
+  mutate(degree = (week_start-1) * 360/48) # -1 so that week 1 in janurari is degree 0
 
-bla <- transition_dates %>%
+# summary of onset dates per species
+onset <- transition_dates %>%
   group_by(species_full) %>%
-  filter(length(week_start) > 2) %>%    # only species with more than 10 events
+  filter(length(week_start) >= minimum_events) %>%    # only species with a minimum of events
   summarise(
     mean_degree = mean.circular(
       circular(degree, units = "degrees")
@@ -75,102 +92,82 @@ bla <- transition_dates %>%
   )
 
 # merge with census and remove rows (species) not included in the Yangambi mixed forest census
-bla <- merge(bla, census, by = "species_full", all.x = TRUE)
-bla <- bla[!(is.na(bla$BAperc)),]
+onset <- merge(onset, census, by = "species_full", all.x = TRUE)
+onset <- onset[!(is.na(onset$BAperc)),]
 
 # sort by BA
 # set y value by sorted BA number
-bla <- bla %>%
+onset <- onset %>%
   arrange(BA) %>%
   mutate(y_value = (1:length(species_full)))
 
 # rescaling between 0 and 360 degrees
-bla$mean_rescaled <- ifelse(bla$mean_degree < 0, bla$mean_degree +360, bla$mean_degree)
-bla$median_rescaled <- ifelse(bla$median_degree < 0, bla$median_degree +360, bla$median_degree)
-bla$upper_rescaled <- ifelse (bla$upper < 0, bla$upper + 360, bla$upper)
-bla$upper_rescaled <- circular(bla$upper_rescaled, units = "degrees")
-bla$lower_rescaled <- ifelse (bla$lower < 0, bla$lower + 360, bla$lower)
-bla$lower_rescaled <- circular(bla$lower_rescaled, units = "degrees")
+onset$mean_rescaled <- ifelse(onset$mean_degree < 0, onset$mean_degree +360, onset$mean_degree)
+onset$median_rescaled <- ifelse(onset$median_degree < 0, onset$median_degree +360, onset$median_degree)
+onset$upper_rescaled <- ifelse (onset$upper < 0, onset$upper + 360, onset$upper)
+onset$lower_rescaled <- ifelse (onset$lower < 0, onset$lower + 360, onset$lower)
 
-# # bla_subset <- bla %>%
-# #   filter(mean_rescaled < lower_rescaled | mean_rescaled > upper_rescaled)
-# bla_subset <- bla %>%
-#   filter(median_rescaled < lower_rescaled | median_rescaled > upper_rescaled)
-# bla_subset$seg1_x <- 0
-# bla_subset$seg2_x <- 360
-#
-# # bla_ok <- bla %>%
-# #   filter(mean_rescaled > lower_rescaled & mean_rescaled < upper_rescaled)
-# bla_ok <- bla %>%
-#   filter(median_rescaled > lower_rescaled & median_rescaled < upper_rescaled)
+# in order to plot the CI if CI goes over zero, two segments needed: lower - 360 and 0 - upper
+onset_CItwosegments <- onset %>%
+  filter(mean_rescaled < lower_rescaled | mean_rescaled > upper_rescaled)
+onset_CItwosegments$seg1_xend <- 360  # end of segment 1 --> lower:360
+onset_CItwosegments$seg2_x <- 0       # beginning of segment 2 --> 0:upper
+# for CI not going over zero, the segment can just be lower - upper
+onset_CIonesegments <- onset %>%
+  filter(mean_rescaled > lower_rescaled & mean_rescaled < upper_rescaled)
 
-
-
-
-overview <- bla[,(names(bla) %in% c("species_full","y_value"))]
+# for the species we have in the onset df, get the y_value
+# link to the original transition_dates, so that we have all datapoints of a species, linked to y_value
+overview <- onset[,(names(onset) %in% c("species_full","y_value"))]
 overview <- inner_join(transition_dates, overview, by = c("species_full"))
 
 
-
-
-
-ggplot(data = bla) + #bla_ok) +
-  geom_point(data = overview, aes(x = degree, y = y_value),
-             color = "grey45",
-             shape = 4) +
-  # geom_point(aes(x = mean_rescaled, y = y_value)) +
+#------------------------------------------------------------------------
+#----- circular plot of median onset dates of event
+#----- bootstrapped 95% confidence interval around mean (cross)
+#------------------------------------------------------------------------
+ggplot(data = onset) +
+  geom_segment(data = onset_CIonesegments,
+               aes(x = lower_rescaled,
+                   xend = upper_rescaled,
+                   y = y_value,
+                   yend = y_value),
+               color = "grey45") +
+  geom_segment(data = onset_CItwosegments,
+               aes(x = lower_rescaled,
+                   xend = seg1_xend,
+                   y = y_value,
+                   yend = y_value),
+               color = "grey45") +
+  geom_segment(data = onset_CItwosegments,
+               aes(x = seg2_x,
+                   xend = upper_rescaled,
+                   y = y_value,
+                   yend = y_value),
+               color = "grey45") +
+  # geom_point(data = overview,
+  #            aes(x = degree, y = y_value),
+  #            color = "grey45",
+  #            shape = 4) +
   geom_point(aes(x = median_rescaled, y = y_value)) +
-  # geom_point(data=bla_subset, aes(x = mean_rescaled, y = y_value)) +
-  scale_x_continuous(limits = c(0,360),
-                     breaks = seq(0,359,30),
-                     labels = month.abb) +
-  scale_y_continuous(limits = c(-20,length(bla$median_rescaled) ),
-                     minor_breaks = seq(1, 48, 1), breaks = seq(1, 48, 1)) + #staring at '-10' so that points are squeezed in the center
-  annotate("rect", xmin = 330, xmax = 360, ymin = 0, ymax = length(bla$median_rescaled) , alpha = .2) + #Dec
-  annotate("rect", xmin = 0, xmax = 60, ymin = 0, ymax = length(bla$median_rescaled) , alpha = .2) + # jan - feb
-  annotate("rect", xmin = 150, xmax = 210, ymin = 0, ymax = length(bla$median_rescaled) , alpha = .2) + # jun-jul
-  # coord_polar() +
-  labs(x="",
-       y="",
-       title = "leaf turnover") +
-  theme(panel.grid.major.x = element_line(colour = "grey75",
-                                          size = 0.3),
-        panel.grid.minor.x = element_blank(),
-        panel.grid.major.y = element_line(colour = "grey90", size = 0.5),
-        panel.grid.minor.y = element_blank(),
-        panel.background = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.text.y = element_blank(),
-        axis.text.x = element_text(size = 11),
-        strip.text = element_text(face = "italic", size = 13),
-        strip.background = element_rect(fill="white"),
-        # legend.position = "right",
-        plot.margin=unit(c(1,0,0,0),"cm")
-  )
-
-ggplot(data = bla) + #bla_ok) +
-  geom_point(data = overview, aes(x = degree, y = y_value),
-             color = "grey45",
+  geom_point(aes(x = mean_rescaled, y = y_value),
              shape = 4) +
-  # geom_point(aes(x = mean_rescaled, y = y_value)) +
-  geom_point(aes(x = mean_rescaled, y = y_value)) +
-  # geom_point(data=bla_subset, aes(x = mean_rescaled, y = y_value)) +
   scale_x_continuous(limits = c(0,360),
                      breaks = seq(0,359,30),
                      labels = month.abb) +
-  scale_y_continuous(limits = c(-20,length(bla$mean_rescaled) ),
-                     minor_breaks = seq(1, 48, 1), breaks = seq(1, 48, 1)) + #staring at '-10' so that points are squeezed in the center
-  annotate("rect", xmin = 330, xmax = 360, ymin = 0, ymax = length(bla$mean_rescaled) , alpha = .2) + #Dec
-  annotate("rect", xmin = 0, xmax = 60, ymin = 0, ymax = length(bla$mean_rescaled) , alpha = .2) + # jan - feb
-  annotate("rect", xmin = 150, xmax = 210, ymin = 0, ymax = length(bla$mean_rescaled) , alpha = .2) + # jun-jul
+  scale_y_continuous(limits = c(-20,length(onset$median_rescaled))) +  #staring y-axis at '-20' so that points are squeezed in the center
+                     # minor_breaks = seq(1, 48, 1), breaks = seq(1, 48, 1)) +
+  annotate("rect", xmin = 330, xmax = 360, ymin = 0, ymax = length(onset$median_rescaled) , alpha = .2) + #Dec
+  annotate("rect", xmin = 0, xmax = 60, ymin = 0, ymax = length(onset$median_rescaled) , alpha = .2) + # jan - feb
+  annotate("rect", xmin = 150, xmax = 210, ymin = 0, ymax = length(onset$median_rescaled) , alpha = .2) + # jun-jul
   coord_polar() +
   labs(x="",
        y="",
-       title = "Leaf dormancy") +
+       title = phenophase_selected) +
   theme(panel.grid.major.x = element_line(colour = "grey75",
                                           size = 0.3),
         panel.grid.minor.x = element_blank(),
-        panel.grid.major.y = element_line(colour = "grey90", size = 0.5),
+        panel.grid.major.y = element_blank(),# element_line(colour = "grey90", size = 0.5),
         panel.grid.minor.y = element_blank(),
         panel.background = element_blank(),
         axis.ticks.y = element_blank(),
@@ -181,28 +178,11 @@ ggplot(data = bla) + #bla_ok) +
         # legend.position = "right",
         plot.margin=unit(c(1,0,0,0),"cm")
   )
+#------------------------------------------------------------------------
 
-# geom_segment(aes(x = lower_rescaled,
-#                  xend = upper_rescaled,
-#                  y = y_value,
-#                  yend = y_value),
-#              color = "grey45") +
-# geom_segment(data=bla_subset, aes(x = upper_rescaled,
-#                                   xend = seg1_x,
-#                                   y = y_value,
-#                                   yend = y_value),
-#              color = "grey45") +
-# geom_segment(data=bla_subset, aes(x = lower_rescaled,
-#                                   xend = seg2_x,
-#                                   y = y_value,
-#                                   yend = y_value),
-#              color = "grey45") +
 
-# #--------------------------------------------------------------------------
-# #--------------------------------------------------------------------------
-# #--------------------------------------------------------------------------
-#
-#
+
+
 # #--------------------------------------------------------------------------
 # #--------------------------------------------------------------------------
 # #--------- This is mean event time, not onset of event    -----------------
