@@ -508,5 +508,8 @@ p_par <- ggplot(climate) +
   )
 
 
-grid.arrange(p_modis, p_dormancy, p_turnover, p_par,p_precip, heights = c(3,3,3.4,1,2)) #
-# grid.arrange(p_dormancy,p_turnover,p_climate, heights = c(1,1,1))
+p_all <- grid.arrange(p_modis, p_dormancy, p_turnover, p_par,p_precip, heights = c(3,3,3.4,1,2)) #
+
+# pdf("~/Desktop/standlevel.pdf",5,10)
+# plot(p_all)
+# dev.off()

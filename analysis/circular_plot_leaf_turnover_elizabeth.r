@@ -18,10 +18,6 @@ circle_plot <- function(data,
   }
 
   # add site years, + individuals
-
-  # juggling with data
-  data$species_full <- paste(data$genus, data$species)
-
   # count sites / years
   data <- data %>%
     group_by(species_full, id) %>%
@@ -80,6 +76,9 @@ circle_plot <- function(data,
                        breaks = seq(1,48,4),
                        labels = month.abb) +
     scale_y_continuous(limits = c(0,2.4)) +
+    annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 2.4, alpha = .2) + #jan - feb
+    annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 2.4, alpha = .2) + # jun-jul
+    annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 2.4, alpha = .2) + # dec
     coord_polar() +
     labs(x="",
          y="",
@@ -97,31 +96,31 @@ circle_plot <- function(data,
           legend.position = "right",
           plot.margin=unit(c(1,1,1,1),"cm")
     ) +
-    facet_wrap(~ species_full,ncol=1)
+    facet_wrap(~ species_full,ncol=2)
   return(p)
 }
 
-library(tidyverse)
-
-data <- readRDS("data/jungle_rhythms_weekly_annotations.rds")
-data$species_full <- paste(data$genus, data$species)
-sp <- na.omit(read.csv2("data/yangambi_mixed_forest_species_list.csv",
-                         header = TRUE, sep = ",",
-                         stringsAsFactors = FALSE))
-
-traits <- na.omit(read.csv2("data/Dataset_traits_African_trees.csv",
-                            header = TRUE, sep = ",",
-                            stringsAsFactors = FALSE))
-colnames(traits)[1] <- 'Species'
-
-query_subset <- traits %>%
-  filter(deciduousness == "evergreen") %>%
-  na.omit()
-query_subset <- query_subset[order(-query_subset$Dmax_lit_cm),]
-query <- paste(query_subset$Species[1:6],collapse = "|")
-
-p <- circle_plot(data, species_name = query)
-
-pdf("~/Desktop/test_order.pdf",20,20)
-plot(p)
-dev.off()
+# library(tidyverse)
+#
+# data <- readRDS("data/jungle_rhythms_weekly_annotations.rds")
+# data$species_full <- paste(data$genus, data$species)
+# sp <- na.omit(read.csv2("data/yangambi_mixed_forest_species_list.csv",
+#                         header = TRUE, sep = ",",
+#                         stringsAsFactors = FALSE))
+#
+# traits <- na.omit(read.csv2("data/Dataset_traits_African_trees.csv",
+#                             header = TRUE, sep = ",",
+#                             stringsAsFactors = FALSE))
+# colnames(traits)[1] <- 'Species'
+#
+# query_subset <- traits %>%
+#   filter(deciduousness == "evergreen") %>%
+#   na.omit()
+# query_subset <- query_subset[order(-query_subset$Dmax_lit_cm),]
+# query <- paste(query_subset$Species[1:6],collapse = "|")
+#
+# p <- circle_plot(data, species_name = query)
+#
+# pdf("~/Desktop/test_order.pdf",20,20)
+# plot(p)
+# dev.off()

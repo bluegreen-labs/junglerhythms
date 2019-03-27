@@ -330,9 +330,9 @@ onset_LT$mean_rescaled <- ifelse(onset_LT$mean_degree < 0, onset_LT$mean_degree 
 onset_LT$median_rescaled <- ifelse(onset_LT$median_degree < 0, onset_LT$median_degree +360, onset_LT$median_degree)
 # rescaling degrees to weeks
 onset_LT <- onset_LT %>%
-  mutate(mean_intrasp_onset_leaf_dormancy_weeks = mean_rescaled /360 *52,
-         median_intrasp_onset_leaf_dormancy_weeks = median_rescaled /360 *52,
-         sd_intrasp_onset_leaf_dormancy_weeks = sd_degree/360*52)
+  mutate(mean_intrasp_onset_leaf_turnover_weeks = mean_rescaled /360 *52,
+         median_intrasp_onset_leaf_turnover_weeks = median_rescaled /360 *52,
+         sd_intrasp_onset_leaf_turnover_weeks = sd_degree/360*52)
 #-------------------------------------------------------------------------------
 #------------ Synchrony index between species as -------------------
 #----- average pairwise distance between median onset date of species

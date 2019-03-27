@@ -15,7 +15,8 @@ source("R/event_length.R")
 #-------- input that you can change   ---------------------------------
 #----------------------------------------------------------------------
 #----------------------------------------------------------------------
-phenophase_selected = "leaf_dormancy"
+phenophase_selected = "leaf_turnover"
+title_name = "(b) Canopy turnover"
 minimum_events = 5    # species will only be included in this analysis
 # when they have a minimum set of events
 #----------------------------------------------------------------------
@@ -178,7 +179,7 @@ rect.hclust(fit, k=5, border="red")
 #----- circular plot of median onset dates of event
 #----- bootstrapped 95% confidence interval around mean (cross)
 #------------------------------------------------------------------------
-ggplot(data = onset) +
+p_onset <- ggplot(data = onset) +
   geom_segment(data = onset_CIonesegments,
                aes(x = lower_rescaled,
                    xend = upper_rescaled,
@@ -215,7 +216,7 @@ ggplot(data = onset) +
   coord_polar() +
   labs(x="",
        y="",
-       title = phenophase_selected) +
+       title = title_name) +
   theme(panel.grid.major.x = element_line(colour = "grey75",
                                           size = 0.3),
         panel.grid.minor.x = element_blank(),
@@ -232,6 +233,9 @@ ggplot(data = onset) +
   )
 #------------------------------------------------------------------------
 
+# pdf("~/Desktop/leaf_turnover_onset.pdf",7,7)
+# plot(p_onset)
+# dev.off()
 
 
 

@@ -5,11 +5,6 @@
 #' @export
 #' @return ggplot object
 
-library(ggplot2)
-library(ggthemes)
-library(gridExtra)
-library(tidyverse)
-
 linear_plot_senescence <- function(
   data,
   species_name = "Millettia laurentii",
@@ -84,7 +79,8 @@ linear_plot_senescence <- function(
           axis.line.x = element_blank(),
           axis.title.x = element_blank(),
           axis.text.x = element_blank(),
-          axis.ticks.x = element_blank()
+          axis.ticks.x = element_blank(),
+          legend.position="none"
           ) +
   facet_wrap( ~ species_full, ncol = 1)
 
@@ -130,28 +126,28 @@ linear_plot_senescence <- function(
 #   na.omit() %>%
 #   ungroup()
 
-# query
-# sp <- na.omit(read.csv2("data/yangambi_mixed_forest_species_list.csv",
-#                          header = TRUE, sep = ",",
-#                          stringsAsFactors = FALSE))#[1:10,]
-sp <- na.omit(read.csv2("~/Dropbox/Phenology_JR/species_meta_data.csv",
-                        header = TRUE, sep = ",",
-                        stringsAsFactors = FALSE))#[1:10,]
-
-query_subset <- sp %>%
-  filter(deciduousness == "deciduous") %>%
-  filter(genus == "Entandrophragma") %>%
-  na.omit()
-query <- paste(query_subset$Species,collapse = "|")
-# query <- paste(sp$Species[c(1,2)],collapse = "|")
-
-
-# create plot
-p <- linear_plot_senescence(data = data, species_name = query)
-
-# pdf("~/Desktop/test_linear_turnover_overview.pdf")#,25,25)
-plot(p)
-# dev.off()
+# # query
+# # sp <- na.omit(read.csv2("data/yangambi_mixed_forest_species_list.csv",
+# #                          header = TRUE, sep = ",",
+# #                          stringsAsFactors = FALSE))#[1:10,]
+# sp <- na.omit(read.csv2("~/Dropbox/Phenology_JR/species_meta_data.csv",
+#                         header = TRUE, sep = ",",
+#                         stringsAsFactors = FALSE))#[1:10,]
+#
+# query_subset <- sp %>%
+#   filter(deciduousness == "deciduous") %>%
+#   filter(genus == "Entandrophragma") %>%
+#   na.omit()
+# query <- paste(query_subset$Species,collapse = "|")
+# # query <- paste(sp$Species[c(1,2)],collapse = "|")
+#
+#
+# # create plot
+# p <- linear_plot_senescence(data = data, species_name = query)
+#
+# # pdf("~/Desktop/test_linear_turnover_overview.pdf")#,25,25)
+# plot(p)
+# # dev.off()
 
 
 
