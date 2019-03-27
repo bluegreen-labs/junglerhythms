@@ -15,7 +15,7 @@ source("R/event_length.R")
 #-------- input that you can change   ---------------------------------
 #----------------------------------------------------------------------
 #----------------------------------------------------------------------
-phenophase_selected = "leaf_turnover"
+phenophase_selected = "leaf_dormancy"
 minimum_events = 5    # species will only be included in this analysis
 # when they have a minimum set of events
 #----------------------------------------------------------------------
@@ -42,14 +42,38 @@ data = data[,!(names(data) %in% "id.x")]
 data <- data %>%
   rename("id" = id.y)
 data$id <- as.character(data$id)
+
 #----------------------------------------------------------------------
 #-------- read in census data  ----------------------------------------
+#-------- get species-specific basal area at plot and site level ------
 #----------------------------------------------------------------------
-census <- read.csv("data/yangambi_mixed_forest_species_list.csv",
-                    header = TRUE,
-                    sep = ",",
-                    stringsAsFactors = FALSE)
-colnames(census)[1] <- 'species_full'
+# read in census data and convert basal area
+census <- read.csv("data/YGB_ForestPlotsNET_corrected_indet.csv",
+                   header = TRUE,
+                   sep = ",",
+                   stringsAsFactors = FALSE)
+census <- census %>%
+  rename("species_full" = Species)
+census$species_full <- ifelse(census$species_full == "Unknown", NA, census$species_full)
+
+# remove trees in understory
+if(understory_remove){
+  census$C1DBH4 <- ifelse(census$C1DBH4 >= (understory_dbh_max*10), census$C1DBH4, NA) #*10 because units here is mm
+}
+# remove individuals without C1DBH4, these are new recruits for census2 + understory if understory.remove = TRUE
+# and calculate basal_area for each individual
+census <- census[!(is.na(census$C1DBH4)),]
+census$basal_area = pi*(census$C1DBH4/2000)^2
+# only keep mixed plots
+# calculate sum basal area across all species at plotlevel and at site level
+census_plot <- census %>%
+  filter(grepl("MIX",Plot)) %>%
+  group_by(Plot, species_full) %>%
+  dplyr::summarise(basal_area_plot = sum(basal_area))
+census_site <- census %>%
+  filter(grepl("MIX",Plot)) %>%
+  group_by(species_full) %>%
+  dplyr::summarise(basal_area_site = sum(basal_area))
 #----------------------------------------------------------------------
 
 
@@ -92,13 +116,13 @@ onset <- transition_dates %>%
   )
 
 # merge with census and remove rows (species) not included in the Yangambi mixed forest census
-onset <- merge(onset, census, by = "species_full", all.x = TRUE)
-onset <- onset[!(is.na(onset$BAperc)),]
+onset <- merge(onset, census_site, by = "species_full", all.x = TRUE)
+onset <- onset[!(is.na(onset$basal_area_site)),]
 
 # sort by BA
 # set y value by sorted BA number
 onset <- onset %>%
-  arrange(BA) %>%
+  arrange(basal_area_site) %>%
   mutate(y_value = (1:length(species_full)))
 
 # rescaling between 0 and 360 degrees
@@ -120,6 +144,34 @@ onset_CIonesegments <- onset %>%
 # link to the original transition_dates, so that we have all datapoints of a species, linked to y_value
 overview <- onset[,(names(onset) %in% c("species_full","y_value"))]
 overview <- inner_join(transition_dates, overview, by = c("species_full"))
+#------------------------------------------------------------------------
+
+#------------------------------------------------------------------------
+#----- calculate pairwise distances
+#----- bootstrapped 95% confidence interval around mean (cross)
+#------------------------------------------------------------------------
+onset$median_rad <- rad(onset$median_degree)
+a <- as.matrix(dist(onset$median_rad), labels = TRUE)
+rownames(a) <- onset_LD[['species_full']]
+colnames(a) <- rownames(a)
+b <- deg(a)
+c <- ifelse(b > 180, 360-b, b)
+d <- as.data.frame(rowMeans(c))
+d$species_full <- rownames(d)
+colnames(d)[1] <- "mean_distance_onset_weeks"
+
+
+# Ward Hierarchical Clustering
+# d <- dist(mydata, method = "euclidean") # distance matrix
+a <- dist(test$median_degree, method = "euclidean")
+b <- deg(a)
+# c <- ifelse(b > 180, 360-b, b)
+fit <- hclust(b, method="ward")
+plot(fit) # display dendogram
+groups <- cutree(fit, k=5) # cut tree into 5 clusters
+# draw dendogram with red borders around the 5 clusters
+rect.hclust(fit, k=5, border="red")
+
 
 
 #------------------------------------------------------------------------

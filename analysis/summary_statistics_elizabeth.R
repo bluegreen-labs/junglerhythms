@@ -1,9 +1,14 @@
-# compile summary statistics
+#----- reset your R session. ---------------------------------------------------#
+rm(list=ls())
+# graphics.off()
+#----- load required packages --------------------------------------------------#
 library(tidyverse)
 library(ggplot2)
 library(ggthemes)
 library(circular)
+#----- source required functions -----------------------------------------------#
 source("R/event_length.R")
+#-------------------------------------------------------------------------------#
 
 #----------------------------------------------------------------------
 #--------   Phenology data - species correction Meise   ---------------
@@ -45,19 +50,34 @@ df$id <- as.character(df$id)
 # df$genus <- ifelse(df$genus == "","Unknown",df$genus)
 # df$species <- ifelse(df$species == "","Unknown",df$species)
 
-# read in census data
-census <- read.csv("data/yangambi_mixed_forest_species_list.csv",
-                     header = TRUE,
-                     sep = ",",
-                     stringsAsFactors = FALSE)
-census = census[,!(names(census) %in% c("count","BAcum"))]
-census$DBHmax <- census$DBHmax /10
+#----------------------------------------------------------------------
+#-------- read in census data  ----------------------------------------
+#-------- get species-specific basal area at plot and site level ------
+#----------------------------------------------------------------------
+# read in census data and convert basal area
+census <- read.csv("data/YGB_ForestPlotsNET_corrected_indet.csv",
+                   header = TRUE,
+                   sep = ",",
+                   stringsAsFactors = FALSE)
 census <- census %>%
-  rename("species_full" = Species,
-         "basal_area" = BA,
-         "basal_area_percentage" = BAperc,
-         "abundance" = Abund,
-         "dbh_max_cm_census" = DBHmax)
+  rename("species_full" = Species)
+census$species_full <- ifelse(census$species_full == "Unknown", NA, census$species_full)
+
+# remove individuals without C1DBH4, these are new recruits for census2 + understory if understory.remove = TRUE
+# and calculate basal_area for each individual
+census <- census[!(is.na(census$C1DBH4)),]
+census$basal_area = pi*(census$C1DBH4/2000)^2
+# only keep mixed plots
+# summarize at species level
+census <- census %>%
+  filter(grepl("MIX", Plot)) %>%
+  group_by(species_full) %>%
+  dplyr::summarise(basal_area_site = sum(basal_area)/5,
+                   abundance = length(basal_area)/5,
+                   dbh_max_mm_census = max(C1DBH4))
+basal_area_total <- sum(census$basal_area_site)
+census$basal_area_percentage <- census$basal_area_site/basal_area_total *100
+#----------------------------------------------------------------------
 
 # read in trait data from Steven Janssens
 traits <- read.csv("data/Dataset_traits_African_trees.csv",
@@ -213,6 +233,9 @@ onset_LD <- transition_dates_LD %>%
     mean_degree = mean.circular(
       circular(degree, units = "degrees")
     ),
+    median_degree = median.circular(
+      circular(degree, units = "degrees")
+    ),
     sd_rad = sd.circular(
       circular(degree, units = "degrees") # eventhough units in degree, sd calculated in radians
     ),                                    # https://stats.stackexchange.com/questions/185361/how-do-i-interpret-the-standard-deviation-of-a-directional-dataset
@@ -222,13 +245,66 @@ onset_LD <- transition_dates_LD %>%
 onset_LD$sd_degree <- deg(onset_LD$sd_rad)
 # mean: rescaling between 0 and 360 degrees
 onset_LD$mean_rescaled <- ifelse(onset_LD$mean_degree < 0, onset_LD$mean_degree +360, onset_LD$mean_degree)
+onset_LD$median_rescaled <- ifelse(onset_LD$median_degree < 0, onset_LD$median_degree +360, onset_LD$median_degree)
 # rescaling degrees to weeks
 onset_LD <- onset_LD %>%
   mutate(mean_intrasp_onset_leaf_dormancy_weeks = mean_rescaled /360 *52,
+         median_intrasp_onset_leaf_dormancy_weeks = median_rescaled /360 *52,
          sd_intrasp_onset_leaf_dormancy_weeks = sd_degree/360*52)
-# remove columns you don't need
-onset_LD = onset_LD[,!(names(onset_LD) %in% c("mean_degree","sd_rad","sd_degree","nr_events_onset","mean_rescaled"))]
 #-------------------------------------------------------------------------------
+#------------ Synchrony index between species as -------------------
+#----- average pairwise distance between median onset date of species
+#-------------------------------------------------------------------------------
+# you need to merge with census here, because else distance is calculated to all other species in full phenology dataset
+census_overview <- census[,(names(census) %in% c("species_full","basal_area_site"))]
+distance_events_LD <- merge(onset_LD, census_overview, by = "species_full", all.x = TRUE)
+distance_events_LD <- distance_events_LD[!(is.na(distance_events_LD$basal_area_site)),]
+distance_events_LD$median_rad <- rad(distance_events_LD$median_degree)
+distance_events_LD <- distance_events_LD[!(is.na(distance_events_LD$median_rad)),]
+a <- as.matrix(dist(distance_events_LD$median_rad), labels = TRUE)
+rownames(a) <- distance_events_LD[['species_full']]
+colnames(a) <- rownames(a)
+b <- deg(a)
+c <- ifelse(b > 180, 360-b, b)
+d <- as.data.frame(rowMeans(c))
+d$species_full <- rownames(d)
+colnames(d)[1] <- "mean_distance_onset_leaf_dormancy_weeks"
+d <- d %>%
+  mutate(mean_distance_onset_leaf_dormancy_weeks = mean_distance_onset_leaf_dormancy_weeks /360 *52)
+#---------- now with a mimimum of 5 events
+onset_LD_minfreq <- transition_dates_LD %>%
+  group_by(species_full) %>%
+  filter(length(week_start) >= 5) %>%    # only species with more than 5 events
+  summarise(median_degree = median.circular(circular(degree, units = "degrees")))
+distance_events_minfreq_LD <- merge(onset_LD_minfreq, census_overview, by = "species_full", all.x = TRUE)
+distance_events_minfreq_LD <- distance_events_minfreq_LD[!(is.na(distance_events_minfreq_LD$basal_area_site)),]
+distance_events_minfreq_LD$median_rad <- rad(distance_events_minfreq_LD$median_degree)
+distance_events_minfreq_LD <- distance_events_minfreq_LD[!(is.na(distance_events_minfreq_LD$median_rad)),]
+a_minfreq <- as.matrix(dist(distance_events_minfreq_LD$median_rad), labels = TRUE)
+rownames(a_minfreq) <- distance_events_minfreq_LD[['species_full']]
+colnames(a_minfreq) <- rownames(a_minfreq)
+b_minfreq <- deg(a_minfreq)
+c_minfreq <- ifelse(b_minfreq > 180, 360-b_minfreq, b_minfreq)
+d_minfreq <- as.data.frame(rowMeans(c_minfreq))
+d_minfreq$species_full <- rownames(d_minfreq)
+colnames(d_minfreq)[1] <- "mean_distance_onset_minfreq_leaf_dormancy_weeks"
+d_minfreq <- d_minfreq %>%
+  mutate(mean_distance_onset_minfreq_leaf_dormancy_weeks = mean_distance_onset_minfreq_leaf_dormancy_weeks /360 *52)
+#-----------
+onset_LD <- merge(onset_LD, d, by = "species_full", all.x = TRUE)
+onset_LD <- merge(onset_LD, d_minfreq, by = "species_full", all.x = TRUE)
+# remove columns you don't need
+onset_LD = onset_LD[,!(names(onset_LD) %in% c("mean_degree","sd_rad","sd_degree","nr_events_onset","mean_rescaled","median_degree","median_rescaled","median_rad"))]
+#-------------------------------------------------------------------------------
+
+
+
+#-------------------------------------------------------------------------------
+#------------ Synchrony index among individuals across years -------------------
+#------------Leaf turnover---------------------------------------------
+#-------------------------------------------------------------------------------
+# calculate the synchrony between events as mean and SD of onset
+# then reformat those taking the year - date line into consideration
 transition_dates_LT <- event_LT %>%
   mutate(degree = week_start * 360/48) #%>%
 
@@ -237,6 +313,9 @@ onset_LT <- transition_dates_LT %>%
   # filter(length(week_start) > 5) %>%    # only species with more than 10 events
   summarise(
     mean_degree = mean.circular(
+      circular(degree, units = "degrees")
+    ),
+    median_degree = median.circular(
       circular(degree, units = "degrees")
     ),
     sd_rad = sd.circular(
@@ -248,13 +327,57 @@ onset_LT <- transition_dates_LT %>%
 onset_LT$sd_degree <- deg(onset_LT$sd_rad)
 # mean: rescaling between 0 and 360 degrees
 onset_LT$mean_rescaled <- ifelse(onset_LT$mean_degree < 0, onset_LT$mean_degree +360, onset_LT$mean_degree)
+onset_LT$median_rescaled <- ifelse(onset_LT$median_degree < 0, onset_LT$median_degree +360, onset_LT$median_degree)
 # rescaling degrees to weeks
 onset_LT <- onset_LT %>%
-  mutate(mean_intrasp_onset_leaf_turnover_weeks = mean_rescaled /360 *52,
-         sd_intrasp_onset_leaf_turnover_weeks = sd_degree/360*52)
+  mutate(mean_intrasp_onset_leaf_dormancy_weeks = mean_rescaled /360 *52,
+         median_intrasp_onset_leaf_dormancy_weeks = median_rescaled /360 *52,
+         sd_intrasp_onset_leaf_dormancy_weeks = sd_degree/360*52)
+#-------------------------------------------------------------------------------
+#------------ Synchrony index between species as -------------------
+#----- average pairwise distance between median onset date of species
+#-------------------------------------------------------------------------------
+# you need to merge with census here, because else distance is calculated to all other species in full phenology dataset
+census_overview <- census[,(names(census) %in% c("species_full","basal_area_site"))]
+distance_events_LT <- merge(onset_LT, census_overview, by = "species_full", all.x = TRUE)
+distance_events_LT <- distance_events_LT[!(is.na(distance_events_LT$basal_area_site)),]
+distance_events_LT$median_rad <- rad(distance_events_LT$median_degree)
+distance_events_LT <- distance_events_LT[!(is.na(distance_events_LT$median_rad)),]
+a <- as.matrix(dist(distance_events_LT$median_rad), labels = TRUE)
+rownames(a) <- distance_events_LT[['species_full']]
+colnames(a) <- rownames(a)
+b <- deg(a)
+c <- ifelse(b > 180, 360-b, b)
+d <- as.data.frame(rowMeans(c))
+d$species_full <- rownames(d)
+colnames(d)[1] <- "mean_distance_onset_leaf_turnover_weeks"
+d <- d %>%
+  mutate(mean_distance_onset_leaf_turnover_weeks = mean_distance_onset_leaf_turnover_weeks /360 *52)
+#---------- now with a mimimum of 5 events
+onset_LT_minfreq <- transition_dates_LT %>%
+  group_by(species_full) %>%
+  filter(length(week_start) >= 5) %>%    # only species with more than 5 events
+  summarise(median_degree = median.circular(circular(degree, units = "degrees")))
+distance_events_minfreq_LT <- merge(onset_LT_minfreq, census_overview, by = "species_full", all.x = TRUE)
+distance_events_minfreq_LT <- distance_events_minfreq_LT[!(is.na(distance_events_minfreq_LT$basal_area_site)),]
+distance_events_minfreq_LT$median_rad <- rad(distance_events_minfreq_LT$median_degree)
+distance_events_minfreq_LT <- distance_events_minfreq_LT[!(is.na(distance_events_minfreq_LT$median_rad)),]
+a_minfreq <- as.matrix(dist(distance_events_minfreq_LT$median_rad), labels = TRUE)
+rownames(a_minfreq) <- distance_events_minfreq_LT[['species_full']]
+colnames(a_minfreq) <- rownames(a_minfreq)
+b_minfreq <- deg(a_minfreq)
+c_minfreq <- ifelse(b_minfreq > 180, 360-b_minfreq, b_minfreq)
+d_minfreq <- as.data.frame(rowMeans(c_minfreq))
+d_minfreq$species_full <- rownames(d_minfreq)
+colnames(d_minfreq)[1] <- "mean_distance_onset_minfreq_leaf_turnover_weeks"
+d_minfreq <- d_minfreq %>%
+  mutate(mean_distance_onset_minfreq_leaf_turnover_weeks = mean_distance_onset_minfreq_leaf_turnover_weeks /360 *52)
+#-----------
+onset_LT <- merge(onset_LT, d, by = "species_full", all.x = TRUE)
+onset_LT <- merge(onset_LT, d_minfreq, by = "species_full", all.x = TRUE)
 # remove columns you don't need
-onset_LT = onset_LT[,!(names(onset_LT) %in% c("mean_degree","sd_rad","sd_degree","nr_events_onset","mean_rescaled"))]
-
+onset_LT = onset_LT[,!(names(onset_LT) %in% c("mean_degree","sd_rad","sd_degree","nr_events_onset","mean_rescaled","median_degree","median_rescaled","median_rad"))]
+#-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
 #------------ Synchrony index within individuals across years ------------------
@@ -335,7 +458,7 @@ final <- merge(final, synchrony_ind_LD, by = "species_full", all.x = TRUE)
 final <- merge(final, synchrony_ind_LT, by = "species_full", all.x = TRUE)
 
 # remove rows (species) not included in the Yangambi mixed forest census
-final <- final[!(is.na(final$basal_area)),]
+final <- final[!(is.na(final$basal_area_site)),]
 
 
 
