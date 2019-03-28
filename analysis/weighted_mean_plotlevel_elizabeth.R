@@ -252,103 +252,103 @@ final_LD_plot <- final_LD_plot %>%
 #-----------------------------------------------------------------------
 #-----------------------------------------------------------------------
 # ------  turnover -----------------------------------------------------
-# first peak
-data_peak1 <- data_LT_site %>%
-  filter(week %in% c(3:11))
-final_peak1 <- data_peak1 %>%
-  group_by(species_full) %>%
-  summarise(mean_freq = mean(mean_week),
-            basal_area = mean(basal_area_site),
-            ss = mean_freq * basal_area) %>%
-  arrange(desc(ss))
-total1 <- sum(final_peak1$ss)
-final_peak1$ss_perc <- final_peak1$ss/total1*100
-head(final_peak1)
-# second peak
-data_peak2 <- data_LT_site %>%
-  filter(week %in% c(17:20))
-final_peak2 <- data_peak2 %>%
-  group_by(species_full) %>%
-  summarise(mean_freq = mean(mean_week),
-            basal_area = mean(basal_area_site),
-            ss = mean_freq * basal_area) %>%
-  arrange(desc(ss))
-total2 <- sum(final_peak2$ss)
-final_peak2$ss_perc <- final_peak2$ss/total2*100
-head(final_peak2)
-# third peak, small incline in sept
-data_peak3 <- data_LT_site %>%
-  filter(week %in% c(34:36))
-final_peak3 <- data_peak3 %>%
-  group_by(species_full) %>%
-  summarise(mean_freq = mean(mean_week),
-            basal_area = mean(basal_area_site),
-            ss = mean_freq * basal_area) %>%
-  arrange(desc(ss))
-total3 <- sum(final_peak3$ss)
-final_peak3$ss_perc <- final_peak3$ss/total3*100
-head(final_peak3)
-# ------  dormancy -----------------------------------------------------
-# first peak
-data_LD_peak1 <- data_LD_site %>%
-  filter(week %in% c(5:7)) #%>% # c(1:8,41:48)
-final_LD_peak1 <- data_LD_peak1 %>%
-  group_by(species_full) %>%
-  summarise(mean_freq = mean(mean_week),
-            basal_area = mean(basal_area_site),
-            ss = mean_freq * basal_area) %>%
-  arrange(desc(ss))
-total1 <- sum(final_LD_peak1$ss)
-final_LD_peak1$ss_perc <- final_LD_peak1$ss/total1*100
-head(final_LD_peak1)
-# second peak
-data_LD_peak2 <- data_LD_site %>%
-  filter(week %in% c(9)) #%>% # c(1:8,41:48)
-final_LD_peak2 <- data_LD_peak2 %>%
-  group_by(species_full) %>%
-  summarise(mean_freq = mean(mean_week),
-            basal_area = mean(basal_area_site),
-            ss = mean_freq * basal_area) %>%
-  arrange(desc(ss))
-total2 <- sum(final_LD_peak2$ss)
-final_LD_peak2$ss_perc <- final_LD_peak2$ss/total2*100
-head(final_LD_peak2)
-# third peak, small incline in sept
-data_LD_peak3 <- data_LD_site %>%
-  filter(week %in% c(21:22)) #%>% # c(1:8,41:48)
-final_LD_peak3 <- data_LD_peak3 %>%
-  group_by(species_full) %>%
-  summarise(mean_freq = mean(mean_week),
-            basal_area = mean(basal_area_site),
-            ss = mean_freq * basal_area) %>%
-  arrange(desc(ss))
-total3 <- sum(final_LD_peak3$ss)
-final_LD_peak3$ss_perc <- final_LD_peak3$ss/total3*100
-head(final_LD_peak3)
-# forth peak, small incline in sept
-data_LD_peak4 <- data_LD_site %>%
-  filter(week %in% c(35:38)) #%>% # c(1:8,41:48)
-final_LD_peak4 <- data_LD_peak4 %>%
-  group_by(species_full) %>%
-  summarise(mean_freq = mean(mean_week),
-            basal_area = mean(basal_area_site),
-            ss = mean_freq * basal_area) %>%
-  arrange(desc(ss))
-total4 <- sum(final_LD_peak4$ss)
-final_LD_peak4$ss_perc <- final_LD_peak4$ss/total4*100
-head(final_LD_peak4)
-# fifth peak, small incline in sept
-data_LD_peak5 <- data_LD_site %>%
-  filter(week %in% c(45:47)) #%>% # c(1:8,41:48)
-final_LD_peak5 <- data_LD_peak5 %>%
-  group_by(species_full) %>%
-  summarise(mean_freq = mean(mean_week),
-            basal_area = mean(basal_area_site),
-            ss = mean_freq * basal_area) %>%
-  arrange(desc(ss))
-total5 <- sum(final_LD_peak5$ss)
-final_LD_peak5$ss_perc <- final_LD_peak5$ss/total5*100
-head(final_LD_peak5)
+# # first peak
+# data_peak1 <- data_LT_site %>%
+#   filter(week %in% c(3:11))
+# final_peak1 <- data_peak1 %>%
+#   group_by(species_full) %>%
+#   summarise(mean_freq = mean(mean_week),
+#             basal_area = mean(basal_area_site),
+#             ss = mean_freq * basal_area) %>%
+#   arrange(desc(ss))
+# total1 <- sum(final_peak1$ss)
+# final_peak1$ss_perc <- final_peak1$ss/total1*100
+# head(final_peak1)
+# # second peak
+# data_peak2 <- data_LT_site %>%
+#   filter(week %in% c(17:20))
+# final_peak2 <- data_peak2 %>%
+#   group_by(species_full) %>%
+#   summarise(mean_freq = mean(mean_week),
+#             basal_area = mean(basal_area_site),
+#             ss = mean_freq * basal_area) %>%
+#   arrange(desc(ss))
+# total2 <- sum(final_peak2$ss)
+# final_peak2$ss_perc <- final_peak2$ss/total2*100
+# head(final_peak2)
+# # third peak, small incline in sept
+# data_peak3 <- data_LT_site %>%
+#   filter(week %in% c(34:36))
+# final_peak3 <- data_peak3 %>%
+#   group_by(species_full) %>%
+#   summarise(mean_freq = mean(mean_week),
+#             basal_area = mean(basal_area_site),
+#             ss = mean_freq * basal_area) %>%
+#   arrange(desc(ss))
+# total3 <- sum(final_peak3$ss)
+# final_peak3$ss_perc <- final_peak3$ss/total3*100
+# head(final_peak3)
+# # ------  dormancy -----------------------------------------------------
+# # first peak
+# data_LD_peak1 <- data_LD_site %>%
+#   filter(week %in% c(5:7)) #%>% # c(1:8,41:48)
+# final_LD_peak1 <- data_LD_peak1 %>%
+#   group_by(species_full) %>%
+#   summarise(mean_freq = mean(mean_week),
+#             basal_area = mean(basal_area_site),
+#             ss = mean_freq * basal_area) %>%
+#   arrange(desc(ss))
+# total1 <- sum(final_LD_peak1$ss)
+# final_LD_peak1$ss_perc <- final_LD_peak1$ss/total1*100
+# head(final_LD_peak1)
+# # second peak
+# data_LD_peak2 <- data_LD_site %>%
+#   filter(week %in% c(9)) #%>% # c(1:8,41:48)
+# final_LD_peak2 <- data_LD_peak2 %>%
+#   group_by(species_full) %>%
+#   summarise(mean_freq = mean(mean_week),
+#             basal_area = mean(basal_area_site),
+#             ss = mean_freq * basal_area) %>%
+#   arrange(desc(ss))
+# total2 <- sum(final_LD_peak2$ss)
+# final_LD_peak2$ss_perc <- final_LD_peak2$ss/total2*100
+# head(final_LD_peak2)
+# # third peak, small incline in sept
+# data_LD_peak3 <- data_LD_site %>%
+#   filter(week %in% c(21:22)) #%>% # c(1:8,41:48)
+# final_LD_peak3 <- data_LD_peak3 %>%
+#   group_by(species_full) %>%
+#   summarise(mean_freq = mean(mean_week),
+#             basal_area = mean(basal_area_site),
+#             ss = mean_freq * basal_area) %>%
+#   arrange(desc(ss))
+# total3 <- sum(final_LD_peak3$ss)
+# final_LD_peak3$ss_perc <- final_LD_peak3$ss/total3*100
+# head(final_LD_peak3)
+# # forth peak, small incline in sept
+# data_LD_peak4 <- data_LD_site %>%
+#   filter(week %in% c(35:38)) #%>% # c(1:8,41:48)
+# final_LD_peak4 <- data_LD_peak4 %>%
+#   group_by(species_full) %>%
+#   summarise(mean_freq = mean(mean_week),
+#             basal_area = mean(basal_area_site),
+#             ss = mean_freq * basal_area) %>%
+#   arrange(desc(ss))
+# total4 <- sum(final_LD_peak4$ss)
+# final_LD_peak4$ss_perc <- final_LD_peak4$ss/total4*100
+# head(final_LD_peak4)
+# # fifth peak, small incline in sept
+# data_LD_peak5 <- data_LD_site %>%
+#   filter(week %in% c(45:47)) #%>% # c(1:8,41:48)
+# final_LD_peak5 <- data_LD_peak5 %>%
+#   group_by(species_full) %>%
+#   summarise(mean_freq = mean(mean_week),
+#             basal_area = mean(basal_area_site),
+#             ss = mean_freq * basal_area) %>%
+#   arrange(desc(ss))
+# total5 <- sum(final_LD_peak5$ss)
+# final_LD_peak5$ss_perc <- final_LD_peak5$ss/total5*100
+# head(final_LD_peak5)
 #-----------------------------------------------------------------------
 # sp_driven <- data_LT_site %>%
 #   filter(mean_week > 0)
@@ -383,14 +383,14 @@ p_turnover <- ggplot() +
              aes(week, ss, shape = Plot),
              col="grey40") +
   geom_smooth(data = final_LT_site,
-              aes(week, ss), span = 0.2, se = FALSE, col = "red", size = 1.2) +
+              aes(week, ss), span = 0.2, se = FALSE, col = "black", size = 1.2) +
   # geom_line(data = final_LT_site,
   #           aes(week, ss),
-  #           col="red",
+  #           col="black",
   #           size=1.2) +
   geom_point(data = final_LT_site,
              aes(week, ss),
-             col="red",
+             col="black",
              size=2) +
   scale_x_continuous(limits = c(1,49),
                      breaks = seq(1,48,4),
@@ -398,9 +398,9 @@ p_turnover <- ggplot() +
   # scale_y_continuous(limits = c(0,2.5),
   #                    breaks = seq(0,2,0.5),
   #                    labels = scales::number_format(accuracy = 0.1)) +
-  annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 2.5, alpha = .2) + # jan - febr
-  annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 2.5, alpha = .2) + # jun - jul
-  annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 2.5, alpha = .2) + # dec
+  annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 2.2, alpha = .2) + # jan - febr
+  annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 2.2, alpha = .2) + # jun - jul
+  annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 2.2, alpha = .2) + # dec
   labs(y = "freq. leaf turnover",
        x = "") +
   theme_minimal() +
@@ -413,8 +413,9 @@ p_turnover <- ggplot() +
         axis.line.x = element_blank(),
         axis.text.x = element_text(angle = 90, hjust = 1),
         axis.title.x = element_blank(),
+        axis.title.y = element_text(vjust = 3),
         legend.position = "none",
-        plot.margin = unit(c(0,0,0.2,0.2),"cm")
+        plot.margin = unit(c(0,0,0.2,0.5),"cm")
   )
 # print(p_turnover)
 
@@ -424,24 +425,24 @@ p_dormancy <- ggplot() +
              aes(week, ss, shape = Plot),
              col="grey40") +
   geom_smooth(data = final_LD_site,
-              aes(week, ss), span = 0.2, se = FALSE, col = "red", size = 1.2) +
+              aes(week, ss), span = 0.2, se = FALSE, col = "black", size = 1.2) +
   # geom_line(data = final_LD_site,
   #           aes(week, ss),
-  #           col="red",
+  #           col="black",
   #           size=1.2) +
   geom_point(data = final_LD_site,
              aes(week, ss),
-             col="red",
+             col="black",
              size=2) +
   scale_x_continuous(limits = c(1,49),
                      breaks = seq(1,48,4),
                      labels = month.abb) +
-  scale_y_continuous(limits = c(0,2.5),
-                     breaks = seq(0,2,0.5),
-                     labels = scales::number_format(accuracy = 0.1)) +
-  annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 2.5, alpha = .2) + # jan - febr
-  annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 2.5, alpha = .2) + # jun - jul
-  annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 2.5, alpha = .2) + # dec
+  # scale_y_continuous(limits = c(0,2.5),
+  #                    breaks = seq(0,2,0.5),
+  #                    labels = scales::number_format(accuracy = 0.1)) +
+  annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 2.2, alpha = .2) + # jan - febr
+  annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 2.2, alpha = .2) + # jun - jul
+  annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 2.2, alpha = .2) + # dec
   labs(y = "freq. leaf dormancy",
        x = "") +
   theme_minimal() +
@@ -454,8 +455,9 @@ p_dormancy <- ggplot() +
         axis.line.x = element_blank(),
         axis.text.x = element_blank(),
         axis.title.x = element_blank(),
+        axis.title.y = element_text(vjust = 3),
         legend.position = "none",
-        plot.margin = unit(c(0,0,0.2,0.2),"cm")
+        plot.margin = unit(c(0,0,0.2,0.5),"cm")
   )
 # print(p_dormancy)
 
@@ -479,8 +481,9 @@ p_precip <- ggplot(climate) +
         strip.text = element_text(hjust = 0),
         axis.line.x = element_blank(),
         axis.text.x = element_text(angle = 90, hjust = 1),
+        axis.title.y = element_text(vjust = 3),
         legend.position = "none",
-        plot.margin = unit(c(0,0,0,0.2),"cm")
+        plot.margin = unit(c(0,0,0,0.5),"cm")
   )
 
 p_par <- ggplot(climate) +
@@ -503,9 +506,24 @@ p_par <- ggplot(climate) +
         # axis.text.x = element_text(angle = 90, hjust = 1),
         axis.text.x=element_blank(),
         axis.title.x=element_blank(),
+        axis.title.y = element_text(vjust = 3),
         legend.position = "none",
-        plot.margin=unit(c(0,0,0,0.2),"cm")
+        plot.margin=unit(c(0,0,0,0.5),"cm")
   )
+
+#-----------------------------------------------------------------------
+# combine plots
+#-----------------------------------------------------------------------
+# make the widths of the plots with different y-axis equal
+# https://stackoverflow.com/questions/30402930/align-x-axes-of-box-plot-and-line-plot-using-ggplot
+p_modis <- ggplot_gtable(ggplot_build(p_modis))
+p_turnover <- ggplot_gtable(ggplot_build(p_turnover))
+p_par <- ggplot_gtable(ggplot_build(p_par))
+p_precip <- ggplot_gtable(ggplot_build(p_precip))
+
+p_modis$widths <-p_turnover$widths
+p_par$widths <-p_turnover$widths
+p_precip$widths <-p_turnover$widths
 
 
 p_all <- grid.arrange(p_modis, p_dormancy, p_turnover, p_par,p_precip, heights = c(3,3,3.4,1,2)) #

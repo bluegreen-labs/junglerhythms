@@ -5,6 +5,7 @@
 #' @export
 #' @return ggplot object
 
+library(tidyverse)
 library(viridis)
 
 
@@ -43,7 +44,7 @@ circular_linear_plot <- function(
   # group by week and take the mean value
   data_subset_circ <- data_subset_circ %>%
     group_by(species_full, week, phenophase) %>%
-    summarise(mean_value = mean(value, na.rm=TRUE))#,
+    dplyr::summarise(mean_value = mean(value, na.rm=TRUE))#,
               # N = unique(N),
               # S = unique(S))
 
@@ -100,7 +101,7 @@ circular_linear_plot <- function(
   # average by week
   data_subset_lin_LD <- data_subset_lin_LD %>%
     group_by(species_full, date) %>%
-    summarize(mean_value = mean(value),
+    dplyr::summarise(mean_value = mean(value),
               scaled_value = ifelse(any(value > 0), 1, 0))
 
   #------------------------------------------------------------------------
@@ -121,7 +122,7 @@ circular_linear_plot <- function(
   # average by week
   data_subset_lin_LT <- data_subset_lin_LT %>%
     group_by(species_full, date) %>%
-    summarize(mean_value = mean(value),
+    dplyr::summarise(mean_value = mean(value),
               scaled_value = ifelse(any(value > 0), 1, 0))
 
   #------------------------------------------------------------------------
@@ -183,7 +184,7 @@ circular_linear_plot <- function(
                                y = mean_value)) +
     geom_line(stat = "identity",aes(color="Canopy dormancy")) +
     geom_line(data=data_subset_lin_LT,aes(color="Canopy turnover")) +
-    scale_colour_manual(values = c("black","grey40")) +
+    scale_colour_manual(values = c("black","grey60")) +
     theme_minimal() +
     labs(title = title_name,
          y = "Freq. phenological event",
@@ -238,10 +239,10 @@ circular_linear_plot <- function(
 }
 
 
-# p_deciduous <- circular_linear_plot(data,
-#                                     species_name = query_deciduous,
-#                                     viridis_rescaling = 0.15,
-#                                     title_name = "(b) Deciduous")
+p_deciduous <- circular_linear_plot(data,
+                                    species_name = query_deciduous,
+                                    viridis_rescaling = 0.15,
+                                    title_name = "(b) Deciduous")
 # pdf("~/Desktop/deciduous.pdf",8.4,12)
 # plot(p_deciduous)
 # dev.off()
