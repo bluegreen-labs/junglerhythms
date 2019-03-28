@@ -19,49 +19,18 @@ overview <- read.csv("data/species_meta_data.csv",
 # first remove if too few events to calculate index (minimum 5 events within a species)
 overview$sd_intrasp_onset_leaf_dormancy_weeks <- ifelse(overview$site_years_with_leaf_dormancy < 5, NA, overview$sd_intrasp_onset_leaf_dormancy_weeks)
 overview$sd_intrasp_onset_leaf_turnover_weeks <- ifelse(overview$site_years_with_leaf_turnover < 5, NA, overview$sd_intrasp_onset_leaf_turnover_weeks)
-# first remove if too few events to calculate index (minimum 2 events per individual)
-overview$mean_synchrony_individuals_onset_leaf_dormancy_weeks <- ifelse(overview$mean_nr_events_within_individuals_leaf_dormancy < 2, NA, overview$mean_synchrony_individuals_onset_leaf_dormancy_weeks)
-overview$mean_synchrony_individuals_onset_leaf_turnover_weeks <- ifelse(overview$mean_synchrony_individuals_onset_leaf_turnover_weeks < 2, NA, overview$mean_synchrony_individuals_onset_leaf_turnover_weeks)
+# # first remove if too few events to calculate index (minimum 2 events per individual)
+# overview$mean_synchrony_individuals_onset_leaf_dormancy_weeks <- ifelse(overview$mean_nr_events_within_individuals_leaf_dormancy < 2, NA, overview$mean_synchrony_individuals_onset_leaf_dormancy_weeks)
+# overview$mean_synchrony_individuals_onset_leaf_turnover_weeks <- ifelse(overview$mean_synchrony_individuals_onset_leaf_turnover_weeks < 2, NA, overview$mean_synchrony_individuals_onset_leaf_turnover_weeks)
 
-
-# #-----------------------------------------------------------------------
-# # data ecology
-# #-----------------------------------------------------------------------
-# dfecol <- overview %>%
-#   filter(ecology == "shade" | ecology == "sun")
-# # dormancy
-# dfecol_ld = dfecol[,(names(dfecol) %in% c("ecology",
-#                                        "ratio_site_years_with_leaf_dormancy",
-#                                        "mean_duration_leaf_dormancy_weeks",
-#                                        "sd_intrasp_onset_leaf_dormancy_weeks",
-#                                        "mean_synchrony_individuals_onset_leaf_dormancy_weeks",
-#                                        "mean_distance_onset_leaf_dormancy_weeks"))]
-# dfecol_ld$phenophase <- "leaf_dormancy"
-# dfecol_ld <- dfecol_ld %>%
-#   rename("ratio_site_years" = ratio_site_years_with_leaf_dormancy,
-#          "mean_duration" = mean_duration_leaf_dormancy_weeks,
-#          "sd_intrasp_onset" = sd_intrasp_onset_leaf_dormancy_weeks,
-#          "mean_synchrony_individuals_onset" = mean_synchrony_individuals_onset_leaf_dormancy_weeks,
-#          "mean_distance_onset" = mean_distance_onset_leaf_dormancy_weeks)
-#
-# # turnover
-# dfecol_lt = dfecol[,(names(dfecol) %in% c("ecology",
-#                                        "ratio_site_years_with_leaf_turnover",
-#                                        "mean_duration_leaf_turnover_weeks",
-#                                        "sd_intrasp_onset_leaf_turnover_weeks",
-#                                        "mean_synchrony_individuals_onset_leaf_turnover_weeks",
-#                                        "mean_distance_onset_leaf_turnover_weeks"))]
-# dfecol_lt$phenophase <- "leaf_turnover"
-# dfecol_lt <- dfecol_lt %>%
-#   rename("ratio_site_years" = ratio_site_years_with_leaf_turnover,
-#          "mean_duration" = mean_duration_leaf_turnover_weeks,
-#          "sd_intrasp_onset" = sd_intrasp_onset_leaf_turnover_weeks,
-#          "mean_synchrony_individuals_onset" = mean_synchrony_individuals_onset_leaf_turnover_weeks,
-#          "mean_distance_onset" = mean_distance_onset_leaf_turnover_weeks)
-#
-# # rbind dormancy and turnover
-# dfecol_all <- rbind(dfecol_ld,dfecol_lt)
-
+#---------------------------
+# synchrony at the individual level
+overview_ind <- read.csv("data/synchrony_individuals.csv",
+                         header = TRUE,
+                         sep = ",",
+                         stringsAsFactors = FALSE)
+# first remove if too few events to calculate index (minimum 3 events per individual)
+overview_ind$onset_sd_weeks <- ifelse(overview_ind$nr_events_onset < 3, NA, overview_ind$onset_sd_weeks)
 
 
 #-----------------------------------------------------------------------
@@ -73,35 +42,72 @@ dfdec <- overview %>%
 dfdec_ld = dfdec[,(names(dfdec) %in% c("deciduousness",
                                        "ratio_site_years_with_leaf_dormancy",
                                        "mean_duration_leaf_dormancy_weeks",
-                                       "sd_intrasp_onset_leaf_dormancy_weeks",
-                                       "mean_synchrony_individuals_onset_leaf_dormancy_weeks",
-                                       "mean_distance_onset_leaf_dormancy_weeks"))]
+                                       "sd_intrasp_onset_leaf_dormancy_weeks"))]
+                                       # "mean_synchrony_individuals_onset_leaf_dormancy_weeks",
+                                       # "mean_distance_onset_leaf_dormancy_weeks"))]
 dfdec_ld$phenophase <- "leaf_dormancy"
 dfdec_ld <- dfdec_ld %>%
   rename("ratio_site_years" = ratio_site_years_with_leaf_dormancy,
          "mean_duration" = mean_duration_leaf_dormancy_weeks,
-         "sd_intrasp_onset" = sd_intrasp_onset_leaf_dormancy_weeks,
-         "mean_synchrony_individuals_onset" = mean_synchrony_individuals_onset_leaf_dormancy_weeks,
-         "mean_distance_onset" = mean_distance_onset_leaf_dormancy_weeks)
+         "sd_intrasp_onset" = sd_intrasp_onset_leaf_dormancy_weeks)
+         # "mean_synchrony_individuals_onset" = mean_synchrony_individuals_onset_leaf_dormancy_weeks,
+         # "mean_distance_onset" = mean_distance_onset_leaf_dormancy_weeks)
 
 # turnover
 dfdec_lt = dfdec[,(names(dfdec) %in% c("deciduousness",
                                        "ratio_site_years_with_leaf_turnover",
                                        "mean_duration_leaf_turnover_weeks",
-                                       "sd_intrasp_onset_leaf_turnover_weeks",
-                                       "mean_synchrony_individuals_onset_leaf_turnover_weeks",
-                                       "mean_distance_onset_leaf_turnover_weeks"))]
+                                       "sd_intrasp_onset_leaf_turnover_weeks"))]
+                                       # "mean_synchrony_individuals_onset_leaf_turnover_weeks",
+                                       # "mean_distance_onset_leaf_turnover_weeks"))]
 dfdec_lt$phenophase <- "leaf_turnover"
 dfdec_lt <- dfdec_lt %>%
   rename("ratio_site_years" = ratio_site_years_with_leaf_turnover,
          "mean_duration" = mean_duration_leaf_turnover_weeks,
-         "sd_intrasp_onset" = sd_intrasp_onset_leaf_turnover_weeks,
-         "mean_synchrony_individuals_onset" = mean_synchrony_individuals_onset_leaf_turnover_weeks,
-         "mean_distance_onset" = mean_distance_onset_leaf_turnover_weeks)
+         "sd_intrasp_onset" = sd_intrasp_onset_leaf_turnover_weeks)
+         # "mean_synchrony_individuals_onset" = mean_synchrony_individuals_onset_leaf_turnover_weeks,
+         # "mean_distance_onset" = mean_distance_onset_leaf_turnover_weeks)
 
 # rbind dormancy and turnover
 dfdec_all <- rbind(dfdec_ld,dfdec_lt)
 
+#-----------------------------------------------------------------------
+dfdec_ind <- overview_ind %>%
+  filter(deciduousness == "deciduous" | deciduousness == "evergreen")
+
+# #-----------------------------------------------------------------------
+# # some statistics
+# #-----------------------------------------------------------------------
+# # all deciduous compared to all evergreen
+# a <- aov(dfdec_all$ratio_site_years ~ dfdec_all$deciduousness)
+# summary(a)
+# a <- aov(dfdec_all$mean_duration ~ dfdec_all$deciduousness)
+# summary(a)
+# a <- aov(dfdec_all$sd_intrasp_onset ~ dfdec_all$deciduousness)
+# summary(a)
+# # within deciduous, campare dormancy v turnover
+# only_dec <- dfdec_all %>%
+#   filter(deciduousness == "deciduous")
+# a <- aov(only_dec$ratio_site_years ~ only_dec$phenophase)
+# summary(a)
+# a <- aov(only_dec$mean_duration ~ only_dec$phenophase)
+# summary(a)
+# a <- aov(only_dec$sd_intrasp_onset ~ only_dec$phenophase)
+# summary(a)
+# # within evergreen, campare dormancy v turnover
+# only_ever <- dfdec_all %>%
+#   filter(deciduousness == "evergreen")
+# a <- aov(only_ever$ratio_site_years ~ only_ever$phenophase)
+# summary(a)
+# a <- aov(only_ever$mean_duration ~ only_ever$phenophase)
+# summary(a)
+# a <- aov(only_ever$sd_intrasp_onset ~ only_ever$phenophase)
+# summary(a)
+# # deciduous compared to evergreen, only dormancy
+# only_dorm <- dfdec_all %>%
+#   filter(phenophase == "leaf_dormancy")
+# a <- aov(only_dorm$sd_intrasp_onset ~ only_dorm$deciduousness)
+# summary(a)
 
 #-----------------------------------------------------------------------
 # plots deciduousness
@@ -182,9 +188,10 @@ p3_dec <- ggplot(data = dfdec_all) +
         plot.margin = unit(c(0,0,0,0.5),"cm")
   )
 
-p4_dec <- ggplot(data = dfdec_all) +
+p4_dec <-
+  ggplot(data = dfdec_ind) +
   geom_boxplot(aes(x = deciduousness,
-                   y = mean_synchrony_individuals_onset,
+                   y = onset_sd_weeks,
                    color = phenophase),
                size = 1) +
   scale_colour_manual(values = c("black","darkgreen")) +
@@ -217,9 +224,47 @@ p2_dec <- ggplot_gtable(ggplot_build(p2_dec))
 p1_dec$widths <-p2_dec$widths
 p_all <- grid.arrange(p1_dec, p2_dec, p3_dec, p4_dec, heights = c(1,1,1,1.2))
 
-# pdf("~/Desktop/summary_plots.pdf",2.5,8)
+# pdf("~/Desktop/figure2_summary_plots.pdf",2.5,8)
 # plot(p_all)
 # dev.off()
+
+# #-----------------------------------------------------------------------
+# # data ecology
+# #-----------------------------------------------------------------------
+# dfecol <- overview %>%
+#   filter(ecology == "shade" | ecology == "sun")
+# # dormancy
+# dfecol_ld = dfecol[,(names(dfecol) %in% c("ecology",
+#                                        "ratio_site_years_with_leaf_dormancy",
+#                                        "mean_duration_leaf_dormancy_weeks",
+#                                        "sd_intrasp_onset_leaf_dormancy_weeks",
+#                                        "mean_synchrony_individuals_onset_leaf_dormancy_weeks",
+#                                        "mean_distance_onset_leaf_dormancy_weeks"))]
+# dfecol_ld$phenophase <- "leaf_dormancy"
+# dfecol_ld <- dfecol_ld %>%
+#   rename("ratio_site_years" = ratio_site_years_with_leaf_dormancy,
+#          "mean_duration" = mean_duration_leaf_dormancy_weeks,
+#          "sd_intrasp_onset" = sd_intrasp_onset_leaf_dormancy_weeks,
+#          "mean_synchrony_individuals_onset" = mean_synchrony_individuals_onset_leaf_dormancy_weeks,
+#          "mean_distance_onset" = mean_distance_onset_leaf_dormancy_weeks)
+#
+# # turnover
+# dfecol_lt = dfecol[,(names(dfecol) %in% c("ecology",
+#                                        "ratio_site_years_with_leaf_turnover",
+#                                        "mean_duration_leaf_turnover_weeks",
+#                                        "sd_intrasp_onset_leaf_turnover_weeks",
+#                                        "mean_synchrony_individuals_onset_leaf_turnover_weeks",
+#                                        "mean_distance_onset_leaf_turnover_weeks"))]
+# dfecol_lt$phenophase <- "leaf_turnover"
+# dfecol_lt <- dfecol_lt %>%
+#   rename("ratio_site_years" = ratio_site_years_with_leaf_turnover,
+#          "mean_duration" = mean_duration_leaf_turnover_weeks,
+#          "sd_intrasp_onset" = sd_intrasp_onset_leaf_turnover_weeks,
+#          "mean_synchrony_individuals_onset" = mean_synchrony_individuals_onset_leaf_turnover_weeks,
+#          "mean_distance_onset" = mean_distance_onset_leaf_turnover_weeks)
+#
+# # rbind dormancy and turnover
+# dfecol_all <- rbind(dfecol_ld,dfecol_lt)
 
 # #-----------------------------------------------------------------------
 # # plots ecology

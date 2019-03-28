@@ -1,7 +1,12 @@
 # compile summary statistics
+#----- reset your R session. ---------------------------------------------------#
+rm(list=ls())
+# graphics.off()
+#----- load required packages --------------------------------------------------#
 library(tidyverse)
 library(ggplot2)
 library(ggthemes)
+#-------------------------------------------------------------------------------#
 
 # read in the weekly data
 df <- readRDS("data/jungle_rhythms_weekly_annotations.rds")

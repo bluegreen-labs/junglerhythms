@@ -460,9 +460,17 @@ final <- merge(final, synchrony_ind_LT, by = "species_full", all.x = TRUE)
 # remove rows (species) not included in the Yangambi mixed forest census
 final <- final[!(is.na(final$basal_area_site)),]
 
-
-
-
+#--------------------------------------------------------------------
+# Sychrony at the individual level
+onset_ind_LD = onset_ind_LD[,(names(onset_ind_LD) %in% c("id","species_full","onset_sd_weeks","nr_events_onset"))]
+onset_ind_LD$phenophase <- "leaf_dormancy"
+onset_ind_LT = onset_ind_LT[,(names(onset_ind_LT) %in% c("id","species_full","onset_sd_weeks","nr_events_onset"))]
+onset_ind_LT$phenophase <- "leaf_turnover"
+onset_ind <- rbind(onset_ind_LD, onset_ind_LT)
+onset_ind <- merge(onset_ind, census, by = "species_full", all.x = TRUE)
+onset_ind <- merge(onset_ind, traits, by = "species_full", all.x = TRUE)
+# remove rows (species) not included in the Yangambi mixed forest census
+onset_ind <- onset_ind[!(is.na(onset_ind$basal_area_site)),]
 
 
 #--------------------------------------------------------------------
@@ -475,6 +483,12 @@ write.table(final, "data/species_meta_data.csv",
           col.names = TRUE,
           row.names = FALSE,
           sep = ",")
+
+write.table(onset_ind, "data/synchrony_individuals.csv",
+            quote = FALSE,
+            col.names = TRUE,
+            row.names = FALSE,
+            sep = ",")
 #--------------------------------------------------------------------
 
 
