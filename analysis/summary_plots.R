@@ -39,7 +39,8 @@ overview_ind$onset_sd_weeks <- ifelse(overview_ind$nr_events_onset < 3, NA, over
 dfdec <- overview %>%
   filter(deciduousness == "deciduous" | deciduousness == "evergreen")
 # dormancy
-dfdec_ld = dfdec[,(names(dfdec) %in% c("deciduousness",
+dfdec_ld = dfdec[,(names(dfdec) %in% c("species_full",
+                                       "deciduousness",
                                        "ratio_site_years_with_leaf_dormancy",
                                        "mean_duration_leaf_dormancy_weeks",
                                        "sd_intrasp_onset_leaf_dormancy_weeks"))]
@@ -54,7 +55,8 @@ dfdec_ld <- dfdec_ld %>%
          # "mean_distance_onset" = mean_distance_onset_leaf_dormancy_weeks)
 
 # turnover
-dfdec_lt = dfdec[,(names(dfdec) %in% c("deciduousness",
+dfdec_lt = dfdec[,(names(dfdec) %in% c("species_full",
+                                       "deciduousness",
                                        "ratio_site_years_with_leaf_turnover",
                                        "mean_duration_leaf_turnover_weeks",
                                        "sd_intrasp_onset_leaf_turnover_weeks"))]
@@ -74,6 +76,8 @@ dfdec_all <- rbind(dfdec_ld,dfdec_lt)
 #-----------------------------------------------------------------------
 dfdec_ind <- overview_ind %>%
   filter(deciduousness == "deciduous" | deciduousness == "evergreen")
+
+
 
 # #-----------------------------------------------------------------------
 # # some statistics
@@ -108,6 +112,30 @@ dfdec_ind <- overview_ind %>%
 #   filter(phenophase == "leaf_dormancy")
 # a <- aov(only_dorm$sd_intrasp_onset ~ only_dorm$deciduousness)
 # summary(a)
+# #-----------------------------------------------------------------------
+# # merge intraspecific with intra-annual dissynchrony to see if their is a statistical difference
+# test <- dfdec_all[,(names(dfdec_all) %in% c("species_full",
+#                                             "deciduousness",
+#                                             "sd_intrasp_onset",
+#                                             "phenophase"))]
+# test <- test %>%
+#   rename("onset_sd_weeks" = sd_intrasp_onset)
+# test$onset <- "intraspecific"
+# test2 <- dfdec_ind[,(names(dfdec_ind) %in% c("species_full",
+#                                              "deciduousness",
+#                                              "onset_sd_weeks",
+#                                              "phenophase"))]
+# test2$onset <- "intraindividual"
+# test3 <- rbind(test,test2)
+# a <- aov(test3$onset_sd_weeks ~ test3$onset)
+# summary(a)
+# mean(test$onset_sd_weeks, na.rm = TRUE)
+# sd(test$onset_sd_weeks, na.rm = TRUE)
+# mean(test2$onset_sd_weeks, na.rm = TRUE)
+# sd(test2$onset_sd_weeks, na.rm = TRUE)
+# #-----------------------------------------------------------------------
+
+
 
 #-----------------------------------------------------------------------
 # plots deciduousness

@@ -4,6 +4,15 @@ rm(list=ls())
 #----- load required packages --------------------------------------------------#
 library(tidyverse)
 
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+# add family name !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 #-----------------------------------------------------------------------
 # read in summary data (file made in summary_statistics_elizabeth.r)
@@ -21,7 +30,8 @@ overview = overview[,!(names(overview) %in% c("start_year",
                                               "abundance",
                                               "dbh_max_mm_census",
                                               "mating_system",
-                                              "diaspora"))]
+                                              "diaspora",
+                                              "height_m_literature"))]
 # round up some numbers
 overview$percentage_site_years_with_leaf_dormancy <- round(overview$ratio_site_years_with_leaf_dormancy, digits=3) *100
 overview$percentage_site_years_with_leaf_turnover <- round(overview$ratio_site_years_with_leaf_turnover, digits=3) *100
@@ -53,36 +63,38 @@ overview = overview[,!(names(overview) %in% c("mean_duration_leaf_turnover_weeks
                                               "total_nr_events_leaf_turnover"))]
 #----------------------------------
 #----------------------------------
-overview$median_onset_dormancy_weeks <- paste (round(overview$median_intrasp_onset_leaf_dormancy_weeks, digits=1),
-                                           "(",
-                                           round(overview$mean_intrasp_onset_leaf_dormancy_weeks, digits=1),
-                                           "±",
-                                           round(overview$sd_intrasp_onset_leaf_dormancy_weeks, digits=1),
-                                           ")")
+# overview$median_onset_dormancy_weeks <- paste (round(overview$median_intrasp_onset_leaf_dormancy_weeks, digits=1),
+#                                            "(",
+#                                            round(overview$mean_intrasp_onset_leaf_dormancy_weeks, digits=1),
+#                                            "±",
+#                                            round(overview$sd_intrasp_onset_leaf_dormancy_weeks, digits=1),
+#                                            ")")
+overview$median_onset_dormancy_weeks <- round(overview$median_intrasp_onset_leaf_dormancy_weeks, digits=1)
 overview$intra_species_synchr_dormancy_weeks <- round(overview$sd_intrasp_onset_leaf_dormancy_weeks, digits=1)
 overview = overview[,!(names(overview) %in% c("median_intrasp_onset_leaf_dormancy_weeks",
                                               "mean_intrasp_onset_leaf_dormancy_weeks",
                                               "sd_intrasp_onset_leaf_dormancy_weeks"))]
 #----------------------------------
-overview$median_onset_turnover_weeks <- paste(round(overview$median_intrasp_onset_leaf_turnover_weeks, digits=1),
-                                           "(",
-                                           round(overview$mean_intrasp_onset_leaf_turnover_weeks, digits=1),
-                                           "±",
-                                           round(overview$sd_intrasp_onset_leaf_turnover_weeks, digits=1),
-                                           ")")
+# overview$median_onset_turnover_weeks <- paste(round(overview$median_intrasp_onset_leaf_turnover_weeks, digits=1),
+#                                            "(",
+#                                            round(overview$mean_intrasp_onset_leaf_turnover_weeks, digits=1),
+#                                            "±",
+#                                            round(overview$sd_intrasp_onset_leaf_turnover_weeks, digits=1),
+#                                            ")")
+overview$median_onset_turnover_weeks <- round(overview$median_intrasp_onset_leaf_turnover_weeks, digits=1)
 overview$intra_species_synchr_turnover_weeks <- round(overview$sd_intrasp_onset_leaf_turnover_weeks, digits=1)
 overview = overview[,!(names(overview) %in% c("median_intrasp_onset_leaf_turnover_weeks",
                                               "mean_intrasp_onset_leaf_turnover_weeks",
                                               "sd_intrasp_onset_leaf_turnover_weeks"))]
 #----------------------------------
 #----------------------------------
-overview$mean_distance_onset_dormancy_weeks <- round(overview$mean_distance_onset_leaf_dormancy_weeks, digits=1)
-overview$minfreq_distance_onset_dormancy_weeks <- round(overview$mean_distance_onset_minfreq_leaf_dormancy_weeks, digits=1)
+# overview$mean_distance_onset_dormancy_weeks <- round(overview$mean_distance_onset_leaf_dormancy_weeks, digits=1)
+# overview$minfreq_distance_onset_dormancy_weeks <- round(overview$mean_distance_onset_minfreq_leaf_dormancy_weeks, digits=1)
 overview = overview[,!(names(overview) %in% c("mean_distance_onset_leaf_dormancy_weeks"))]
 overview = overview[,!(names(overview) %in% c("mean_distance_onset_minfreq_leaf_dormancy_weeks"))]
 #----------------------------------
-overview$mean_distance_onset_turnover_weeks <- round(overview$mean_distance_onset_leaf_turnover_weeks, digits=1)
-overview$minfreq_distance_onset_turnover_weeks <- round(overview$mean_distance_onset_minfreq_leaf_turnover_weeks, digits=1)
+# overview$mean_distance_onset_turnover_weeks <- round(overview$mean_distance_onset_leaf_turnover_weeks, digits=1)
+# overview$minfreq_distance_onset_turnover_weeks <- round(overview$mean_distance_onset_minfreq_leaf_turnover_weeks, digits=1)
 overview = overview[,!(names(overview) %in% c("mean_distance_onset_leaf_turnover_weeks"))]
 overview = overview[,!(names(overview) %in% c("mean_distance_onset_minfreq_leaf_turnover_weeks"))]
 #----------------------------------

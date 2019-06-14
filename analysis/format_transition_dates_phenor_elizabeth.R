@@ -153,7 +153,7 @@ overview <- inner_join(transition_dates, overview, by = c("species_full"))
 #------------------------------------------------------------------------
 onset$median_rad <- rad(onset$median_degree)
 a <- as.matrix(dist(onset$median_rad), labels = TRUE)
-rownames(a) <- onset_LD[['species_full']]
+rownames(a) <- onset[['species_full']]
 colnames(a) <- rownames(a)
 b <- deg(a)
 c <- ifelse(b > 180, 360-b, b)
@@ -162,18 +162,23 @@ d$species_full <- rownames(d)
 colnames(d)[1] <- "mean_distance_onset_weeks"
 
 
-# Ward Hierarchical Clustering
-# d <- dist(mydata, method = "euclidean") # distance matrix
-a <- dist(test$median_degree, method = "euclidean")
-b <- deg(a)
-# c <- ifelse(b > 180, 360-b, b)
-fit <- hclust(b, method="ward")
-plot(fit) # display dendogram
-groups <- cutree(fit, k=5) # cut tree into 5 clusters
-# draw dendogram with red borders around the 5 clusters
-rect.hclust(fit, k=5, border="red")
-
-
+# # Ward Hierarchical Clustering
+# # d <- dist(mydata, method = "euclidean") # distance matrix
+# a <- dist(onset$median_rad, method = "euclidean")
+# b <- deg(a)
+# # c <- ifelse(b > 180, 360-b, b)
+# fit <- hclust(b, method="ward")
+# plot(fit) # display dendogram
+# groups <- cutree(fit, k=4) # cut tree into 5 clusters
+# # draw dendogram with red borders around the 5 clusters
+# rect.hclust(fit, k=4, border="red")
+#
+# groups.cluster <- as.data.frame(groups)
+# species_dates = onset[,(names(onset) %in% c("species_full",
+#                                        "median_degree"))]
+# species_groups <- cbind(species_dates, groups.cluster)
+#
+# plot(species_groups$groups, species_groups$median_degree)
 
 #------------------------------------------------------------------------
 #----- circular plot of median onset dates of event

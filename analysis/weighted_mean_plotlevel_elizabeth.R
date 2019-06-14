@@ -528,6 +528,8 @@ p_precip$widths <-p_turnover$widths
 
 p_all <- grid.arrange(p_modis, p_dormancy, p_turnover, p_par,p_precip, heights = c(3,3,3.4,1,2)) #
 
+
 # pdf("~/Desktop/standlevel.pdf",5,10)
 # plot(p_all)
 # dev.off()
+
