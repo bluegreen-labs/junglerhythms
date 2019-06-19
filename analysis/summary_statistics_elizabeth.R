@@ -17,7 +17,7 @@ df <- readRDS("data/jungle_rhythms_weekly_annotations.rds")
 df <- df[which(df$value != 0),]
 df$join_id <- paste0("R",df$image,"-",df$image_row)
 
-metadata <- read.csv("data/phenology_archives_species_long_format_20190319.csv",
+metadata <- read.csv("data/phenology_archives_species_long_format_20190619.csv",
                      header = TRUE, sep = ",")
 metadata$join_id <- paste(metadata$image,metadata$row, sep = "-")
 

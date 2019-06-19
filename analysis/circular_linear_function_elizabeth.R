@@ -139,20 +139,20 @@ circular_linear_plot <- function(
     annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 2.4, alpha = .2) + #jan - feb
     annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 2.4, alpha = .2) + # jun-jul
     annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 2.4, alpha = .2) + # dec
-    # scale_color_viridis_c(option="plasma",
-    #                       name = "Freq.",
-    #                       direction = 1,
-    #                       begin = 0,
-    #                       end = 1) +
-    scale_color_viridis_c(option = "plasma", #,"viridis"
+    scale_color_viridis_c(option="plasma",
                           name = "Freq.",
                           direction = 1,
-                          rescaler = function(x, to = c(0, 1), from = NULL) {
-      ifelse(x < viridis_rescaling,
-             scales::rescale(x,
-                             to = to,
-                             from = c(min(x, na.rm = TRUE), viridis_rescaling)),
-             1)}) +
+                          begin = 0,
+                          end = 1) +
+    # scale_color_viridis_c(option = "plasma", #,"viridis"
+    #                       name = "Freq.",
+    #                       direction = 1,
+    #                       rescaler = function(x, to = c(0, 1), from = NULL) {
+    #   ifelse(x < viridis_rescaling,
+    #          scales::rescale(x,
+    #                          to = to,
+    #                          from = c(min(x, na.rm = TRUE), viridis_rescaling)),
+    #          1)}) +
     geom_segment(size = 4) +
     scale_x_continuous(limits = c(1,49),
                        breaks = seq(1,48,4),
@@ -239,10 +239,10 @@ circular_linear_plot <- function(
 }
 
 
-p_deciduous <- circular_linear_plot(data,
-                                    species_name = query_deciduous,
-                                    viridis_rescaling = 0.15,
-                                    title_name = "(b) Deciduous")
+# p_deciduous <- circular_linear_plot(data,
+#                                     species_name = query_deciduous,
+#                                     viridis_rescaling = 0.15,
+#                                     title_name = "(b) Deciduous")
 # pdf("~/Desktop/deciduous.pdf",8.4,12)
 # plot(p_deciduous)
 # dev.off()
