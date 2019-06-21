@@ -206,30 +206,22 @@ overview <- merge(overview, tseries, by = "species_full", all.x = TRUE)
 # star to add in table description that this is based on the actual data
 # indicate specifically for genus level that this could potentially not be true for all species within the genus
 
+tapply(overview$species_full, overview$deciduousness, length)
+
 # clear
 overview$deciduousness <- ifelse(overview$species_full %in% "Pericopsis elata", "deciduous*",overview$deciduousness)
-overview$deciduousness <- ifelse(overview$species_full %in% "Diospyros sp.", "evergreen*",overview$deciduousness)
-overview$deciduousness <- ifelse(overview$species_full %in% "Beilschmiedia sp.", "evergreen*",overview$deciduousness)
-overview$deciduousness <- ifelse(overview$species_full %in% "Macaranga sp.", "evergreen*",overview$deciduousness)
 overview$deciduousness <- ifelse(overview$species_full %in% "Trichilia welwitschii", "evergreen*",overview$deciduousness)
-overview$deciduousness <- ifelse(overview$species_full %in% "Chytranthus sp.", "evergreen*",overview$deciduousness)
 overview$deciduousness <- ifelse(overview$species_full %in% "Copaifera mildbraedii", "deciduous*",overview$deciduousness)
 overview$deciduousness <- ifelse(overview$species_full %in% "Tridesmostemon omphalocarpoides", "evergreen*",overview$deciduousness)
 overview$deciduousness <- ifelse(overview$species_full %in% "Omphalocarpum lecomteanum", "evergreen*",overview$deciduousness)
 overview$deciduousness <- ifelse(overview$species_full %in% "Fernandoa adolfi-friderici", "deciduous*",overview$deciduousness)
-overview$deciduousness <- ifelse(overview$species_full %in% "Cola sp.", "evergreen*",overview$deciduousness)
-overview$deciduousness <- ifelse(overview$species_full %in% "Tessmannia sp.", "evergreen*",overview$deciduousness)
-overview$deciduousness <- ifelse(overview$species_full %in% "Irvingia sp.", "deciduous*",overview$deciduousness)
 overview$deciduousness <- ifelse(overview$species_full %in% "Tabernaemontana crassa", "evergreen*",overview$deciduousness)
 overview$deciduousness <- ifelse(overview$species_full %in% "Trichilia tessmannii", "deciduous*",overview$deciduousness)
 # not so sure, limited data
-overview$deciduousness <- ifelse(overview$species_full %in% "Trichilia sp.", "deciduous* (?)",overview$deciduousness)
 overview$deciduousness <- ifelse(overview$species_full %in% "Trichilia gilletii", "evergreen* (?)",overview$deciduousness)
-overview$deciduousness <- ifelse(overview$species_full %in% "Drypetes sp.", "evergreen* (?)",overview$deciduousness)
 # not so sure, unclear phenological data
 overview$deciduousness <- ifelse(overview$species_full %in% "Radlkofera calodendron", "evergreen* (?)",overview$deciduousness)
 overview$deciduousness <- ifelse(overview$species_full %in% "Gilletiodendron mildbraedii", "evergreen* (?)",overview$deciduousness)
-overview$deciduousness <- ifelse(overview$species_full %in% "Homalium sp.", "deciduous* (?)",overview$deciduousness)
 
 ## two stars, in literature found as evergreen or (sometimes) deciduous
 ## selected a class based on the actual data
@@ -247,7 +239,11 @@ overview$deciduousness <- ifelse(overview$species_full %in% "Irvingia gabonensis
 overview$dec_label <- ifelse(overview$deciduousness %in% c("deciduous","deciduous*","deciduous**","deciduous* (?)","deciduous** (?)"), "dec",
                              ifelse(overview$deciduousness %in% c("evergreen","evergreen*","evergreen**","evergreen* (?)","evergreen** (?)"), "ever", "NA"))
 
+tapply(overview$species_full, overview$dec_label, length)
 
+test <- overview %>%
+  filter(grepl("evergreen",deciduousness)) %>%
+  filter(percentage_site_years_with_leaf_turnover == 0 & percentage_site_years_with_leaf_dormancy == 0)
 #--------------------------------------------------------------------
 #--------------------------------------------------------------------
 # write to file

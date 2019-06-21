@@ -459,6 +459,9 @@ final <- merge(final, synchrony_ind_LT, by = "species_full", all.x = TRUE)
 
 # remove rows (species) not included in the Yangambi mixed forest census
 final <- final[!(is.na(final$basal_area_site)),]
+# remove those only at genus level
+final <- final %>%
+  filter(!grepl("sp\\.",species_full))
 
 #--------------------------------------------------------------------
 # Sychrony at the individual level

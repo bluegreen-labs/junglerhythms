@@ -411,7 +411,8 @@ p_turnover <- ggplot() +
         plot.background = element_rect(fill = 'white', colour = 'white'),
         strip.text = element_text(hjust = 0),
         axis.line.x = element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1),
+        axis.text.x = element_blank(),
+        # axis.text.x = element_text(angle = 90, hjust = 1),
         axis.title.x = element_blank(),
         axis.title.y = element_text(vjust = 3),
         legend.position = "none",
@@ -473,30 +474,7 @@ p_precip <- ggplot(climate) +
   labs(y = "precip. (mm)",
        x = "") +
   theme_minimal() +
-  theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
-        panel.grid.minor.x =  element_blank(),
-        panel.grid.minor.y = element_blank(),
-        panel.background = element_blank(),
-        plot.background = element_rect(fill = 'white', colour = 'white'),
-        strip.text = element_text(hjust = 0),
-        axis.line.x = element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1),
-        axis.title.y = element_text(vjust = 3),
-        legend.position = "none",
-        plot.margin = unit(c(0,0,0,0.5),"cm")
-  )
-
-p_par <- ggplot(climate) +
-  geom_line(aes(x = Month,
-                y = PAR_Ygb_Hauser),
-            size = 1.2) +
-  scale_x_continuous(limits = c(0.5,12.5),
-                     breaks = seq(1,12,1),
-                     labels = month.abb) +
-  labs(y = "PAR",
-       x = "") +
-  theme_minimal() +
-  theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
+  theme(panel.grid.major.x = element_blank(), #element_line(colour = "grey89", size = 0.3),
         panel.grid.minor.x =  element_blank(),
         panel.grid.minor.y = element_blank(),
         panel.background = element_blank(),
@@ -505,11 +483,11 @@ p_par <- ggplot(climate) +
         axis.line.x = element_blank(),
         # axis.text.x = element_text(angle = 90, hjust = 1),
         axis.text.x=element_blank(),
-        axis.title.x=element_blank(),
         axis.title.y = element_text(vjust = 3),
         legend.position = "none",
-        plot.margin=unit(c(0,0,0,0.5),"cm")
+        plot.margin = unit(c(0,0,0,0.5),"cm")
   )
+
 
 p_sun <- ggplot(climate) +
   geom_line(aes(x = Month,
@@ -521,7 +499,7 @@ p_sun <- ggplot(climate) +
   labs(y = "sun hours",
        x = "") +
   theme_minimal() +
-  theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
+  theme(panel.grid.major.x = element_blank(), # element_line(colour = "grey89", size = 0.3),
         panel.grid.minor.x =  element_blank(),
         panel.grid.minor.y = element_blank(),
         panel.background = element_blank(),
@@ -535,6 +513,7 @@ p_sun <- ggplot(climate) +
         legend.position = "none",
         plot.margin=unit(c(0,0,0,0.5),"cm")
   )
+
 
 #-----------------------------------------------------------------------
 # combine plots
@@ -552,12 +531,16 @@ p_par$widths <-p_turnover$widths
 p_precip$widths <-p_turnover$widths
 p_sun$widths <-p_turnover$widths
 
-# p_all <- grid.arrange(p_modis, p_dormancy, p_turnover, p_par,p_precip, heights = c(3,3,3.4,1,2)) #
-p_all <- grid.arrange(p_modis, p_dormancy, p_turnover, p_sun, p_precip, heights = c(3,3,3.4,1,2)) #
+# p_all <- grid.arrange(p_modis, p_dormancy, p_turnover, p_sun, p_precip, heights = c(3,3,3.4,1,2)) #
+p_all <- grid.arrange(p_sun, p_precip, p_dormancy, p_turnover, p_modis, heights = c(1,2,3,3,3.2)) #
 
-# pdf("~/Desktop/standlevel.pdf",5,10)
-# plot(p_all)
-# dev.off()
+
+# p_all <- grid.arrange(p_sun, p_precip, p_modis, p_dormancy, p_turnover, heights = c(1,2,3,3,3.4)) #
+
+
+pdf("~/Desktop/standlevel.pdf",5,10)
+plot(p_all)
+dev.off()
 
 #-----------------------------------------------------------------------
 # correlations between standlevel events and climate
@@ -609,6 +592,8 @@ cor.test(climate.corr$PAR_Ygb_Hauser, climate.corr$turnover_stand, method = 'pea
 cor.test(climate.corr$insol_JR, climate.corr$turnover_stand, method = 'pearson')
 # cor.test(climate.corr$prec_all, climate.corr$turnover_stand, method = 'pearson')
 cor.test(climate.corr$prec_JR, climate.corr$turnover_stand, method = 'pearson')
+cor.test(climate.corr$tmax_JR, climate.corr$turnover_stand, method = 'pearson')
+
 
 # dormancy
 # cor.test(climate.corr$PAR_Ygb_Yoko_Hauser, climate.corr$dormancy_stand, method = 'pearson')
@@ -617,3 +602,4 @@ cor.test(climate.corr$PAR_Ygb_Hauser, climate.corr$dormancy_stand, method = 'pea
 cor.test(climate.corr$insol_JR, climate.corr$dormancy_stand, method = 'pearson')
 # cor.test(climate.corr$prec_all, climate.corr$dormancy_stand, method = 'pearson')
 cor.test(climate.corr$prec_JR, climate.corr$dormancy_stand, method = 'pearson')
+cor.test(climate.corr$tmax_JR, climate.corr$dormancy_stand, method = 'pearson')
