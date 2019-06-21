@@ -133,9 +133,9 @@ data <- inner_join(data, census_site, by = "species_full")
 #----------------------------------------------------------------------
 #-------- load climate data -------------------------------------------
 #----------------------------------------------------------------------
-climate <- read.csv("~/Dropbox/Phenology_JR/Manuscript/Phenology_Leaf_draft/ClimData_test.csv",
-                      header = TRUE,
-                      sep = ",")
+climate <- read.csv("data/ClimData_monthly_avg.csv",
+                    header = TRUE,
+                    sep = ",")
 #----------------------------------------------------------------------
 
 
@@ -464,7 +464,7 @@ p_dormancy <- ggplot() +
 
 p_precip <- ggplot(climate) +
   geom_col(aes(x = Month,
-               y = prec),
+               y = prec_JR),
            col = "grey70",
            fill = "grey70") +
   scale_x_continuous(limits = c(0.5,12.5),
@@ -488,12 +488,37 @@ p_precip <- ggplot(climate) +
 
 p_par <- ggplot(climate) +
   geom_line(aes(x = Month,
-                y = PAR_Hauser),
+                y = PAR_Ygb_Hauser),
             size = 1.2) +
   scale_x_continuous(limits = c(0.5,12.5),
                      breaks = seq(1,12,1),
                      labels = month.abb) +
   labs(y = "PAR",
+       x = "") +
+  theme_minimal() +
+  theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
+        panel.grid.minor.x =  element_blank(),
+        panel.grid.minor.y = element_blank(),
+        panel.background = element_blank(),
+        plot.background = element_rect(fill = 'white', colour = 'white'),
+        strip.text = element_text(hjust = 0),
+        axis.line.x = element_blank(),
+        # axis.text.x = element_text(angle = 90, hjust = 1),
+        axis.text.x=element_blank(),
+        axis.title.x=element_blank(),
+        axis.title.y = element_text(vjust = 3),
+        legend.position = "none",
+        plot.margin=unit(c(0,0,0,0.5),"cm")
+  )
+
+p_sun <- ggplot(climate) +
+  geom_line(aes(x = Month,
+                y = insol_JR),
+            size = 1.2) +
+  scale_x_continuous(limits = c(0.5,12.5),
+                     breaks = seq(1,12,1),
+                     labels = month.abb) +
+  labs(y = "sun hours",
        x = "") +
   theme_minimal() +
   theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
@@ -520,16 +545,75 @@ p_modis <- ggplot_gtable(ggplot_build(p_modis))
 p_turnover <- ggplot_gtable(ggplot_build(p_turnover))
 p_par <- ggplot_gtable(ggplot_build(p_par))
 p_precip <- ggplot_gtable(ggplot_build(p_precip))
+p_sun <- ggplot_gtable(ggplot_build(p_sun))
 
 p_modis$widths <-p_turnover$widths
 p_par$widths <-p_turnover$widths
 p_precip$widths <-p_turnover$widths
+p_sun$widths <-p_turnover$widths
 
-
-p_all <- grid.arrange(p_modis, p_dormancy, p_turnover, p_par,p_precip, heights = c(3,3,3.4,1,2)) #
-
+# p_all <- grid.arrange(p_modis, p_dormancy, p_turnover, p_par,p_precip, heights = c(3,3,3.4,1,2)) #
+p_all <- grid.arrange(p_modis, p_dormancy, p_turnover, p_sun, p_precip, heights = c(3,3,3.4,1,2)) #
 
 # pdf("~/Desktop/standlevel.pdf",5,10)
 # plot(p_all)
 # dev.off()
 
+#-----------------------------------------------------------------------
+# correlations between standlevel events and climate
+#-----------------------------------------------------------------------
+
+final_LT_site$Month <- ifelse(final_LT_site$week %in% c(1,2,3,4),1,
+                              ifelse(final_LT_site$week %in% c(5,6,7,8),2,
+                                     ifelse(final_LT_site$week %in% c(9,10,11,12),3,
+                                            ifelse(final_LT_site$week %in% c(13,14,15,16),4,
+                                                   ifelse(final_LT_site$week %in% c(17,18,19,20),5,
+                                                          ifelse(final_LT_site$week %in% c(21,22,23,24),6,
+                                                                 ifelse(final_LT_site$week %in% c(25,26,27,28),7,
+                                                                        ifelse(final_LT_site$week %in% c(29,30,31,32),8,
+                                                                               ifelse(final_LT_site$week %in% c(33,34,35,36),9,
+                                                                                      ifelse(final_LT_site$week %in% c(37,38,39,40),10,
+                                                                                             ifelse(final_LT_site$week %in% c(41,42,43,44),11,
+                                                                                                    ifelse(final_LT_site$week %in% c(45,46,47,48),12,
+                                                                                                           NA))))))))))))
+
+final_LT_month <- final_LT_site %>%
+  group_by(Month) %>%
+  summarise(turnover_stand = mean(ss))
+
+final_LD_site$Month <- ifelse(final_LD_site$week %in% c(1,2,3,4),1,
+                              ifelse(final_LD_site$week %in% c(5,6,7,8),2,
+                                     ifelse(final_LD_site$week %in% c(9,10,11,12),3,
+                                            ifelse(final_LD_site$week %in% c(13,14,15,16),4,
+                                                   ifelse(final_LD_site$week %in% c(17,18,19,20),5,
+                                                          ifelse(final_LD_site$week %in% c(21,22,23,24),6,
+                                                                 ifelse(final_LD_site$week %in% c(25,26,27,28),7,
+                                                                        ifelse(final_LD_site$week %in% c(29,30,31,32),8,
+                                                                               ifelse(final_LD_site$week %in% c(33,34,35,36),9,
+                                                                                      ifelse(final_LD_site$week %in% c(37,38,39,40),10,
+                                                                                             ifelse(final_LD_site$week %in% c(41,42,43,44),11,
+                                                                                                    ifelse(final_LD_site$week %in% c(45,46,47,48),12,
+                                                                                                           NA))))))))))))
+
+final_LD_month <- final_LD_site %>%
+  group_by(Month) %>%
+  summarise(dormancy_stand = mean(ss))
+
+climate.corr <- merge(climate, final_LT_month, by = c("Month"), all.x = TRUE)
+climate.corr <- merge(climate.corr, final_LD_month, by = c("Month"), all.x = TRUE)
+
+# turnover
+# cor.test(climate.corr$PAR_Ygb_Yoko_Hauser, climate.corr$turnover_stand, method = 'pearson')
+cor.test(climate.corr$PAR_Ygb_Hauser, climate.corr$turnover_stand, method = 'pearson')
+# cor.test(climate.corr$insol_all, climate.corr$turnover_stand, method = 'pearson')
+cor.test(climate.corr$insol_JR, climate.corr$turnover_stand, method = 'pearson')
+# cor.test(climate.corr$prec_all, climate.corr$turnover_stand, method = 'pearson')
+cor.test(climate.corr$prec_JR, climate.corr$turnover_stand, method = 'pearson')
+
+# dormancy
+# cor.test(climate.corr$PAR_Ygb_Yoko_Hauser, climate.corr$dormancy_stand, method = 'pearson')
+cor.test(climate.corr$PAR_Ygb_Hauser, climate.corr$dormancy_stand, method = 'pearson')
+# cor.test(climate.corr$insol_all, climate.corr$dormancy_stand, method = 'pearson')
+cor.test(climate.corr$insol_JR, climate.corr$dormancy_stand, method = 'pearson')
+# cor.test(climate.corr$prec_all, climate.corr$dormancy_stand, method = 'pearson')
+cor.test(climate.corr$prec_JR, climate.corr$dormancy_stand, method = 'pearson')

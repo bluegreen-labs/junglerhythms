@@ -61,29 +61,29 @@ climate <- climate %>%
 
 
 
-p_climate <- ggplot() +
-  geom_col(data = climate, aes(x = date,
-                               y = diff,
-                               colour = col,
-                               fill = col)) +
-  scale_colour_manual(values = c("lightcoral","lightblue"),
-                      aesthetics = c("fill","colour")) +
-  labs(y = "precip. (mm/month)",
-       x = "Year") +
-  scale_x_date(date_breaks = "1 year",
-               date_labels = "%Y",
-               limits = as.Date(c('1935-01-01','1960-01-01'))) +
-  theme_minimal() +
-  theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
-        panel.grid.minor.x =  element_blank(),
-        panel.grid.minor.y = element_blank(),
-        panel.background = element_blank(),
-        plot.background = element_rect(fill = 'white', colour = 'white'),
-        strip.text = element_text(hjust = 0),
-        axis.line.x = element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1),
-        legend.position="none"
-  )
+# p_climate <- ggplot() +
+#   geom_col(data = climate, aes(x = date,
+#                                y = diff,
+#                                colour = col,
+#                                fill = col)) +
+#   scale_colour_manual(values = c("lightcoral","lightblue"),
+#                       aesthetics = c("fill","colour")) +
+#   labs(y = "precip. (mm/month)",
+#        x = "Year") +
+#   scale_x_date(date_breaks = "1 year",
+#                date_labels = "%Y",
+#                limits = as.Date(c('1935-01-01','1960-01-01'))) +
+#   theme_minimal() +
+#   theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
+#         panel.grid.minor.x =  element_blank(),
+#         panel.grid.minor.y = element_blank(),
+#         panel.background = element_blank(),
+#         plot.background = element_rect(fill = 'white', colour = 'white'),
+#         strip.text = element_text(hjust = 0),
+#         axis.line.x = element_blank(),
+#         axis.text.x = element_text(angle = 90, hjust = 1),
+#         legend.position="none"
+#   )
 
 
 
@@ -158,13 +158,13 @@ species_list <- overview$species_full
 #------------------------------------------------------------------------
 # filtering species for analysis
 #------------------------------------------------------------------------
-# species_list <- census %>%
-#   filter(deciduousness == "deciduous")
-# species_list <- species_list$species_full
+# # species_list <- census %>%
+# #   filter(deciduousness == "deciduous")
+# # species_list <- species_list$species_full
 #
 # # subset on species
 # data_subset <- data %>%
-#   filter(species_full %in% "Scorodophloeus zenkeri",#species_list,  Erythrophleum suaveolens, Irvingia grandifolia, Diospyros iturensis
+#   filter(species_full %in% "Erythrophleum suaveolens",#species_list,  Erythrophleum suaveolens, , Diospyros iturensis
 #          phenophase == "leaf_dormancy") # leaf_dormancy
 #
 #
@@ -206,7 +206,7 @@ species_list <- overview$species_full
 #
 #
 #
-# corr <- ccf(data_subset$precip, data_subset$mean_value, calc.ci = TRUE, pl=TRUE) # precip as first value: to check if something in precip has an effect on phenology at time t
+# corr <- ccf(data_subset$precip, data_subset$mean_value,lag = 6, pl=TRUE) # precip as first value: to check if something in precip has an effect on phenology at time t
 # ci <- 0.95
 # ci_value <- qnorm((1 + ci)/2)/sqrt(corr$n.used)
 # #abline(h = ci_value, col = "red")
@@ -219,7 +219,7 @@ species_list <- overview$species_full
 #----------- DORMANCY x actual precipitation --------------------------------------------
 #----------------------------------------------------------------------------------------
 
-output_dormancy <- data.frame(matrix(0,nrow=length(species_list),ncol=19))
+output_dormancy <- data.frame(matrix(0,nrow=length(species_list),ncol=20))
 colnames(output_dormancy)[1] <- "species_full"
 colnames(output_dormancy)[2:14] <- c("t-6","t-5","t-4","t-3","t-2","t-1","t","t+1","t+2","t+3","t+4","t+5","t+6")
 colnames(output_dormancy)[15] <- "ci"
@@ -256,60 +256,95 @@ for(i in 1:length(species_list)){
     # plot(corr.precip, main = paste(species_list[i], " - dormancy x precip"))
     ci_value <- qnorm((1 + ci)/2)/sqrt(corr.precip$n.used)
   } else {
-    corr.precip$acf <- "NA"
-    ci_value <- "NA"
+    corr.precip$acf <- NA
+    ci_value <- NA
   }
 
   output_dormancy[i,1] <- species_list[i]
   output_dormancy[i,2:14] <- as.numeric(corr.precip$acf)
   output_dormancy[i,15] <- as.numeric(ci_value)
 }
+# direct correlation at time t
+colnames(output_dormancy)[16] <- "corr"
+output_dormancy$corr <- ifelse(abs(output_dormancy[,8]) > output_dormancy$ci, output_dormancy[,8], NA)
 
-# maximum correlation before and after time 0 of phenophase
-colnames(output_dormancy)[16] <- "max.corr.before"
-colnames(output_dormancy)[17] <- "max.corr.after"
-absmax <- function(x) { x[which.max( abs(x) )][1]}
-output_dormancy$max.corr.before <- apply(output_dormancy[,2:7], 1, absmax) # if lag-time changes, this should be adapted --> this is 6 lags max
-output_dormancy$max.corr.after <- apply(output_dormancy[,9:14], 1, absmax)
-# only keep significant correlations
-output_dormancy$max.corr.before <- ifelse(abs(output_dormancy$max.corr.before) > output_dormancy$ci, output_dormancy$max.corr.before, "NA")
-output_dormancy$max.corr.after <- ifelse(abs(output_dormancy$max.corr.after) > output_dormancy$ci, output_dormancy$max.corr.after, "NA")
+# timeseries lead and lag: in timing closest signigicant correlation to time t
+colnames(output_dormancy)[17] <- "corr.before"
+colnames(output_dormancy)[18] <- "corr.before.timing"
+output_dormancy$corr.before <- ifelse(abs(output_dormancy[,7]) > output_dormancy$ci, output_dormancy[,7], # t-1
+                                      ifelse(abs(output_dormancy[,6]) > output_dormancy$ci, output_dormancy[,6], # t-2
+                                      ifelse(abs(output_dormancy[,5]) > output_dormancy$ci, output_dormancy[,5], # t-3
+                                      ifelse(abs(output_dormancy[,4]) > output_dormancy$ci, output_dormancy[,4], # t-4
+                                      ifelse(abs(output_dormancy[,3]) > output_dormancy$ci, output_dormancy[,3], # t-5
+                                      ifelse(abs(output_dormancy[,2]) > output_dormancy$ci, output_dormancy[,2], # t-6
+                                             NA))))))
+output_dormancy$corr.before.timing <- ifelse(abs(output_dormancy[,7]) > output_dormancy$ci, "-1", # t-1
+                                             ifelse(abs(output_dormancy[,6]) > output_dormancy$ci, "-2", # t-2
+                                             ifelse(abs(output_dormancy[,5]) > output_dormancy$ci, "-3", # t-3
+                                             ifelse(abs(output_dormancy[,4]) > output_dormancy$ci, "-4", # t-4
+                                             ifelse(abs(output_dormancy[,3]) > output_dormancy$ci, "-5", # t-5
+                                             ifelse(abs(output_dormancy[,2]) > output_dormancy$ci, "-6", # t-6
+                                                    NA))))))
 
-# get the timing of the correlations
-colnames(output_dormancy)[18] <- "max.corr.before.timing"
-colnames(output_dormancy)[19] <- "max.corr.after.timing"
-max.corr.before.timing <- apply(output_dormancy[,2:7], 1, function(x) { x[which.max( abs(x) )]}) # if lag-time changes, this should be adapted --> this is 6 lags max
-max.corr.before.timing <- names(unlist(max.corr.before.timing))
-max.corr.after.timing <- apply(output_dormancy[,9:14], 1, function(x) { x[which.max( abs(x) )]})
-max.corr.after.timing <- names(unlist(max.corr.after.timing))
+colnames(output_dormancy)[19] <- "corr.after"
+colnames(output_dormancy)[20] <- "corr.after.timing"
+output_dormancy$corr.after <- ifelse(abs(output_dormancy[,9]) > output_dormancy$ci, output_dormancy[,9], # t+1
+                                      ifelse(abs(output_dormancy[,10]) > output_dormancy$ci, output_dormancy[,10], # t+2
+                                      ifelse(abs(output_dormancy[,11]) > output_dormancy$ci, output_dormancy[,11], # t+3
+                                      ifelse(abs(output_dormancy[,12]) > output_dormancy$ci, output_dormancy[,12], # t+4
+                                      ifelse(abs(output_dormancy[,13]) > output_dormancy$ci, output_dormancy[,13], # t+5
+                                      ifelse(abs(output_dormancy[,14]) > output_dormancy$ci, output_dormancy[,14], # t+6
+                                                                         NA))))))
+output_dormancy$corr.after.timing <- ifelse(abs(output_dormancy[,9]) > output_dormancy$ci, "1", # t+1
+                                             ifelse(abs(output_dormancy[,10]) > output_dormancy$ci, "2", # t+2
+                                             ifelse(abs(output_dormancy[,11]) > output_dormancy$ci, "3", # t+3
+                                             ifelse(abs(output_dormancy[,12]) > output_dormancy$ci, "4", # t+4
+                                             ifelse(abs(output_dormancy[,13]) > output_dormancy$ci, "5", # t+5
+                                             ifelse(abs(output_dormancy[,14]) > output_dormancy$ci, "6", # t+6
+                                                    NA))))))
 
-# remove NA's, because this messes up the colnames of the timing
-output_dormancy <- output_dormancy[complete.cases(output_dormancy), ]
-output_dormancy$max.corr.before.timing <- max.corr.before.timing
-output_dormancy$max.corr.after.timing <- max.corr.after.timing
-# only keep timing of significant correlations
-output_dormancy$max.corr.before.timing <- ifelse(output_dormancy$max.corr.before %in% "NA", "NA", output_dormancy$max.corr.before.timing)
-output_dormancy$max.corr.after.timing <- ifelse(output_dormancy$max.corr.after %in% "NA", "NA", output_dormancy$max.corr.after.timing)
+# # maximum correlation before and after time 0 of phenophase
+# colnames(output_dormancy)[16] <- "max.corr.before"
+# colnames(output_dormancy)[17] <- "max.corr.after"
+# absmax <- function(x) { x[which.max( abs(x) )][1]}
+# output_dormancy$max.corr.before <- apply(output_dormancy[,2:7], 1, absmax) # if lag-time changes, this should be adapted --> this is 6 lags max
+# output_dormancy$max.corr.after <- apply(output_dormancy[,9:14], 1, absmax)
+# # only keep significant correlations
+# output_dormancy$max.corr.before <- ifelse(abs(output_dormancy$max.corr.before) > output_dormancy$ci, output_dormancy$max.corr.before, NA)
+# output_dormancy$max.corr.after <- ifelse(abs(output_dormancy$max.corr.after) > output_dormancy$ci, output_dormancy$max.corr.after, NA)
+#
+# # get the timing of the correlations
+# colnames(output_dormancy)[18] <- "max.corr.before.timing"
+# colnames(output_dormancy)[19] <- "max.corr.after.timing"
+# max.corr.before.timing <- apply(output_dormancy[,2:7], 1, function(x) { x[which.max( abs(x) )]}) # if lag-time changes, this should be adapted --> this is 6 lags max
+# max.corr.before.timing <- names(unlist(max.corr.before.timing))
+# max.corr.after.timing <- apply(output_dormancy[,9:14], 1, function(x) { x[which.max( abs(x) )]})
+# max.corr.after.timing <- names(unlist(max.corr.after.timing))
+#
+# # remove NA's, because this messes up the colnames of the timing
+# output_dormancy <- output_dormancy[complete.cases(output_dormancy), ]
+# output_dormancy$max.corr.before.timing <- max.corr.before.timing
+# output_dormancy$max.corr.after.timing <- max.corr.after.timing
+# # only keep timing of significant correlations
+# output_dormancy$max.corr.before.timing <- ifelse(output_dormancy$max.corr.before %in% NA, NA, output_dormancy$max.corr.before.timing)
+# output_dormancy$max.corr.after.timing <- ifelse(output_dormancy$max.corr.after %in% NA, NA, output_dormancy$max.corr.after.timing)
 
 
 
 dormancy_precip <- output_dormancy[,(names(output_dormancy) %in% c("species_full",
-                                                                   "max.corr.before",
-                                                                   "max.corr.after",
-                                                                    "max.corr.before.timing",
-                                                                    "max.corr.after.timing"))]
+                                                                   "corr",
+                                                                   "corr.before",
+                                                                   "corr.before.timing",
+                                                                   "corr.after",
+                                                                   "corr.after.timing"))]
 colnames(dormancy_precip) <- c("species_full",
+                               "corr_dormancy_precip",
                                "ccf_dormancy_precip_lead",
-                               "ccf_dormancy_precip_lag",
                                "ccf_dormancy_precip_lead_timing",
+                               "ccf_dormancy_precip_lag",
                                "ccf_dormancy_precip_lag_timing")
 
-# change the order of the columns
-dormancy_precip <- dormancy_precip[c("species_full",
-                                     "ccf_dormancy_precip_lead",
-                                     "ccf_dormancy_precip_lead_timing",
-                                     "ccf_dormancy_precip_lag",
-                                     "ccf_dormancy_precip_lag_timing")]
+
 
 
 #----------------------------------------------------------------------------------------
@@ -317,7 +352,7 @@ dormancy_precip <- dormancy_precip[c("species_full",
 #----------- TURNOVER x actual precipitation --------------------------------------------
 #----------------------------------------------------------------------------------------
 
-output_turnover <- data.frame(matrix(0,nrow=length(species_list),ncol=19))
+output_turnover <- data.frame(matrix(0,nrow=length(species_list),ncol=20))
 colnames(output_turnover)[1] <- "species_full"
 colnames(output_turnover)[2:14] <- c("t-6","t-5","t-4","t-3","t-2","t-1","t","t+1","t+2","t+3","t+4","t+5","t+6")
 colnames(output_turnover)[15] <- "ci"
@@ -354,8 +389,8 @@ for(i in 1:length(species_list)){
     # plot(corr.precip, main = paste(species_list[i], " - turnover x precip"))
     ci_value <- qnorm((1 + ci)/2)/sqrt(corr.precip$n.used)
   } else {
-    corr.precip$acf <- "NA"
-    ci_value <- "NA"
+    corr.precip$acf <- NA
+    ci_value <- NA
   }
 
   output_turnover[i,1] <- species_list[i]
@@ -363,50 +398,59 @@ for(i in 1:length(species_list)){
   output_turnover[i,15] <- as.numeric(ci_value)
 }
 
-# maximum correlation before and after time 0 of phenophase
-colnames(output_turnover)[16] <- "max.corr.before"
-colnames(output_turnover)[17] <- "max.corr.after"
-absmax <- function(x) { x[which.max( abs(x) )][1]}
-output_turnover$max.corr.before <- apply(output_turnover[,2:7], 1, absmax) # if lag-time changes, this should be adapted --> this is 6 lags max
-output_turnover$max.corr.after <- apply(output_turnover[,9:14], 1, absmax)
-# only keep significant correlations
-output_turnover$max.corr.before <- ifelse(abs(output_turnover$max.corr.before) > output_turnover$ci, output_turnover$max.corr.before, "NA")
-output_turnover$max.corr.after <- ifelse(abs(output_turnover$max.corr.after) > output_turnover$ci, output_turnover$max.corr.after, "NA")
+# direct correlation at time t
+colnames(output_turnover)[16] <- "corr"
+output_turnover$corr <- ifelse(abs(output_turnover[,8]) > output_turnover$ci, output_turnover[,8], NA)
 
-# get the timing of the correlations
-colnames(output_turnover)[18] <- "max.corr.before.timing"
-colnames(output_turnover)[19] <- "max.corr.after.timing"
-max.corr.before.timing <- apply(output_turnover[,2:7], 1, function(x) { x[which.max( abs(x) )]}) # if lag-time changes, this should be adapted --> this is 6 lags max
-max.corr.before.timing <- names(unlist(max.corr.before.timing))
-max.corr.after.timing <- apply(output_turnover[,9:14], 1, function(x) { x[which.max( abs(x) )]})
-max.corr.after.timing <- names(unlist(max.corr.after.timing))
-# remove NA's, because this messes up the colnames of the timing
-output_turnover <- output_turnover[complete.cases(output_turnover), ]
-output_turnover$max.corr.before.timing <- max.corr.before.timing
-output_turnover$max.corr.after.timing <- max.corr.after.timing
-# only keep timing of significant correlations
-output_turnover$max.corr.before.timing <- ifelse(output_turnover$max.corr.before %in% "NA", "NA", output_turnover$max.corr.before.timing)
-output_turnover$max.corr.after.timing <- ifelse(output_turnover$max.corr.after %in% "NA", "NA", output_turnover$max.corr.after.timing)
+# closest signigicant correlation to time t
+colnames(output_turnover)[17] <- "corr.before"
+colnames(output_turnover)[18] <- "corr.before.timing"
+output_turnover$corr.before <- ifelse(abs(output_turnover[,7]) > output_turnover$ci, output_turnover[,7], # t-1
+                                      ifelse(abs(output_turnover[,6]) > output_turnover$ci, output_turnover[,6], # t-2
+                                      ifelse(abs(output_turnover[,5]) > output_turnover$ci, output_turnover[,5], # t-3
+                                      ifelse(abs(output_turnover[,4]) > output_turnover$ci, output_turnover[,4], # t-4
+                                      ifelse(abs(output_turnover[,3]) > output_turnover$ci, output_turnover[,3], # t-5
+                                      ifelse(abs(output_turnover[,2]) > output_turnover$ci, output_turnover[,2], # t-6
+                                                                         NA))))))
+output_turnover$corr.before.timing <- ifelse(abs(output_turnover[,7]) > output_turnover$ci, "-1", # t-1
+                                             ifelse(abs(output_turnover[,6]) > output_turnover$ci, "-2", # t-2
+                                                    ifelse(abs(output_turnover[,5]) > output_turnover$ci, "-3", # t-3
+                                                           ifelse(abs(output_turnover[,4]) > output_turnover$ci, "-4", # t-4
+                                                                  ifelse(abs(output_turnover[,3]) > output_turnover$ci, "-5", # t-5
+                                                                         ifelse(abs(output_turnover[,2]) > output_turnover$ci, "-6", # t-6
+                                                                                NA))))))
+
+colnames(output_turnover)[19] <- "corr.after"
+colnames(output_turnover)[20] <- "corr.after.timing"
+output_turnover$corr.after <- ifelse(abs(output_turnover[,9]) > output_turnover$ci, output_turnover[,9], # t+1
+                                     ifelse(abs(output_turnover[,10]) > output_turnover$ci, output_turnover[,10], # t+2
+                                            ifelse(abs(output_turnover[,11]) > output_turnover$ci, output_turnover[,11], # t+3
+                                                   ifelse(abs(output_turnover[,12]) > output_turnover$ci, output_turnover[,12], # t+4
+                                                          ifelse(abs(output_turnover[,13]) > output_turnover$ci, output_turnover[,13], # t+5
+                                                                 ifelse(abs(output_turnover[,14]) > output_turnover$ci, output_turnover[,14], # t+6
+                                                                        NA))))))
+output_turnover$corr.after.timing <- ifelse(abs(output_turnover[,9]) > output_turnover$ci, "1", # t+1
+                                            ifelse(abs(output_turnover[,10]) > output_turnover$ci, "2", # t+2
+                                                   ifelse(abs(output_turnover[,11]) > output_turnover$ci, "3", # t+3
+                                                          ifelse(abs(output_turnover[,12]) > output_turnover$ci, "4", # t+4
+                                                                 ifelse(abs(output_turnover[,13]) > output_turnover$ci, "5", # t+5
+                                                                        ifelse(abs(output_turnover[,14]) > output_turnover$ci, "6", # t+6
+                                                                               NA))))))
 
 
 
 turnover_precip <- output_turnover[,(names(output_turnover) %in% c("species_full",
-                                                                   "max.corr.before",
-                                                                   "max.corr.after",
-                                                                   "max.corr.before.timing",
-                                                                   "max.corr.after.timing"))]
+                                                                   "corr",
+                                                                   "corr.before",
+                                                                   "corr.before.timing",
+                                                                   "corr.after",
+                                                                   "corr.after.timing"))]
 colnames(turnover_precip) <- c("species_full",
+                               "corr_turnover_precip",
                                "ccf_turnover_precip_lead",
-                               "ccf_turnover_precip_lag",
                                "ccf_turnover_precip_lead_timing",
+                               "ccf_turnover_precip_lag",
                                "ccf_turnover_precip_lag_timing")
-
-# change the order of the columns
-turnover_precip <- turnover_precip[c("species_full",
-                                     "ccf_turnover_precip_lead",
-                                     "ccf_turnover_precip_lead_timing",
-                                     "ccf_turnover_precip_lag",
-                                     "ccf_turnover_precip_lag_timing")]
 
 
 
@@ -457,8 +501,8 @@ for(i in 1:length(species_list)){
     # plot(corr.anom, main = paste(species_list[i], " - dormancy x anom"))
     ci_value <- qnorm((1 + ci)/2)/sqrt(corr.anom$n.used)
   } else {
-    corr.anom$acf <- "NA"
-    ci_value <- "NA"
+    corr.anom$acf <- NA
+    ci_value <- NA
   }
 
   output_dormancy_anom[i,1] <- species_list[i]
@@ -466,26 +510,68 @@ for(i in 1:length(species_list)){
   output_dormancy_anom[i,39] <- as.numeric(ci_value)
 }
 
-# maximum correlation before time 0 of phenophase
-colnames(output_dormancy_anom)[40] <- "max.corr.before"
-absmax <- function(x) { x[which.max( abs(x) )][1]}
-output_dormancy_anom$max.corr.before <- apply(output_dormancy_anom[,2:19], 1, absmax) # if lag-time changes, this should be adapted --> this is 6 lags max
-# only keep significant correlations
-output_dormancy_anom$max.corr.before <- ifelse(abs(output_dormancy_anom$max.corr.before) > output_dormancy_anom$ci, output_dormancy_anom$max.corr.before, "NA")
+# closest signigicant correlation to time t
+colnames(output_dormancy_anom)[40] <- "corr.before"
+colnames(output_dormancy_anom)[41] <- "corr.before.timing"
+output_dormancy_anom$corr.before <- ifelse(abs(output_dormancy_anom[,19]) > output_dormancy_anom$ci, output_dormancy_anom[,19], # t-1
+                                      ifelse(abs(output_dormancy_anom[,18]) > output_dormancy_anom$ci, output_dormancy_anom[,18], # t-2
+                                      ifelse(abs(output_dormancy_anom[,17]) > output_dormancy_anom$ci, output_dormancy_anom[,17], # t-3
+                                      ifelse(abs(output_dormancy_anom[,16]) > output_dormancy_anom$ci, output_dormancy_anom[,16], # t-4
+                                      ifelse(abs(output_dormancy_anom[,15]) > output_dormancy_anom$ci, output_dormancy_anom[,15], # t-5
+                                      ifelse(abs(output_dormancy_anom[,14]) > output_dormancy_anom$ci, output_dormancy_anom[,14], # t-6
+                                      ifelse(abs(output_dormancy_anom[,13]) > output_dormancy_anom$ci, output_dormancy_anom[,13], # t-7
+                                      ifelse(abs(output_dormancy_anom[,12]) > output_dormancy_anom$ci, output_dormancy_anom[,12], # t-8
+                                      ifelse(abs(output_dormancy_anom[,11]) > output_dormancy_anom$ci, output_dormancy_anom[,11], # t-9
+                                      ifelse(abs(output_dormancy_anom[,10]) > output_dormancy_anom$ci, output_dormancy_anom[,10], # t-10
+                                      ifelse(abs(output_dormancy_anom[,9]) > output_dormancy_anom$ci, output_dormancy_anom[,9], # t-11
+                                      ifelse(abs(output_dormancy_anom[,8]) > output_dormancy_anom$ci, output_dormancy_anom[,8], # t-12
+                                      ifelse(abs(output_dormancy_anom[,7]) > output_dormancy_anom$ci, output_dormancy_anom[,7], # t-13
+                                      ifelse(abs(output_dormancy_anom[,6]) > output_dormancy_anom$ci, output_dormancy_anom[,6], # t-14
+                                      ifelse(abs(output_dormancy_anom[,5]) > output_dormancy_anom$ci, output_dormancy_anom[,5], # t-15
+                                      ifelse(abs(output_dormancy_anom[,4]) > output_dormancy_anom$ci, output_dormancy_anom[,4], # t-16
+                                      ifelse(abs(output_dormancy_anom[,3]) > output_dormancy_anom$ci, output_dormancy_anom[,3], # t-17
+                                      ifelse(abs(output_dormancy_anom[,2]) > output_dormancy_anom$ci, output_dormancy_anom[,2], # t-18
+                                                                         NA))))))))))))))))))
+output_dormancy_anom$corr.before.timing <- ifelse(abs(output_dormancy_anom[,19]) > output_dormancy_anom$ci, "-1", # t-1
+                                                  ifelse(abs(output_dormancy_anom[,18]) > output_dormancy_anom$ci, "-2", # t-2
+                                                  ifelse(abs(output_dormancy_anom[,17]) > output_dormancy_anom$ci, "-3", # t-3
+                                                  ifelse(abs(output_dormancy_anom[,16]) > output_dormancy_anom$ci, "-4", # t-4
+                                                  ifelse(abs(output_dormancy_anom[,15]) > output_dormancy_anom$ci, "-5", # t-5
+                                                  ifelse(abs(output_dormancy_anom[,14]) > output_dormancy_anom$ci, "-6", # t-6
+                                                  ifelse(abs(output_dormancy_anom[,13]) > output_dormancy_anom$ci, "-7", # t-7
+                                                  ifelse(abs(output_dormancy_anom[,12]) > output_dormancy_anom$ci, "-8", # t-8
+                                                  ifelse(abs(output_dormancy_anom[,11]) > output_dormancy_anom$ci, "-9", # t-9
+                                                  ifelse(abs(output_dormancy_anom[,10]) > output_dormancy_anom$ci, "-10", # t-10
+                                                  ifelse(abs(output_dormancy_anom[,9]) > output_dormancy_anom$ci, "-11", # t-11
+                                                  ifelse(abs(output_dormancy_anom[,8]) > output_dormancy_anom$ci, "-12", # t-12
+                                                  ifelse(abs(output_dormancy_anom[,7]) > output_dormancy_anom$ci, "-13", # t-13
+                                                  ifelse(abs(output_dormancy_anom[,6]) > output_dormancy_anom$ci, "-14", # t-14
+                                                  ifelse(abs(output_dormancy_anom[,5]) > output_dormancy_anom$ci, "-15", # t-15
+                                                  ifelse(abs(output_dormancy_anom[,4]) > output_dormancy_anom$ci, "-16", # t-16
+                                                  ifelse(abs(output_dormancy_anom[,3]) > output_dormancy_anom$ci, "-17", # t-17
+                                                  ifelse(abs(output_dormancy_anom[,2]) > output_dormancy_anom$ci, "-18", # t-18
+                                                         NA))))))))))))))))))
 
-# get the timing of the correlations
-colnames(output_dormancy_anom)[41] <- "max.corr.before.timing"
-max.corr.before.timing <- apply(output_dormancy_anom[,2:19], 1, function(x) { x[which.max( abs(x) )]}) # if lag-time changes, this should be adapted --> this is 6 lags max
-max.corr.before.timing <- names(unlist(max.corr.before.timing))
-# remove NA's, because this messes up the colnames of the timing
-output_dormancy_anom <- output_dormancy_anom[complete.cases(output_dormancy_anom), ]
-output_dormancy_anom$max.corr.before.timing <- max.corr.before.timing
-# only keep timing of significant correlations
-output_dormancy_anom$max.corr.before.timing <- ifelse(output_dormancy_anom$max.corr.before %in% "NA", "NA", output_dormancy_anom$max.corr.before.timing)
+# # maximum correlation before time 0 of phenophase
+# colnames(output_dormancy_anom)[40] <- "max.corr.before"
+# absmax <- function(x) { x[which.max( abs(x) )][1]}
+# output_dormancy_anom$max.corr.before <- apply(output_dormancy_anom[,2:19], 1, absmax) # if lag-time changes, this should be adapted --> this is 6 lags max
+# # only keep significant correlations
+# output_dormancy_anom$max.corr.before <- ifelse(abs(output_dormancy_anom$max.corr.before) > output_dormancy_anom$ci, output_dormancy_anom$max.corr.before, NA)
+#
+# # get the timing of the correlations
+# colnames(output_dormancy_anom)[41] <- "max.corr.before.timing"
+# max.corr.before.timing <- apply(output_dormancy_anom[,2:19], 1, function(x) { x[which.max( abs(x) )]}) # if lag-time changes, this should be adapted --> this is 6 lags max
+# max.corr.before.timing <- names(unlist(max.corr.before.timing))
+# # remove NA's, because this messes up the colnames of the timing
+# output_dormancy_anom <- output_dormancy_anom[complete.cases(output_dormancy_anom), ]
+# output_dormancy_anom$max.corr.before.timing <- max.corr.before.timing
+# # only keep timing of significant correlations
+# output_dormancy_anom$max.corr.before.timing <- ifelse(output_dormancy_anom$max.corr.before %in% NA, NA, output_dormancy_anom$max.corr.before.timing)
 
 dormancy_anom <- output_dormancy_anom[,(names(output_dormancy_anom) %in% c("species_full",
-                                                                           "max.corr.before",
-                                                                           "max.corr.before.timing"))]
+                                                                           "corr.before",
+                                                                           "corr.before.timing"))]
 colnames(dormancy_anom) <- c("species_full",
                              "ccf_dormancy_anom_lead",
                              "ccf_dormancy_anom_lead_timing")
@@ -536,8 +622,8 @@ for(i in 1:length(species_list)){
     # plot(corr.anom, main = paste(species_list[i], " - turnover x anom"))
     ci_value <- qnorm((1 + ci)/2)/sqrt(corr.anom$n.used)
   } else {
-    corr.anom$acf <- "NA"
-    ci_value <- "NA"
+    corr.anom$acf <- NA
+    ci_value <- NA
   }
 
   output_turnover_anom[i,1] <- species_list[i]
@@ -545,26 +631,51 @@ for(i in 1:length(species_list)){
   output_turnover_anom[i,39] <- as.numeric(ci_value)
 }
 
-# maximum correlation before time 0 of phenophase
-colnames(output_turnover_anom)[40] <- "max.corr.before"
-absmax <- function(x) { x[which.max( abs(x) )][1]}
-output_turnover_anom$max.corr.before <- apply(output_turnover_anom[,2:19], 1, absmax) # if lag-time changes, this should be adapted --> this is 6 lags max
-# only keep significant correlations
-output_turnover_anom$max.corr.before <- ifelse(abs(output_turnover_anom$max.corr.before) > output_turnover_anom$ci, output_turnover_anom$max.corr.before, "NA")
-
-# get the timing of the correlations
-colnames(output_turnover_anom)[41] <- "max.corr.before.timing"
-max.corr.before.timing <- apply(output_turnover_anom[,2:19], 1, function(x) { x[which.max( abs(x) )]}) # if lag-time changes, this should be adapted --> this is 6 lags max
-max.corr.before.timing <- names(unlist(max.corr.before.timing))
-# remove NA's, because this messes up the colnames of the timing
-output_turnover_anom <- output_turnover_anom[complete.cases(output_turnover_anom), ]
-output_turnover_anom$max.corr.before.timing <- max.corr.before.timing
-# only keep timing of significant correlations
-output_turnover_anom$max.corr.before.timing <- ifelse(output_turnover_anom$max.corr.before %in% "NA", "NA", output_turnover_anom$max.corr.before.timing)
+# closest signigicant correlation to time t
+colnames(output_turnover_anom)[40] <- "corr.before"
+colnames(output_turnover_anom)[41] <- "corr.before.timing"
+output_turnover_anom$corr.before <- ifelse(abs(output_turnover_anom[,19]) > output_turnover_anom$ci, output_turnover_anom[,19], # t-1
+                                           ifelse(abs(output_turnover_anom[,18]) > output_turnover_anom$ci, output_turnover_anom[,18], # t-2
+                                                  ifelse(abs(output_turnover_anom[,17]) > output_turnover_anom$ci, output_turnover_anom[,17], # t-3
+                                                         ifelse(abs(output_turnover_anom[,16]) > output_turnover_anom$ci, output_turnover_anom[,16], # t-4
+                                                                ifelse(abs(output_turnover_anom[,15]) > output_turnover_anom$ci, output_turnover_anom[,15], # t-5
+                                                                       ifelse(abs(output_turnover_anom[,14]) > output_turnover_anom$ci, output_turnover_anom[,14], # t-6
+                                                                              ifelse(abs(output_turnover_anom[,13]) > output_turnover_anom$ci, output_turnover_anom[,13], # t-7
+                                                                                     ifelse(abs(output_turnover_anom[,12]) > output_turnover_anom$ci, output_turnover_anom[,12], # t-8
+                                                                                            ifelse(abs(output_turnover_anom[,11]) > output_turnover_anom$ci, output_turnover_anom[,11], # t-9
+                                                                                                   ifelse(abs(output_turnover_anom[,10]) > output_turnover_anom$ci, output_turnover_anom[,10], # t-10
+                                                                                                          ifelse(abs(output_turnover_anom[,9]) > output_turnover_anom$ci, output_turnover_anom[,9], # t-11
+                                                                                                                 ifelse(abs(output_turnover_anom[,8]) > output_turnover_anom$ci, output_turnover_anom[,8], # t-12
+                                                                                                                        ifelse(abs(output_turnover_anom[,7]) > output_turnover_anom$ci, output_turnover_anom[,7], # t-13
+                                                                                                                               ifelse(abs(output_turnover_anom[,6]) > output_turnover_anom$ci, output_turnover_anom[,6], # t-14
+                                                                                                                                      ifelse(abs(output_turnover_anom[,5]) > output_turnover_anom$ci, output_turnover_anom[,5], # t-15
+                                                                                                                                             ifelse(abs(output_turnover_anom[,4]) > output_turnover_anom$ci, output_turnover_anom[,4], # t-16
+                                                                                                                                                    ifelse(abs(output_turnover_anom[,3]) > output_turnover_anom$ci, output_turnover_anom[,3], # t-17
+                                                                                                                                                           ifelse(abs(output_turnover_anom[,2]) > output_turnover_anom$ci, output_turnover_anom[,2], # t-18
+                                                                                                                                                                  NA))))))))))))))))))
+output_turnover_anom$corr.before.timing <- ifelse(abs(output_turnover_anom[,19]) > output_turnover_anom$ci, "-1", # t-1
+                                                  ifelse(abs(output_turnover_anom[,18]) > output_turnover_anom$ci, "-2", # t-2
+                                                         ifelse(abs(output_turnover_anom[,17]) > output_turnover_anom$ci, "-3", # t-3
+                                                                ifelse(abs(output_turnover_anom[,16]) > output_turnover_anom$ci, "-4", # t-4
+                                                                       ifelse(abs(output_turnover_anom[,15]) > output_turnover_anom$ci, "-5", # t-5
+                                                                              ifelse(abs(output_turnover_anom[,14]) > output_turnover_anom$ci, "-6", # t-6
+                                                                                     ifelse(abs(output_turnover_anom[,13]) > output_turnover_anom$ci, "-7", # t-7
+                                                                                            ifelse(abs(output_turnover_anom[,12]) > output_turnover_anom$ci, "-8", # t-8
+                                                                                                   ifelse(abs(output_turnover_anom[,11]) > output_turnover_anom$ci, "-9", # t-9
+                                                                                                          ifelse(abs(output_turnover_anom[,10]) > output_turnover_anom$ci, "-10", # t-10
+                                                                                                                 ifelse(abs(output_turnover_anom[,9]) > output_turnover_anom$ci, "-11", # t-11
+                                                                                                                        ifelse(abs(output_turnover_anom[,8]) > output_turnover_anom$ci, "-12", # t-12
+                                                                                                                               ifelse(abs(output_turnover_anom[,7]) > output_turnover_anom$ci, "-13", # t-13
+                                                                                                                                      ifelse(abs(output_turnover_anom[,6]) > output_turnover_anom$ci, "-14", # t-14
+                                                                                                                                             ifelse(abs(output_turnover_anom[,5]) > output_turnover_anom$ci, "-15", # t-15
+                                                                                                                                                    ifelse(abs(output_turnover_anom[,4]) > output_turnover_anom$ci, "-16", # t-16
+                                                                                                                                                           ifelse(abs(output_turnover_anom[,3]) > output_turnover_anom$ci, "-17", # t-17
+                                                                                                                                                                  ifelse(abs(output_turnover_anom[,2]) > output_turnover_anom$ci, "-18", # t-18
+                                                                                                                                                                         NA))))))))))))))))))
 
 turnover_anom <- output_turnover_anom[,(names(output_turnover_anom) %in% c("species_full",
-                                                                           "max.corr.before",
-                                                                           "max.corr.before.timing"))]
+                                                                           "corr.before",
+                                                                           "corr.before.timing"))]
 colnames(turnover_anom) <- c("species_full",
                              "ccf_turnover_anom_lead",
                              "ccf_turnover_anom_lead_timing")
@@ -584,3 +695,110 @@ write.table(output, "data/timeseries_correlations.csv",
             col.names = TRUE,
             row.names = FALSE,
             sep = ",")
+#----------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
+# get an idea of how many species show correlations, at what average timing etc...
+# in groups of deciduous and evergreen
+#----------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
+
+
+overview <- read.csv("data/species_meta_data.csv",
+                     header = TRUE,
+                     sep = ",",
+                     stringsAsFactors = FALSE)
+# clear
+overview$deciduousness <- ifelse(overview$species_full %in% "Pericopsis elata", "deciduous*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Diospyros sp.", "evergreen*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Beilschmiedia sp.", "evergreen*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Macaranga sp.", "evergreen*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Trichilia welwitschii", "evergreen*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Chytranthus sp.", "evergreen*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Copaifera mildbraedii", "deciduous*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Tridesmostemon omphalocarpoides", "evergreen*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Omphalocarpum lecomteanum", "evergreen*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Fernandoa adolfi-friderici", "deciduous*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Cola sp.", "evergreen*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Tessmannia sp.", "evergreen*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Irvingia sp.", "deciduous*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Tabernaemontana crassa", "evergreen*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Trichilia tessmannii", "deciduous*",overview$deciduousness)
+# not so sure, limited data
+overview$deciduousness <- ifelse(overview$species_full %in% "Trichilia sp.", "deciduous* (?)",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Trichilia gilletii", "evergreen* (?)",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Drypetes sp.", "evergreen* (?)",overview$deciduousness)
+# not so sure, unclear phenological data
+overview$deciduousness <- ifelse(overview$species_full %in% "Radlkofera calodendron", "evergreen* (?)",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Gilletiodendron mildbraedii", "evergreen* (?)",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Homalium sp.", "deciduous* (?)",overview$deciduousness)
+
+## two stars, in literature found as evergreen or (sometimes) deciduous
+## selected a class based on the actual data
+overview$deciduousness <- ifelse(overview$species_full %in% "Celtis mildbraedii", "evergreen**",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Combretum lokele", "deciduous**",overview$deciduousness)
+
+overview$deciduousness <- ifelse(overview$species_full %in% "Homalium africanum", "evergreen**",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Quassia silvestris", "evergreen**",overview$deciduousness)
+
+# not so sure, unclear phenological data
+overview$deciduousness <- ifelse(overview$species_full %in% "Homalium longistylum", "evergreen** (?)",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Irvingia gabonensis", "deciduous** (?)",overview$deciduousness)
+
+
+# only keep the columns you want to work with
+overview = overview[,(names(overview) %in% c("species_full",
+                                             "deciduousness",
+                                             "site_years_with_leaf_dormancy",
+                                             "site_years_with_leaf_turnover"
+                                             ))]
+
+df <- merge(overview, output, by = "species_full", all.x = TRUE)
+
+#--------------
+
+df_dec_dorm <- df %>%
+  filter(grepl("deciduous",deciduousness)) %>%
+  filter(site_years_with_leaf_dormancy > 0)
+
+apply(df_dec_dorm, 2, function(x){sum(!is.na(x))})
+mean(as.numeric(df_dec_dorm$ccf_dormancy_precip_lead_timing), na.rm=TRUE)
+
+table(sign(df_dec_dorm$ccf_dormancy_precip_lead))
+
+
+
+#--
+df_dec_turn <- df %>%
+  filter(grepl("deciduous",deciduousness)) %>%
+  filter(site_years_with_leaf_turnover > 0)
+
+apply(df_dec_turn, 2, function(x){sum(!is.na(x))})
+mean(as.numeric(df_dec_turn$ccf_dormancy_precip_lead_timing), na.rm=TRUE)
+
+
+#--------------
+
+df_ever_dorm <- df %>%
+  filter(grepl("evergreen",deciduousness)) %>%
+  filter(site_years_with_leaf_dormancy > 0)
+
+apply(df_ever_dorm, 2, function(x){sum(!is.na(x))})
+mean(as.numeric(df_ever_dorm$ccf_dormancy_precip_lead_timing), na.rm=TRUE)
+
+table(sign(df_ever_dorm$ccf_dormancy_precip_lead))
+table(sign(df_ever_dorm$ccf_dormancy_anom_lead))
+
+#--
+df_ever_turn <- df %>%
+  filter(grepl("evergreen",deciduousness)) %>%
+  filter(site_years_with_leaf_turnover > 0)
+
+apply(df_ever_turn, 2, function(x){sum(!is.na(x))})
+mean(as.numeric(df_ever_turn$ccf_dormancy_precip_lead_timing), na.rm=TRUE)
+
+table(sign(df_ever_turn$ccf_turnover_precip_lead))
+
+
+
+
