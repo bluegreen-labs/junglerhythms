@@ -15,8 +15,8 @@ source("R/event_length.R")
 #-------- input that you can change   ---------------------------------
 #----------------------------------------------------------------------
 #----------------------------------------------------------------------
-phenophase_selected = "leaf_turnover"
-title_name = "(b) Canopy turnover"
+phenophase_selected = "leaf_dormancy"
+title_name = "(a) Canopy dormancy"
 minimum_events = 5    # species will only be included in this analysis
 # when they have a minimum set of events
 #----------------------------------------------------------------------
@@ -30,7 +30,7 @@ df <- readRDS("data/jungle_rhythms_weekly_annotations.rds")
 df <- df[which(df$value != 0),]
 df$join_id <- paste0("R",df$image,"-",df$image_row)
 
-metadata <- read.csv("data/phenology_archives_species_long_format_20190619.csv",
+metadata <- read.csv("data/phenology_archives_species_long_format_20190626.csv",
                      header = TRUE, sep = ",")
 metadata$join_id <- paste(metadata$image,metadata$row, sep = "-")
 
@@ -242,7 +242,12 @@ p_onset <- ggplot(data = onset) +
 # plot(p_onset)
 # dev.off()
 
+p_onset_turn <- p_onset
+p_all <- grid.arrange(p_onset, p_onset_turn, widths = c(1,1)) #
 
+# pdf("~/Desktop/figure2_onset.pdf",10.5,6)
+# plot(p_all)
+# dev.off()
 
 # #--------------------------------------------------------------------------
 # #--------------------------------------------------------------------------

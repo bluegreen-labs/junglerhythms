@@ -88,12 +88,12 @@ p_modis <- ggplot(VI_s) +
         strip.text = element_text(hjust = 0),
         axis.line.x = element_blank(),
         # axis.text.x=element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1,vjust = 2,size = 10), # vjust to center the label
+        axis.text.x = element_text(angle = 90, hjust = 1,vjust = 1.5,size = 10), # vjust to center the label
         axis.title.x=element_blank(),
         axis.title.y = element_text(vjust = 3),
         legend.position = "none",
-        plot.margin=unit(c(0,0,0,0.5),"cm")
+        plot.margin=unit(c(0,0,0.5,0.5),"cm")
   )
 
-print(p_modis)
+# print(p_modis)
 

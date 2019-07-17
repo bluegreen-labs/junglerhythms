@@ -17,7 +17,7 @@ df <- readRDS("data/jungle_rhythms_weekly_annotations.rds")
 df <- df[which(df$value != 0),]
 df$join_id <- paste0("R",df$image,"-",df$image_row)
 
-metadata <- read.csv("data/phenology_archives_species_long_format_20190619.csv",
+metadata <- read.csv("data/phenology_archives_species_long_format_20190626.csv",
                      header = TRUE, sep = ",")
 metadata$join_id <- paste(metadata$image,metadata$row, sep = "-")
 
@@ -457,23 +457,62 @@ final <- merge(final, onset_LT, by = "species_full", all.x = TRUE)
 final <- merge(final, synchrony_ind_LD, by = "species_full", all.x = TRUE)
 final <- merge(final, synchrony_ind_LT, by = "species_full", all.x = TRUE)
 
+
+# # to get some statistics on full database (total species, individuals, siteyear etc.)
+# metadata <- read.csv("data/phenology_archives_species_long_format_20190626.csv",
+#                      header = TRUE, sep = ",")
+# metadata$species_full <- paste(metadata$genus_Meise, metadata$species_Meise)
+# metadata = metadata[,(names(metadata) %in% c("species_full",
+#                                               "genus_Meise",
+#                                               "family_Meise"))]
+# metadata <- metadata[!duplicated(metadata), ]
+#
+# final <- final[ !final$species_full %in% c("Unknown Unknown"), ] # remove unknown species
+# final <- merge(final, metadata, by = "species_full", all.x = TRUE)
+#
+# # count species identified to full species names and those only to genus level
+# test <- final %>%
+#   filter(!grepl("sp\\.",species_full))
+# test <- final %>%
+#   filter(grepl("sp\\.",species_full))
+# # number of genus and family covered
+# unique(final$genus_Meise)
+# unique(final$family_Meise)
+# # total individuals and siteyears
+# sum(final$nr_indiv)
+# sum(final$site_years)
+
 # remove rows (species) not included in the Yangambi mixed forest census
 final <- final[!(is.na(final$basal_area_site)),]
 # remove those only at genus level
 final <- final %>%
   filter(!grepl("sp\\.",species_full))
+# sum(final$nr_indiv)
+# sum(final$site_years)
+# sum(final$basal_area_percentage)
+# metadata <- read.csv("data/phenology_archives_species_long_format_20190626.csv",
+#                      header = TRUE, sep = ",")
+# metadata$species_full <- paste(metadata$genus_Meise, metadata$species_Meise)
+# metadata = metadata[,(names(metadata) %in% c("species_full",
+#                                               "genus_Meise",
+#                                               "family_Meise"))]
+# metadata <- metadata[!duplicated(metadata), ]
+# final <- merge(final, metadata, by = "species_full", all.x = TRUE)
+# unique(final$genus_Meise)
+# unique(final$family_Meise)
+
 
 #--------------------------------------------------------------------
-# Sychrony at the individual level
-onset_ind_LD = onset_ind_LD[,(names(onset_ind_LD) %in% c("id","species_full","onset_sd_weeks","nr_events_onset"))]
-onset_ind_LD$phenophase <- "leaf_dormancy"
-onset_ind_LT = onset_ind_LT[,(names(onset_ind_LT) %in% c("id","species_full","onset_sd_weeks","nr_events_onset"))]
-onset_ind_LT$phenophase <- "leaf_turnover"
-onset_ind <- rbind(onset_ind_LD, onset_ind_LT)
-onset_ind <- merge(onset_ind, census, by = "species_full", all.x = TRUE)
-onset_ind <- merge(onset_ind, traits, by = "species_full", all.x = TRUE)
-# remove rows (species) not included in the Yangambi mixed forest census
-onset_ind <- onset_ind[!(is.na(onset_ind$basal_area_site)),]
+# # Sychrony at the individual level
+# onset_ind_LD = onset_ind_LD[,(names(onset_ind_LD) %in% c("id","species_full","onset_sd_weeks","nr_events_onset"))]
+# onset_ind_LD$phenophase <- "leaf_dormancy"
+# onset_ind_LT = onset_ind_LT[,(names(onset_ind_LT) %in% c("id","species_full","onset_sd_weeks","nr_events_onset"))]
+# onset_ind_LT$phenophase <- "leaf_turnover"
+# onset_ind <- rbind(onset_ind_LD, onset_ind_LT)
+# onset_ind <- merge(onset_ind, census, by = "species_full", all.x = TRUE)
+# onset_ind <- merge(onset_ind, traits, by = "species_full", all.x = TRUE)
+# # remove rows (species) not included in the Yangambi mixed forest census
+# onset_ind <- onset_ind[!(is.na(onset_ind$basal_area_site)),]
 
 
 #--------------------------------------------------------------------

@@ -19,7 +19,7 @@ df <- readRDS("data/jungle_rhythms_weekly_annotations.rds")
 # df <- df[which(df$value != 0),]
 df$join_id <- paste0("R",df$image,"-",df$image_row)
 
-metadata <- read.csv("data/phenology_archives_species_long_format_20190619.csv",
+metadata <- read.csv("data/phenology_archives_species_long_format_20190626.csv",
                      header = TRUE, sep = ",")
 metadata$join_id <- paste(metadata$image,metadata$row, sep = "-")
 
@@ -52,7 +52,8 @@ sp_deciduous <- c("Petersianthus macrocarpus",
                   # "Greenwayodendron suaveolens",
                   "Irvingia grandifolia",
                   "Erythrophleum suaveolens",
-                  "Autranella congolensis",
+                  "Antrocaryon nannanii",
+                  #"Autranella congolensis",
                   "Pericopsis elata")
                   # "Vitex ferruginea",
                   # "Ricinodendron heudelotii",
@@ -66,7 +67,7 @@ p_deciduous <- circular_linear_plot(data,
                                     species_name = query_deciduous,
                                     viridis_rescaling = 0.15,
                                     title_name = "(b) Deciduous")
-pdf("~/Desktop/deciduous.pdf",8.4,12)
+pdf("~/Desktop/deciduous.pdf",8.6,12)
 plot(p_deciduous)
 dev.off()
 
@@ -74,7 +75,7 @@ p_evergreen <- circular_linear_plot(data,
                                     species_name = query_evergreen,
                                     viridis_rescaling = 0.05,
                                     title_name = "(a) Evergreen")
-pdf("~/Desktop/evergreen.pdf",8.4,12)
+pdf("~/Desktop/evergreen.pdf",8.6,12)
 plot(p_evergreen)
 dev.off()
 

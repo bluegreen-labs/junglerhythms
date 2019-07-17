@@ -54,7 +54,7 @@ if(zero_events_remove){
 }
 
 df$join_id <- paste0("R",df$image,"-",df$image_row)
-metadata <- read.csv("data/phenology_archives_species_long_format_20190619.csv",
+metadata <- read.csv("data/phenology_archives_species_long_format_20190626.csv",
                      header = TRUE, sep = ",")
 metadata$join_id <- paste(metadata$image,metadata$row, sep = "-")
 
@@ -401,7 +401,7 @@ p_turnover <- ggplot() +
   annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 2.2, alpha = .2) + # jan - febr
   annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 2.2, alpha = .2) + # jun - jul
   annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 2.2, alpha = .2) + # dec
-  labs(y = "freq. leaf turnover",
+  labs(y = "freq. canopy turnover",
        x = "") +
   theme_minimal() +
   theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
@@ -444,7 +444,7 @@ p_dormancy <- ggplot() +
   annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 2.2, alpha = .2) + # jan - febr
   annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 2.2, alpha = .2) + # jun - jul
   annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 2.2, alpha = .2) + # dec
-  labs(y = "freq. leaf dormancy",
+  labs(y = "freq. canopy dormancy",
        x = "") +
   theme_minimal() +
   theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
@@ -493,9 +493,13 @@ p_sun <- ggplot(climate) +
   geom_line(aes(x = Month,
                 y = insol_JR),
             size = 1.2) +
+  geom_point(aes(x = Month,
+                 y = insol_JR)) +
   scale_x_continuous(limits = c(0.5,12.5),
                      breaks = seq(1,12,1),
                      labels = month.abb) +
+  scale_y_continuous(limits = c(130,210),
+                     breaks = seq(130,210,20)) +
   labs(y = "sun hours",
        x = "") +
   theme_minimal() +
@@ -511,7 +515,7 @@ p_sun <- ggplot(climate) +
         axis.title.x=element_blank(),
         axis.title.y = element_text(vjust = 3),
         legend.position = "none",
-        plot.margin=unit(c(0,0,0,0.5),"cm")
+        plot.margin=unit(c(0.5,0,0,0.5),"cm")
   )
 
 
@@ -522,12 +526,10 @@ p_sun <- ggplot(climate) +
 # https://stackoverflow.com/questions/30402930/align-x-axes-of-box-plot-and-line-plot-using-ggplot
 p_modis <- ggplot_gtable(ggplot_build(p_modis))
 p_turnover <- ggplot_gtable(ggplot_build(p_turnover))
-p_par <- ggplot_gtable(ggplot_build(p_par))
 p_precip <- ggplot_gtable(ggplot_build(p_precip))
 p_sun <- ggplot_gtable(ggplot_build(p_sun))
 
 p_modis$widths <-p_turnover$widths
-p_par$widths <-p_turnover$widths
 p_precip$widths <-p_turnover$widths
 p_sun$widths <-p_turnover$widths
 
@@ -538,7 +540,7 @@ p_all <- grid.arrange(p_sun, p_precip, p_dormancy, p_turnover, p_modis, heights 
 # p_all <- grid.arrange(p_sun, p_precip, p_modis, p_dormancy, p_turnover, heights = c(1,2,3,3,3.4)) #
 
 
-pdf("~/Desktop/standlevel.pdf",5,10)
+pdf("~/Desktop/standlevel.pdf",4,8.5) # 5,10)
 plot(p_all)
 dev.off()
 
@@ -603,3 +605,23 @@ cor.test(climate.corr$insol_JR, climate.corr$dormancy_stand, method = 'pearson')
 # cor.test(climate.corr$prec_all, climate.corr$dormancy_stand, method = 'pearson')
 cor.test(climate.corr$prec_JR, climate.corr$dormancy_stand, method = 'pearson')
 cor.test(climate.corr$tmax_JR, climate.corr$dormancy_stand, method = 'pearson')
+
+# climate inter - correlations
+cor.test(climate.corr$insol_JR, climate.corr$prec_JR, method = 'pearson')
+cor.test(climate.corr$insol_all, climate.corr$prec_all, method = 'pearson')
+
+# MODIS
+VI_s$date <- as.Date(VI_s$doy, origin="2010-12-31")
+VI_s$Month <- format(as.Date(VI_s$date), "%m")
+modis <- VI_s %>%
+  group_by(Month)%>%
+  dplyr::summarise(EVIm = mean(EVI))
+modis$Month <- as.numeric(modis$Month)
+
+climate.corr <- merge(climate.corr, modis, by = c("Month"), all.x = TRUE)
+
+cor.test(climate.corr$EVIm, climate.corr$prec_all, method = 'pearson')
+cor.test(climate.corr$EVIm, climate.corr$insol_all, method = 'pearson')
+cor.test(climate.corr$EVIm, climate.corr$PAR_Ygb_Hauser, method = 'pearson')
+cor.test(climate.corr$EVIm, climate.corr$dormancy_stand, method = 'pearson')
+cor.test(climate.corr$EVIm, climate.corr$turnover_stand, method = 'pearson')

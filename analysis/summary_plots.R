@@ -23,6 +23,39 @@ overview$sd_intrasp_onset_leaf_turnover_weeks <- ifelse(overview$site_years_with
 # overview$mean_synchrony_individuals_onset_leaf_dormancy_weeks <- ifelse(overview$mean_nr_events_within_individuals_leaf_dormancy < 2, NA, overview$mean_synchrony_individuals_onset_leaf_dormancy_weeks)
 # overview$mean_synchrony_individuals_onset_leaf_turnover_weeks <- ifelse(overview$mean_synchrony_individuals_onset_leaf_turnover_weeks < 2, NA, overview$mean_synchrony_individuals_onset_leaf_turnover_weeks)
 
+# clear
+overview$deciduousness <- ifelse(overview$species_full %in% "Pericopsis elata", "deciduous*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Trichilia welwitschii", "evergreen*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Copaifera mildbraedii", "deciduous*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Tridesmostemon omphalocarpoides", "evergreen*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Omphalocarpum lecomteanum", "evergreen*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Fernandoa adolfi-friderici", "deciduous*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Tabernaemontana crassa", "evergreen*",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Trichilia tessmannii", "deciduous*",overview$deciduousness)
+# not so sure, limited data
+overview$deciduousness <- ifelse(overview$species_full %in% "Trichilia gilletii", "evergreen* (?)",overview$deciduousness)
+# not so sure, unclear phenological data
+overview$deciduousness <- ifelse(overview$species_full %in% "Radlkofera calodendron", "evergreen* (?)",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Gilletiodendron mildbraedii", "evergreen* (?)",overview$deciduousness)
+
+## two stars, in literature found as evergreen or (sometimes) deciduous
+## selected a class based on the actual data
+overview$deciduousness <- ifelse(overview$species_full %in% "Celtis mildbraedii", "evergreen**",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Combretum lokele", "deciduous**",overview$deciduousness)
+
+overview$deciduousness <- ifelse(overview$species_full %in% "Homalium africanum", "evergreen**",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Quassia silvestris", "evergreen**",overview$deciduousness)
+
+# not so sure, unclear phenological data
+overview$deciduousness <- ifelse(overview$species_full %in% "Homalium longistylum", "evergreen** (?)",overview$deciduousness)
+overview$deciduousness <- ifelse(overview$species_full %in% "Irvingia gabonensis", "deciduous** (?)",overview$deciduousness)
+
+# to sort easily for making the eventual tables -. uniform label deciduous or evergreen
+overview$dec_label <- ifelse(overview$deciduousness %in% c("deciduous","deciduous*","deciduous**","deciduous* (?)","deciduous** (?)"), "dec",
+                             ifelse(overview$deciduousness %in% c("evergreen","evergreen*","evergreen**","evergreen* (?)","evergreen** (?)"), "ever", "NA"))
+
+
+
 #---------------------------
 # synchrony at the individual level
 overview_ind <- read.csv("data/synchrony_individuals.csv",
@@ -31,23 +64,52 @@ overview_ind <- read.csv("data/synchrony_individuals.csv",
                          stringsAsFactors = FALSE)
 # first remove if too few events to calculate index (minimum 3 events per individual)
 overview_ind$onset_sd_weeks <- ifelse(overview_ind$nr_events_onset < 3, NA, overview_ind$onset_sd_weeks)
+# clear
+overview_ind$deciduousness <- ifelse(overview_ind$species_full %in% "Pericopsis elata", "deciduous*",overview_ind$deciduousness)
+overview_ind$deciduousness <- ifelse(overview_ind$species_full %in% "Trichilia welwitschii", "evergreen*",overview_ind$deciduousness)
+overview_ind$deciduousness <- ifelse(overview_ind$species_full %in% "Copaifera mildbraedii", "deciduous*",overview_ind$deciduousness)
+overview_ind$deciduousness <- ifelse(overview_ind$species_full %in% "Tridesmostemon omphalocarpoides", "evergreen*",overview_ind$deciduousness)
+overview_ind$deciduousness <- ifelse(overview_ind$species_full %in% "Omphalocarpum lecomteanum", "evergreen*",overview_ind$deciduousness)
+overview_ind$deciduousness <- ifelse(overview_ind$species_full %in% "Fernandoa adolfi-friderici", "deciduous*",overview_ind$deciduousness)
+overview_ind$deciduousness <- ifelse(overview_ind$species_full %in% "Tabernaemontana crassa", "evergreen*",overview_ind$deciduousness)
+overview_ind$deciduousness <- ifelse(overview_ind$species_full %in% "Trichilia tessmannii", "deciduous*",overview_ind$deciduousness)
+# not so sure, limited data
+overview_ind$deciduousness <- ifelse(overview_ind$species_full %in% "Trichilia gilletii", "evergreen* (?)",overview_ind$deciduousness)
+# not so sure, unclear phenological data
+overview_ind$deciduousness <- ifelse(overview_ind$species_full %in% "Radlkofera calodendron", "evergreen* (?)",overview_ind$deciduousness)
+overview_ind$deciduousness <- ifelse(overview_ind$species_full %in% "Gilletiodendron mildbraedii", "evergreen* (?)",overview_ind$deciduousness)
+
+## two stars, in literature found as evergreen or (sometimes) deciduous
+## selected a class based on the actual data
+overview_ind$deciduousness <- ifelse(overview_ind$species_full %in% "Celtis mildbraedii", "evergreen**",overview_ind$deciduousness)
+overview_ind$deciduousness <- ifelse(overview_ind$species_full %in% "Combretum lokele", "deciduous**",overview_ind$deciduousness)
+
+overview_ind$deciduousness <- ifelse(overview_ind$species_full %in% "Homalium africanum", "evergreen**",overview_ind$deciduousness)
+overview_ind$deciduousness <- ifelse(overview_ind$species_full %in% "Quassia silvestris", "evergreen**",overview_ind$deciduousness)
+
+# not so sure, unclear phenological data
+overview_ind$deciduousness <- ifelse(overview_ind$species_full %in% "Homalium longistylum", "evergreen** (?)",overview_ind$deciduousness)
+overview_ind$deciduousness <- ifelse(overview_ind$species_full %in% "Irvingia gabonensis", "deciduous** (?)",overview_ind$deciduousness)
+
+# to sort easily for making the eventual tables -. uniform label deciduous or evergreen
+overview_ind$dec_label <- ifelse(overview_ind$deciduousness %in% c("deciduous","deciduous*","deciduous**","deciduous* (?)","deciduous** (?)"), "dec",
+                             ifelse(overview_ind$deciduousness %in% c("evergreen","evergreen*","evergreen**","evergreen* (?)","evergreen** (?)"), "ever", "NA"))
+
 
 
 #-----------------------------------------------------------------------
 # data deciduousness
 #-----------------------------------------------------------------------
-dfdec <- overview %>%
-  filter(deciduousness == "deciduous" | deciduousness == "evergreen")
 # dormancy
-dfdec_ld = dfdec[,(names(dfdec) %in% c("species_full",
-                                       "deciduousness",
+df_ld = overview[,(names(overview) %in% c("species_full",
+                                       "dec_label",
                                        "ratio_site_years_with_leaf_dormancy",
                                        "mean_duration_leaf_dormancy_weeks",
                                        "sd_intrasp_onset_leaf_dormancy_weeks"))]
                                        # "mean_synchrony_individuals_onset_leaf_dormancy_weeks",
                                        # "mean_distance_onset_leaf_dormancy_weeks"))]
-dfdec_ld$phenophase <- "leaf_dormancy"
-dfdec_ld <- dfdec_ld %>%
+df_ld$phenophase <- "leaf_dormancy"
+df_ld <- df_ld %>%
   rename("ratio_site_years" = ratio_site_years_with_leaf_dormancy,
          "mean_duration" = mean_duration_leaf_dormancy_weeks,
          "sd_intrasp_onset" = sd_intrasp_onset_leaf_dormancy_weeks)
@@ -55,15 +117,15 @@ dfdec_ld <- dfdec_ld %>%
          # "mean_distance_onset" = mean_distance_onset_leaf_dormancy_weeks)
 
 # turnover
-dfdec_lt = dfdec[,(names(dfdec) %in% c("species_full",
-                                       "deciduousness",
+df_lt = overview[,(names(overview) %in% c("species_full",
+                                       "dec_label",
                                        "ratio_site_years_with_leaf_turnover",
                                        "mean_duration_leaf_turnover_weeks",
                                        "sd_intrasp_onset_leaf_turnover_weeks"))]
                                        # "mean_synchrony_individuals_onset_leaf_turnover_weeks",
                                        # "mean_distance_onset_leaf_turnover_weeks"))]
-dfdec_lt$phenophase <- "leaf_turnover"
-dfdec_lt <- dfdec_lt %>%
+df_lt$phenophase <- "leaf_turnover"
+df_lt <- df_lt %>%
   rename("ratio_site_years" = ratio_site_years_with_leaf_turnover,
          "mean_duration" = mean_duration_leaf_turnover_weeks,
          "sd_intrasp_onset" = sd_intrasp_onset_leaf_turnover_weeks)
@@ -71,58 +133,55 @@ dfdec_lt <- dfdec_lt %>%
          # "mean_distance_onset" = mean_distance_onset_leaf_turnover_weeks)
 
 # rbind dormancy and turnover
-dfdec_all <- rbind(dfdec_ld,dfdec_lt)
+df_all <- rbind(df_ld,df_lt)
 
-#-----------------------------------------------------------------------
-dfdec_ind <- overview_ind %>%
-  filter(deciduousness == "deciduous" | deciduousness == "evergreen")
 
 
 
 # #-----------------------------------------------------------------------
 # # some statistics
 # #-----------------------------------------------------------------------
-# # all deciduous compared to all evergreen
-# a <- aov(dfdec_all$ratio_site_years ~ dfdec_all$deciduousness)
-# summary(a)
-# a <- aov(dfdec_all$mean_duration ~ dfdec_all$deciduousness)
-# summary(a)
-# a <- aov(dfdec_all$sd_intrasp_onset ~ dfdec_all$deciduousness)
-# summary(a)
-# # within deciduous, campare dormancy v turnover
-# only_dec <- dfdec_all %>%
-#   filter(deciduousness == "deciduous")
-# a <- aov(only_dec$ratio_site_years ~ only_dec$phenophase)
-# summary(a)
-# a <- aov(only_dec$mean_duration ~ only_dec$phenophase)
-# summary(a)
-# a <- aov(only_dec$sd_intrasp_onset ~ only_dec$phenophase)
-# summary(a)
-# # within evergreen, campare dormancy v turnover
-# only_ever <- dfdec_all %>%
-#   filter(deciduousness == "evergreen")
-# a <- aov(only_ever$ratio_site_years ~ only_ever$phenophase)
-# summary(a)
-# a <- aov(only_ever$mean_duration ~ only_ever$phenophase)
-# summary(a)
-# a <- aov(only_ever$sd_intrasp_onset ~ only_ever$phenophase)
-# summary(a)
-# # deciduous compared to evergreen, only dormancy
-# only_dorm <- dfdec_all %>%
-#   filter(phenophase == "leaf_dormancy")
-# a <- aov(only_dorm$sd_intrasp_onset ~ only_dorm$deciduousness)
-# summary(a)
+# all deciduous compared to all evergreen
+a <- aov(df_all$ratio_site_years ~ df_all$dec_label)
+summary(a)
+a <- aov(df_all$mean_duration ~ df_all$dec_label)
+summary(a)
+a <- aov(df_all$sd_intrasp_onset ~ df_all$dec_label)
+summary(a)
+# within deciduous, campare dormancy v turnover
+only_dec <- df_all %>%
+  filter(dec_label == "dec")
+a <- aov(only_dec$ratio_site_years ~ only_dec$phenophase)
+summary(a)
+a <- aov(only_dec$mean_duration ~ only_dec$phenophase)
+summary(a)
+a <- aov(only_dec$sd_intrasp_onset ~ only_dec$phenophase)
+summary(a)
+# within evergreen, campare dormancy v turnover
+only_ever <- df_all %>%
+  filter(dec_label == "ever")
+a <- aov(only_ever$ratio_site_years ~ only_ever$phenophase)
+summary(a)
+a <- aov(only_ever$mean_duration ~ only_ever$phenophase)
+summary(a)
+a <- aov(only_ever$sd_intrasp_onset ~ only_ever$phenophase)
+summary(a)
+# deciduous compared to evergreen, only dormancy
+only_dorm <- df_all %>%
+  filter(phenophase == "leaf_dormancy")
+a <- aov(only_dorm$sd_intrasp_onset ~ only_dorm$dec_label)
+summary(a)
 # #-----------------------------------------------------------------------
 # # merge intraspecific with intra-annual dissynchrony to see if their is a statistical difference
-# test <- dfdec_all[,(names(dfdec_all) %in% c("species_full",
-#                                             "deciduousness",
+# test <- df_all[,(names(df_all) %in% c("species_full",
+#                                             "dec_label",
 #                                             "sd_intrasp_onset",
 #                                             "phenophase"))]
 # test <- test %>%
 #   rename("onset_sd_weeks" = sd_intrasp_onset)
 # test$onset <- "intraspecific"
-# test2 <- dfdec_ind[,(names(dfdec_ind) %in% c("species_full",
-#                                              "deciduousness",
+# test2 <- overview_ind[,(names(overview_ind) %in% c("species_full",
+#                                              "dec_label",
 #                                              "onset_sd_weeks",
 #                                              "phenophase"))]
 # test2$onset <- "intraindividual"
@@ -138,10 +197,10 @@ dfdec_ind <- overview_ind %>%
 
 
 #-----------------------------------------------------------------------
-# plots deciduousness
+# plots dec_label
 #-----------------------------------------------------------------------
-p1_dec <- ggplot(data = dfdec_all) +
-  geom_boxplot(aes(x = deciduousness,
+p1_dec <- ggplot(data = df_all) +
+  geom_boxplot(aes(x = dec_label,
                    y = ratio_site_years,
                    color = phenophase),
                size = 1) +
@@ -166,8 +225,8 @@ p1_dec <- ggplot(data = dfdec_all) +
         plot.margin = unit(c(0,0,0,0.5),"cm")
   )
 
-p2_dec <- ggplot(data = dfdec_all) +
-  geom_boxplot(aes(x = deciduousness,
+p2_dec <- ggplot(data = df_all) +
+  geom_boxplot(aes(x = dec_label,
                    y = mean_duration,
                    color = phenophase),
                size = 1) +
@@ -191,8 +250,8 @@ p2_dec <- ggplot(data = dfdec_all) +
         plot.margin = unit(c(0,0,0,0.5),"cm")
   )
 
-p3_dec <- ggplot(data = dfdec_all) +
-  geom_boxplot(aes(x = deciduousness,
+p3_dec <- ggplot(data = df_all) +
+  geom_boxplot(aes(x = dec_label,
                    y = sd_intrasp_onset,
                    color = phenophase),
                size = 1) +
@@ -217,8 +276,8 @@ p3_dec <- ggplot(data = dfdec_all) +
   )
 
 p4_dec <-
-  ggplot(data = dfdec_ind) +
-  geom_boxplot(aes(x = deciduousness,
+  ggplot(data = overview_ind) +
+  geom_boxplot(aes(x = dec_label,
                    y = onset_sd_weeks,
                    color = phenophase),
                size = 1) +
@@ -255,6 +314,8 @@ p_all <- grid.arrange(p1_dec, p2_dec, p3_dec, p4_dec, heights = c(1,1,1,1.2))
 # pdf("~/Desktop/figure2_summary_plots.pdf",2.5,8)
 # plot(p_all)
 # dev.off()
+
+
 
 # #-----------------------------------------------------------------------
 # # data ecology
@@ -429,8 +490,8 @@ p_all <- grid.arrange(p1_dec, p2_dec, p3_dec, p4_dec, heights = c(1,1,1,1.2))
 #-----------------------------------------------------------------------
 #-----------------------------------------------------------------------
 
-# p5 <- ggplot(data = dfdec_all) +
-#   geom_boxplot(aes(x = deciduousness,
+# p5 <- ggplot(data = df_all) +
+#   geom_boxplot(aes(x = dec_label,
 #                    y = mean_distance_onset,
 #                    color = phenophase),
 #                size = 1) +
@@ -457,26 +518,26 @@ p_all <- grid.arrange(p1_dec, p2_dec, p3_dec, p4_dec, heights = c(1,1,1,1.2))
 # par(mfrow=c(4,4),
 #     mar=c(6,5,2,2))
 # # ratio eventyears:siteyears
-# boxplot(dfdec$ratio_site_years_with_leaf_dormancy ~ dfdec$deciduousness,ylab = "ratio years with canopy dormancy")
-# boxplot(dfdec$ratio_site_years_with_leaf_turnover ~ dfdec$deciduousness,ylab = "ratio years with canopy turnover")
+# boxplot(df$ratio_site_years_with_leaf_dormancy ~ df$dec_label,ylab = "ratio years with canopy dormancy")
+# boxplot(df$ratio_site_years_with_leaf_turnover ~ df$dec_label,ylab = "ratio years with canopy turnover")
 # boxplot(dfecol$ratio_site_years_with_leaf_dormancy ~ dfecol$ecology,ylab = "ratio years with canopy dormancy")
 # boxplot(dfecol$ratio_site_years_with_leaf_turnover ~ dfecol$ecology,ylab = "ratio years with canopy turnover")
 #
 # # duration event
-# boxplot(dfdec$mean_duration_leaf_dormancy_weeks ~ dfdec$deciduousness,ylab = "mean duration canopy dormancy (weeks)")
-# boxplot(dfdec$mean_duration_leaf_turnover_weeks ~ dfdec$deciduousness,ylab = "mean duration canopy turnover (weeks)")
+# boxplot(df$mean_duration_leaf_dormancy_weeks ~ df$dec_label,ylab = "mean duration canopy dormancy (weeks)")
+# boxplot(df$mean_duration_leaf_turnover_weeks ~ df$dec_label,ylab = "mean duration canopy turnover (weeks)")
 # boxplot(dfecol$mean_duration_leaf_dormancy_weeks ~ dfecol$ecology,ylab = "mean duration canopy dormancy (weeks)")
 # boxplot(dfecol$mean_duration_leaf_turnover_weeks ~ dfecol$ecology,ylab = "mean duration canopy turnover (weeks)")
 #
 # # intraspecific synchrony index
-# boxplot(dfdec$sd_intrasp_onset_leaf_dormancy_weeks ~ dfdec$deciduousness,ylab = "intraspecific synchrony index leaf dormancy (weeks)")
-# boxplot(dfdec$sd_intrasp_onset_leaf_turnover_weeks ~ dfdec$deciduousness,ylab = "intraspecific synchrony index leaf turnover (weeks)")
+# boxplot(df$sd_intrasp_onset_leaf_dormancy_weeks ~ df$dec_label,ylab = "intraspecific synchrony index leaf dormancy (weeks)")
+# boxplot(df$sd_intrasp_onset_leaf_turnover_weeks ~ df$dec_label,ylab = "intraspecific synchrony index leaf turnover (weeks)")
 # boxplot(dfecol$sd_intrasp_onset_leaf_dormancy_weeks ~ dfecol$ecology,ylab = "intraspecific synchrony index leaf dormancy (weeks)")
 # boxplot(dfecol$sd_intrasp_onset_leaf_turnover_weeks ~ dfecol$ecology,ylab = "intraspecific synchrony index leaf turnover (weeks)")
 #
 # # intra-individual synchrony index
-# boxplot(dfdec$mean_synchrony_individuals_onset_leaf_dormancy_weeks ~ dfdec$deciduousness,ylab = "intra-individual synchrony index leaf dormancy (weeks)")
-# boxplot(dfdec$mean_synchrony_individuals_onset_leaf_turnover_weeks ~ dfdec$deciduousness,ylab = "intra-individual synchrony index leaf turnover (weeks)")
+# boxplot(df$mean_synchrony_individuals_onset_leaf_dormancy_weeks ~ df$dec_label,ylab = "intra-individual synchrony index leaf dormancy (weeks)")
+# boxplot(df$mean_synchrony_individuals_onset_leaf_turnover_weeks ~ df$dec_label,ylab = "intra-individual synchrony index leaf turnover (weeks)")
 # boxplot(dfecol$mean_synchrony_individuals_onset_leaf_dormancy_weeks ~ dfecol$ecology,ylab = "intra-individual synchrony index leaf dormancy (weeks)")
 # boxplot(dfecol$mean_synchrony_individuals_onset_leaf_turnover_weeks ~ dfecol$ecology,ylab = "intra-individual synchrony index leaf turnover (weeks)")
 
