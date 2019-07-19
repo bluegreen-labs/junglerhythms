@@ -136,14 +136,18 @@ circular_linear_plot <- function(
                 yend = pos,
                 colour = mean_value
               )) +
+    scale_colour_distiller(palette = "YlOrBr",
+                           direction = 1,
+                           name = "Freq.",
+                           values = c(0,0.3,1)) +
     annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 2.4, alpha = .2) + #jan - feb
     annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 2.4, alpha = .2) + # jun-jul
     annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 2.4, alpha = .2) + # dec
-    scale_color_viridis_c(option="plasma",
-                          name = "Freq.",
-                          direction = 1,
-                          begin = 0,
-                          end = 1) +
+    # scale_color_viridis_c(option="plasma",
+    #                       name = "Freq.",
+    #                       direction = 1,
+    #                       begin = 0,
+    #                       end = 1) +
     # scale_color_viridis_c(option = "plasma", #,"viridis"
     #                       name = "Freq.",
     #                       direction = 1,
@@ -240,7 +244,7 @@ circular_linear_plot <- function(
 
 
 # p_deciduous <- circular_linear_plot(data,
-#                                     species_name = query_deciduous,
+#                                     species_name = "Entandrophragma angolense",
 #                                     viridis_rescaling = 0.15,
 #                                     title_name = "(b) Deciduous")
 # pdf("~/Desktop/deciduous.pdf",8.4,12)

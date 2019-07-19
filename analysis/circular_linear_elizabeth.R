@@ -34,6 +34,7 @@ data <- data %>%
 data$id <- as.character(data$id)
 #----------------------------------------------------------------------
 
+
 # specieslist based on selection made in advance
 sp_evergreen <- c("Scorodophloeus zenkeri",
                   "Panda oleosa",

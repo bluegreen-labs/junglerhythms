@@ -40,8 +40,8 @@ overview <- read.csv("data/SI_table2.csv",
                      stringsAsFactors = FALSE)
 
 overview_dec <- overview %>%
-  filter(deciduousness %in% c("deciduous","deciduous*","deciduous**","deciduous* (?)","deciduous** (?)")) %>%
-  filter(percentage_site_years_with_leaf_dormancy > 0 & percentage_site_years_with_leaf_turnover > 0) %>%
+  filter(grepl("deciduous",deciduousness)) %>%
+  filter(percentage_site_years_with_leaf_dormancy > 0 | percentage_site_years_with_leaf_turnover > 0) %>%
   arrange_at("species_full")
 
 sp_dec <- overview_dec$species_full
@@ -51,7 +51,7 @@ sp_dec3 <- paste(sp_dec[11:15],collapse = "|")
 sp_dec4 <- paste(sp_dec[16:20],collapse = "|")
 sp_dec5 <- paste(sp_dec[21:25],collapse = "|")
 sp_dec6 <- paste(sp_dec[26:30],collapse = "|")
-sp_dec7 <- paste(sp_dec[31:32],collapse = "|")
+sp_dec7 <- paste(sp_dec[31:33],collapse = "|")
 
 
 
@@ -114,28 +114,19 @@ plot_dec7 <- circular_linear_plot(data,
                                   species_name = sp_dec7,
                                   viridis_rescaling = 0.15,
                                   title_name = "(b) Deciduous - continued")
-pdf("~/Desktop/deciduous7.pdf",8.4, 5.2)#8.6,5.4) # 12/5*2 = 4.8
+pdf("~/Desktop/deciduous7.pdf",8.4, 7.5)#8.6,5.4) # 12/5*2 = 4.8
 plot(plot_dec7)
 dev.off()
 
 
 #------------------------------------------------------------------------
 overview_ever <- overview %>%
-  filter(deciduousness %in% c("evergreen","evergreen*","evergreen**","evergreen* (?)","evergreen** (?)")) %>%
-  filter(percentage_site_years_with_leaf_dormancy > 0 & percentage_site_years_with_leaf_turnover > 0) %>%
+  filter(grepl("evergreen",deciduousness)) %>%
+  filter(percentage_site_years_with_leaf_dormancy > 0 | percentage_site_years_with_leaf_turnover > 0) %>%
   arrange_at("species_full")
 
 sp_ever <- overview_ever$species_full
-# sp_ever1 <- paste(sp_ever[1:5],collapse = "|")
-# sp_ever2 <- paste(sp_ever[6:10],collapse = "|")
-# sp_ever3 <- paste(sp_ever[11:15],collapse = "|")
-# sp_ever4 <- paste(sp_ever[16:20],collapse = "|")
-# sp_ever5 <- paste(sp_ever[21:25],collapse = "|")
-# sp_ever6 <- paste(sp_ever[26:30],collapse = "|")
-# sp_ever7 <- paste(sp_ever[31:35],collapse = "|")
-# sp_ever8 <- paste(sp_ever[36:40],collapse = "|")
-# sp_ever9 <- paste(sp_ever[41])
-sp_ever1 <- paste(sp_ever[1:4],collapse = "|")
+sp_ever1 <- paste(sp_ever[1:4],collapse = "|") # up to 4 for the first page which includes figure description
 sp_ever2 <- paste(sp_ever[5:9],collapse = "|")
 sp_ever3 <- paste(sp_ever[10:14],collapse = "|")
 sp_ever4 <- paste(sp_ever[15:19],collapse = "|")
@@ -143,7 +134,12 @@ sp_ever5 <- paste(sp_ever[20:24],collapse = "|")
 sp_ever6 <- paste(sp_ever[25:29],collapse = "|")
 sp_ever7 <- paste(sp_ever[30:34],collapse = "|")
 sp_ever8 <- paste(sp_ever[35:39],collapse = "|")
-sp_ever9 <- paste(sp_ever[40:41],collapse = "|")
+sp_ever9 <- paste(sp_ever[40:44],collapse = "|")
+sp_ever10 <- paste(sp_ever[45:49],collapse = "|")
+sp_ever11 <- paste(sp_ever[50:54],collapse = "|")
+sp_ever12 <- paste(sp_ever[55:59],collapse = "|")
+sp_ever13 <- paste(sp_ever[60:64],collapse = "|")
+
 
 # sequence 1
 plot_ever1 <- circular_linear_plot(data,
@@ -159,7 +155,7 @@ plot_ever2 <- circular_linear_plot(data,
                                    species_name = sp_ever2,
                                    viridis_rescaling = 0.05,
                                    title_name = "(a) Evergreen - continued")
-pdf("~/Desktop/evergreen2.pdf",8.75,12)
+pdf("~/Desktop/evergreen2.pdf",8.6,12)
 plot(plot_ever2)
 dev.off()
 
@@ -168,7 +164,7 @@ plot_ever3 <- circular_linear_plot(data,
                                    species_name = sp_ever3,
                                    viridis_rescaling = 0.05,
                                    title_name = "(a) Evergreen - continued")
-pdf("~/Desktop/evergreen3.pdf",8.6,12)
+pdf("~/Desktop/evergreen3.pdf",8.75,12)
 plot(plot_ever3)
 dev.off()
 
@@ -205,7 +201,7 @@ plot_ever7 <- circular_linear_plot(data,
                                    species_name = sp_ever7,
                                    viridis_rescaling = 0.05,
                                    title_name = "(a) Evergreen - continued")
-pdf("~/Desktop/evergreen7.pdf",8.75,12)
+pdf("~/Desktop/evergreen7.pdf",8.6,12)
 plot(plot_ever7)
 dev.off()
 
@@ -214,7 +210,7 @@ plot_ever8 <- circular_linear_plot(data,
                                    species_name = sp_ever8,
                                    viridis_rescaling = 0.05,
                                    title_name = "(a) Evergreen - continued")
-pdf("~/Desktop/evergreen8.pdf",8.75,12)
+pdf("~/Desktop/evergreen8.pdf",8.6,12)
 plot(plot_ever8)
 dev.off()
 
@@ -223,6 +219,42 @@ plot_ever9 <- circular_linear_plot(data,
                                    species_name = sp_ever9,
                                    viridis_rescaling = 0.05,
                                    title_name = "(a) Evergreen - continued")
-pdf("~/Desktop/evergreen9.pdf",8.6,5.2)
+pdf("~/Desktop/evergreen9.pdf",8.75,12)
 plot(plot_ever9)
+dev.off()
+
+# sequence 10
+plot_ever10 <- circular_linear_plot(data,
+                                   species_name = sp_ever10,
+                                   viridis_rescaling = 0.05,
+                                   title_name = "(a) Evergreen - continued")
+pdf("~/Desktop/evergreen10.pdf",8.6,12)
+plot(plot_ever10)
+dev.off()
+
+# sequence 11
+plot_ever11 <- circular_linear_plot(data,
+                                    species_name = sp_ever11,
+                                    viridis_rescaling = 0.05,
+                                    title_name = "(a) Evergreen - continued")
+pdf("~/Desktop/evergreen11.pdf",8.6,12)
+plot(plot_ever11)
+dev.off()
+
+# sequence 12
+plot_ever12 <- circular_linear_plot(data,
+                                    species_name = sp_ever12,
+                                    viridis_rescaling = 0.05,
+                                    title_name = "(a) Evergreen - continued")
+pdf("~/Desktop/evergreen12.pdf",8.75,12)
+plot(plot_ever12)
+dev.off()
+
+# sequence 13
+plot_ever13 <- circular_linear_plot(data,
+                                    species_name = sp_ever13,
+                                    viridis_rescaling = 0.05,
+                                    title_name = "(a) Evergreen - continued")
+pdf("~/Desktop/evergreen13.pdf",8.6,12)
+plot(plot_ever13)
 dev.off()

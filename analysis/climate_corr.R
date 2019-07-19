@@ -246,7 +246,7 @@ for(i in 1:length(species_list)){
   # cross-correlation + confidence interval
   if(max(data_sp$mean_value)>0){
     corr.insol_JR <- ccf(data_sp$insol_JR, data_sp$mean_value,lag = 6, pl = FALSE)
-    plot(corr.insol_JR, main = paste(species_list[i], " - dormancy x insol_JR"))
+    # plot(corr.insol_JR, main = paste(species_list[i], " - dormancy x insol_JR"))
     ci_value <- qnorm((1 + ci)/2)/sqrt(corr.insol_JR$n.used)
   } else {
     corr.insol_JR$acf <- NA
@@ -666,49 +666,65 @@ df <- merge(overview, output, by = "species_full", all.x = TRUE)
 # dormancy
 df_dorm <- df %>%
   # filter(grepl("deciduous",deciduousness)) %>%
-  filter(site_years_with_leaf_dormancy > 0) %>%
-  filter(total_nr_events_leaf_dormancy >=5)
+  filter(site_years_with_leaf_dormancy > 0) #%>%
+  # filter(total_nr_events_leaf_dormancy >=5)
 
-df_dorm$precip_phase <- ifelse(df_dorm$corr_dormancy_precip_timing == "0" & df_dorm$corr_dormancy_precip < 0, "no-lag-neg",
+df_dorm$precip_phase <- ifelse(df_dorm$total_nr_events_leaf_dormancy <5, "few-events",
+                               ifelse(df_dorm$corr_dormancy_precip_timing == "0" & df_dorm$corr_dormancy_precip < 0, "no-lag-neg",
                                    ifelse(df_dorm$corr_dormancy_precip_timing == "0" & df_dorm$corr_dormancy_precip > 0, "no-lag-pos",
                                           ifelse(df_dorm$corr_dormancy_precip_timing %in% c("-1","-2","-3") & df_dorm$corr_dormancy_precip < 0, "lag-neg",
                                                  ifelse(df_dorm$corr_dormancy_precip_timing %in% c("-1","-2","-3") & df_dorm$corr_dormancy_precip > 0, "lag-pos",
-                                                        NA))))
+                                                        NA)))))
+df_dorm$precip_phase <- ifelse(is.na(df_dorm$precip_phase) & df_dorm$total_nr_events_leaf_dormancy >= 5, "h-no-corr", df_dorm$precip_phase)
 
-df_dorm$insol_phase <- ifelse(df_dorm$corr_dormancy_insol_JR_timing == "0" & df_dorm$corr_dormancy_insol_JR < 0, "no-lag-neg",
+
+df_dorm$insol_phase <- ifelse(df_dorm$total_nr_events_leaf_dormancy <5, "few-events",
+                              ifelse(df_dorm$corr_dormancy_insol_JR_timing == "0" & df_dorm$corr_dormancy_insol_JR < 0, "no-lag-neg",
                                    ifelse(df_dorm$corr_dormancy_insol_JR_timing == "0" & df_dorm$corr_dormancy_insol_JR > 0, "no-lag-pos",
                                           ifelse(df_dorm$corr_dormancy_insol_JR_timing %in% c("-1","-2","-3") & df_dorm$corr_dormancy_insol_JR < 0, "lag-neg",
                                                  ifelse(df_dorm$corr_dormancy_insol_JR_timing %in% c("-1","-2","-3") & df_dorm$corr_dormancy_insol_JR > 0, "lag-pos",
-                                                        NA))))
+                                                        NA)))))
+df_dorm$insol_phase <- ifelse(is.na(df_dorm$insol_phase) & df_dorm$total_nr_events_leaf_dormancy >= 5, "h-no-corr", df_dorm$insol_phase)
 
-df_dorm$tmax_phase <- ifelse(df_dorm$corr_dormancy_tmax_JR_timing == "0" & df_dorm$corr_dormancy_tmax_JR < 0, "no-lag-neg",
+df_dorm$tmax_phase <- ifelse(df_dorm$total_nr_events_leaf_dormancy <5, "few-events",
+                             ifelse(df_dorm$corr_dormancy_tmax_JR_timing == "0" & df_dorm$corr_dormancy_tmax_JR < 0, "no-lag-neg",
                                   ifelse(df_dorm$corr_dormancy_tmax_JR_timing == "0" & df_dorm$corr_dormancy_tmax_JR > 0, "no-lag-pos",
                                          ifelse(df_dorm$corr_dormancy_tmax_JR_timing %in% c("-1","-2","-3") & df_dorm$corr_dormancy_tmax_JR < 0, "lag-neg",
                                                 ifelse(df_dorm$corr_dormancy_tmax_JR_timing %in% c("-1","-2","-3") & df_dorm$corr_dormancy_tmax_JR > 0, "lag-pos",
-                                                       NA))))
+                                                       NA)))))
+df_dorm$tmax_phase <- ifelse(is.na(df_dorm$tmax_phase) & df_dorm$total_nr_events_leaf_dormancy >= 5, "h-no-corr", df_dorm$tmax_phase)
+
+
 # turnover
 df_turn <- df %>%
   # filter(grepl("deciduous",deciduousness)) %>%
-  filter(site_years_with_leaf_turnover > 0) %>%
-  filter(total_nr_events_leaf_turnover >=5)
+  filter(site_years_with_leaf_turnover > 0) #%>%
+  # filter(total_nr_events_leaf_turnover >=5)
 
-df_turn$precip_phase <- ifelse(df_turn$corr_turnover_precip_timing == "0" & df_turn$corr_turnover_precip < 0, "no-lag-neg",
+df_turn$precip_phase <- ifelse(df_turn$total_nr_events_leaf_turnover <5, "few-events",
+                               ifelse(df_turn$corr_turnover_precip_timing == "0" & df_turn$corr_turnover_precip < 0, "no-lag-neg",
                                ifelse(df_turn$corr_turnover_precip_timing == "0" & df_turn$corr_turnover_precip > 0, "no-lag-pos",
                                       ifelse(df_turn$corr_turnover_precip_timing %in% c("-1","-2","-3") & df_turn$corr_turnover_precip < 0, "lag-neg",
                                              ifelse(df_turn$corr_turnover_precip_timing %in% c("-1","-2","-3") & df_turn$corr_turnover_precip > 0, "lag-pos",
-                                                    NA))))
+                                                    NA)))))
+df_turn$precip_phase <- ifelse(is.na(df_turn$precip_phase) & df_turn$total_nr_events_leaf_turnover >= 5, "h-no-corr", df_turn$precip_phase)
 
-df_turn$insol_phase <- ifelse(df_turn$corr_turnover_insol_JR_timing == "0" & df_turn$corr_turnover_insol_JR < 0, "no-lag-neg",
+
+df_turn$insol_phase <- ifelse(df_turn$total_nr_events_leaf_turnover <5, "few-events",
+                              ifelse(df_turn$corr_turnover_insol_JR_timing == "0" & df_turn$corr_turnover_insol_JR < 0, "no-lag-neg",
                               ifelse(df_turn$corr_turnover_insol_JR_timing == "0" & df_turn$corr_turnover_insol_JR > 0, "no-lag-pos",
                                      ifelse(df_turn$corr_turnover_insol_JR_timing %in% c("-1","-2","-3") & df_turn$corr_turnover_insol_JR < 0, "lag-neg",
                                             ifelse(df_turn$corr_turnover_insol_JR_timing %in% c("-1","-2","-3") & df_turn$corr_turnover_insol_JR > 0, "lag-pos",
-                                                   NA))))
+                                                   NA)))))
+df_turn$insol_phase <- ifelse(is.na(df_turn$insol_phase) & df_turn$total_nr_events_leaf_turnover >= 5, "h-no-corr", df_turn$insol_phase)
 
-df_turn$tmax_phase <- ifelse(df_turn$corr_turnover_tmax_JR_timing == "0" & df_turn$corr_turnover_tmax_JR < 0, "no-lag-neg",
+df_turn$tmax_phase <- ifelse(df_turn$total_nr_events_leaf_turnover <5, "few-events",
+                             ifelse(df_turn$corr_turnover_tmax_JR_timing == "0" & df_turn$corr_turnover_tmax_JR < 0, "no-lag-neg",
                              ifelse(df_turn$corr_turnover_tmax_JR_timing == "0" & df_turn$corr_turnover_tmax_JR > 0, "no-lag-pos",
                                     ifelse(df_turn$corr_turnover_tmax_JR_timing %in% c("-1","-2","-3") & df_turn$corr_turnover_tmax_JR < 0, "lag-neg",
                                            ifelse(df_turn$corr_turnover_tmax_JR_timing %in% c("-1","-2","-3") & df_turn$corr_turnover_tmax_JR > 0, "lag-pos",
-                                                  NA))))
+                                                  NA)))))
+df_turn$tmax_phase <- ifelse(is.na(df_turn$tmax_phase) & df_turn$total_nr_events_leaf_turnover >= 5, "h-no-corr", df_turn$tmax_phase)
 
 
 #-----------------------------
@@ -718,42 +734,61 @@ df_ever_dorm <- df_dorm %>%
   filter(grepl("evergreen",deciduousness))
 
 ed_precip <- as.data.frame(tapply(df_ever_dorm$corr_dormancy_precip, list(df_ever_dorm$precip_phase), length)) #ed = ever dorm
-# no corr with precip -> make empty dataframe
-ed_precip <- data.frame(
-  value = c(0,0,0,0), #,11/2/94,11/2/94),
-  relation = c("no-lag-neg","no-lag-pos","lag-neg","lag-pos"), #,"enough-events-pos","enough-events-neg"),
-  variable = "precipitation")
+counts_ever_dorm <- length(df_ever_dorm$species_full)
+colnames(ed_precip) <- "value"
+ed_precip$value <- ed_precip$value / counts_ever_dorm *100
+ed_precip$relation <- rownames(ed_precip)
+ed_precip$variable <- "precipitation"
+# # no corr with precip -> make empty dataframe
+# ed_precip <- data.frame(
+#   value = c(0,0,0,0), #,11/2/94,11/2/94),
+#   relation = c("no-lag-neg","no-lag-pos","lag-neg","lag-pos"), #,"enough-events-pos","enough-events-neg"),
+#   variable = "precipitation")
 
 ed_insol <- as.data.frame(tapply(df_ever_dorm$corr_dormancy_insol_JR, list(df_ever_dorm$insol_phase), length)) #ed = ever dorm
 counts_ever_dorm <- length(df_ever_dorm$species_full)
 colnames(ed_insol) <- "value"
-ed_insol$value <- ed_insol$value / 94 #counts_ever_dorm
+ed_insol$value <- ed_insol$value / counts_ever_dorm *100
 ed_insol$relation <- rownames(ed_insol)
 ed_insol$variable <- "sunhours"
 
 ed_tmax <- as.data.frame(tapply(df_ever_dorm$corr_dormancy_tmax_JR, list(df_ever_dorm$tmax_phase), length)) #ed = ever dorm
 counts_ever_dorm <- length(df_ever_dorm$species_full)
 colnames(ed_tmax) <- "value"
-ed_tmax$value <- ed_tmax$value / 94 #counts_ever_dorm
+ed_tmax$value <- ed_tmax$value / counts_ever_dorm *100
 ed_tmax$relation <- rownames(ed_tmax)
 ed_tmax$variable <- "tmax"
 
 ed_summary <- rbind(ed_precip, ed_insol, ed_tmax)
 
+ed_summary$value <- ifelse(ed_summary$relation %in% c("few-events","h-no-corr"), ed_summary$value / 2, ed_summary$value)
+hack <- ed_summary %>%
+  filter(relation %in% "few-events")
+hack$relation <- "few-events-neg"
+hack2 <- ed_summary %>%
+  filter(relation %in% "h-no-corr")
+hack2$relation <- "h-no-corr-neg"
+ed_summary <- rbind(ed_summary, hack)
+ed_summary <- rbind(ed_summary, hack2)
 
 p_ed <- ggplot(ed_summary,
        aes(x = variable,
-           y = ifelse(relation %in% c("no-lag-neg","lag-neg"), -value, value), #,"enough-events-neg"
+           y = ifelse(relation %in% c("no-lag-neg","lag-neg","few-events-neg","h-no-corr-neg"), -value, value), #,"enough-events-neg"
            fill = relation)) +
   geom_col() +
-  scale_y_continuous(limits = c(-0.6,0.6)) +
+  scale_y_continuous(limits = c(-70,70),
+                     breaks = c(-50,-25,0,25,50),
+                     labels = c("", "","","",""),
+                     sec.axis = dup_axis(name = "test",
+                                         breaks = c(-25,25),
+                                         labels = c("negative correlations", "positive correlations"))) +
   scale_x_discrete(limits = rev(levels(as.factor(ed_summary$variable)))) +
   coord_flip() +
-  scale_fill_manual(values = c("grey70", "grey70","grey40", "grey40")) + #"grey 90","grey 90",
+  scale_fill_manual(values = c("grey90", "grey90","#dfc27d", "#dfc27d", "#80cdc1","#018571","#018571")) + # no label for lag-pos, so 1 #80cdc1 removed
   geom_hline(yintercept = 0, color =c("white")) +
-  annotate("text", x = 3.1, y = 0.55, label = "n = 94") + #paste("n = ",counts_ever_dorm)) +
+  annotate("text", x = 3.2, y = 65, label = paste("n = ",counts_ever_dorm), size = 3) +
   labs(y = "",
-       x = "Dormancy") +
+       x = "Dormancy")  +
   theme_minimal() +
   theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
         panel.grid.minor.x =  element_blank(),
@@ -762,13 +797,13 @@ p_ed <- ggplot(ed_summary,
         plot.background = element_rect(fill = 'white', colour = 'white'),
         strip.text = element_text(hjust = 0),
         axis.line.x = element_blank(),
-        axis.text.x = element_blank(),
-        # axis.text.x = element_text(angle = 90, hjust = 1),
+        axis.text.x = element_text(size = 10, colour = "black",vjust = 5),
         axis.title.x = element_blank(),
         axis.title.y = element_text(vjust = 3),
         legend.position = "none",
-        plot.margin = unit(c(0,0,0.2,0.5),"cm")
+        plot.margin = unit(c(0.5,0,0,0.5),"cm")
   )
+
 
 
 #-----------------------------
@@ -780,38 +815,50 @@ df_ever_turn <- df_turn %>%
 et_precip <- as.data.frame(tapply(df_ever_turn$corr_dormancy_precip, list(df_ever_turn$precip_phase), length)) #et = ever dorm
 counts_ever_turn <- length(df_ever_turn$species_full)
 colnames(et_precip) <- "value"
-et_precip$value <- et_precip$value / 94 #counts_ever_turn
+et_precip$value <- et_precip$value / counts_ever_turn *100
 et_precip$relation <- rownames(et_precip)
 et_precip$variable <- "precipitation"
 
 et_insol <- as.data.frame(tapply(df_ever_turn$corr_dormancy_insol_JR, list(df_ever_turn$insol_phase), length)) #et = ever dorm
 counts_ever_turn <- length(df_ever_turn$species_full)
 colnames(et_insol) <- "value"
-et_insol$value <- et_insol$value / 94 #counts_ever_turn
+et_insol$value <- et_insol$value / counts_ever_turn *100
 et_insol$relation <- rownames(et_insol)
 et_insol$variable <- "sunhours"
 
 et_tmax <- as.data.frame(tapply(df_ever_turn$corr_dormancy_tmax_JR, list(df_ever_turn$tmax_phase), length)) #et = ever dorm
 counts_ever_turn <- length(df_ever_turn$species_full)
 colnames(et_tmax) <- "value"
-et_tmax$value <- et_tmax$value / 94 #counts_ever_turn
+et_tmax$value <- et_tmax$value / counts_ever_turn *100
 et_tmax$relation <- rownames(et_tmax)
 et_tmax$variable <- "tmax"
 
 et_summary <- rbind(et_precip, et_insol, et_tmax)
 
+et_summary$value <- ifelse(et_summary$relation %in% c("few-events","h-no-corr"), et_summary$value / 2, et_summary$value)
+hack <- et_summary %>%
+  filter(relation %in% "few-events")
+hack$relation <- "few-events-neg"
+hack2 <- et_summary %>%
+  filter(relation %in% "h-no-corr")
+hack2$relation <- "h-no-corr-neg"
+et_summary <- rbind(et_summary, hack)
+et_summary <- rbind(et_summary, hack2)
+
 
 p_et <- ggplot(et_summary,
        aes(x = variable,
-           y = ifelse(relation %in% c("no-lag-neg","lag-neg"), -value, value),
+           y = ifelse(relation %in% c("no-lag-neg","lag-neg","few-events-neg","h-no-corr-neg"), -value, value),
            fill = relation)) +
   geom_col() +
-  scale_y_continuous(limits = c(-0.6,0.6)) +
+  scale_y_continuous(limits = c(-70,70),
+                     breaks = c(-50,-25,0,25,50),
+                     labels = c("", "","","","")) +
   scale_x_discrete(limits = rev(levels(as.factor(et_summary$variable)))) +
   coord_flip() +
-  scale_fill_manual(values = c("grey70", "grey70","grey40", "grey40")) +
+  scale_fill_manual(values = c("grey90", "grey90","#dfc27d", "#dfc27d", "#80cdc1", "#80cdc1", "#018571","#018571")) +
   geom_hline(yintercept = 0, color =c("white")) +
-  annotate("text", x = 3.1, y = 0.55, label = "n = 94") + #paste("n = ",counts_ever_turn)) +
+  annotate("text", x = 3.2, y = 65, label = paste("n = ",counts_ever_turn), size = 3) +
   labs(y = "",
        x = "Turnover") +
   theme_minimal() +
@@ -840,38 +887,50 @@ df_dec_dorm <- df_dorm %>%
 dd_precip <- as.data.frame(tapply(df_dec_dorm$corr_dormancy_precip, list(df_dec_dorm$precip_phase), length)) #dd = dec dorm
 counts_dec_dorm <- length(df_dec_dorm$species_full)
 colnames(dd_precip) <- "value"
-dd_precip$value <- dd_precip$value / 34 #counts_dec_dorm
+dd_precip$value <- dd_precip$value / counts_dec_dorm *100
 dd_precip$relation <- rownames(dd_precip)
 dd_precip$variable <- "precipitation"
 
 dd_insol <- as.data.frame(tapply(df_dec_dorm$corr_dormancy_insol_JR, list(df_dec_dorm$insol_phase), length)) #dd = dec dorm
 counts_dec_dorm <- length(df_dec_dorm$species_full)
 colnames(dd_insol) <- "value"
-dd_insol$value <- dd_insol$value / 34 #counts_dec_dorm
+dd_insol$value <- dd_insol$value / counts_dec_dorm *100
 dd_insol$relation <- rownames(dd_insol)
 dd_insol$variable <- "sunhours"
 
 dd_tmax <- as.data.frame(tapply(df_dec_dorm$corr_dormancy_tmax_JR, list(df_dec_dorm$tmax_phase), length)) #dd = dec dorm
 counts_dec_dorm <- length(df_dec_dorm$species_full)
 colnames(dd_tmax) <- "value"
-dd_tmax$value <- dd_tmax$value / 34 #counts_dec_dorm
+dd_tmax$value <- dd_tmax$value / counts_dec_dorm *100
 dd_tmax$relation <- rownames(dd_tmax)
 dd_tmax$variable <- "tmax"
 
 dd_summary <- rbind(dd_precip, dd_insol, dd_tmax)
 
+dd_summary$value <- ifelse(dd_summary$relation %in% c("few-events","h-no-corr"), dd_summary$value / 2, dd_summary$value)
+hack <- dd_summary %>%
+  filter(relation %in% "few-events")
+hack$relation <- "few-events-neg"
+hack2 <- dd_summary %>%
+  filter(relation %in% "h-no-corr")
+hack2$relation <- "h-no-corr-neg"
+dd_summary <- rbind(dd_summary, hack)
+dd_summary <- rbind(dd_summary, hack2)
+
 
 p_dd <- ggplot(dd_summary,
        aes(x = variable,
-           y = ifelse(relation %in% c("no-lag-neg","lag-neg"), -value, value),
+           y = ifelse(relation %in% c("no-lag-neg","lag-neg","few-events-neg","h-no-corr-neg"), -value, value),
            fill = relation)) +
   geom_col() +
-  scale_y_continuous(limits = c(-0.6,0.6)) +
+  scale_y_continuous(limits = c(-70,70),
+                     breaks = c(-50,-25,0,25,50),
+                     labels = c("", "","","","")) +
   scale_x_discrete(limits = rev(levels(as.factor(dd_summary$variable)))) +
   coord_flip() +
-  scale_fill_manual(values = c("grey70", "grey70","grey40", "grey40")) +
+  scale_fill_manual(values = c("grey90", "grey90","#dfc27d", "#dfc27d", "#80cdc1", "#80cdc1", "#018571","#018571")) +
   geom_hline(yintercept = 0, color =c("white")) +
-  annotate("text", x = 3.1, y = 0.55, label = "n = 34") + #paste("n = ",counts_dec_dorm)) +
+  annotate("text", x = 3.2, y = 65, label = paste("n = ",counts_dec_dorm), size = 3) +
   labs(y = "",
        x = "Dormancy") +
   theme_minimal() +
@@ -899,39 +958,53 @@ df_dec_turn <- df_turn %>%
 dt_precip <- as.data.frame(tapply(df_dec_turn$corr_dormancy_precip, list(df_dec_turn$precip_phase), length)) #dt = dec turn
 counts_dec_turn <- length(df_dec_turn$species_full)
 colnames(dt_precip) <- "value"
-dt_precip$value <- dt_precip$value / 34 #counts_dec_turn
+dt_precip$value <- dt_precip$value / counts_dec_turn *100
 dt_precip$relation <- rownames(dt_precip)
 dt_precip$variable <- "precipitation"
 
 dt_insol <- as.data.frame(tapply(df_dec_turn$corr_dormancy_insol_JR, list(df_dec_turn$insol_phase), length)) #dt = dec turn
 counts_dec_turn <- length(df_dec_turn$species_full)
 colnames(dt_insol) <- "value"
-dt_insol$value <- dt_insol$value / 34 #counts_dec_turn
+dt_insol$value <- dt_insol$value / counts_dec_turn *100
 dt_insol$relation <- rownames(dt_insol)
 dt_insol$variable <- "sunhours"
 
 dt_tmax <- as.data.frame(tapply(df_dec_turn$corr_dormancy_tmax_JR, list(df_dec_turn$tmax_phase), length)) #dt = dec turn
 counts_dec_turn <- length(df_dec_turn$species_full)
 colnames(dt_tmax) <- "value"
-dt_tmax$value <- dt_tmax$value / 34 #counts_dec_turn
+dt_tmax$value <- dt_tmax$value / counts_dec_turn *100
 dt_tmax$relation <- rownames(dt_tmax)
 dt_tmax$variable <- "tmax"
 
 dt_summary <- rbind(dt_precip, dt_insol, dt_tmax)
 
+dt_summary$value <- ifelse(dt_summary$relation %in% c("few-events","h-no-corr"), dt_summary$value / 2, dt_summary$value)
+hack <- dt_summary %>%
+  filter(relation %in% "few-events")
+hack$relation <- "few-events-neg"
+hack2 <- dt_summary %>%
+  filter(relation %in% "h-no-corr")
+hack2$relation <- "h-no-corr-neg"
+dt_summary <- rbind(dt_summary, hack)
+dt_summary <- rbind(dt_summary, hack2)
+
 
 p_dt <- ggplot(dt_summary,
        aes(x = variable,
-           y = ifelse(relation %in% c("no-lag-neg","lag-neg"), -value, value),
+           y = ifelse(relation %in% c("no-lag-neg","lag-neg","few-events-neg","h-no-corr-neg"), -value, value),
            fill = relation)) +
   geom_col() +
-  scale_y_continuous(limits = c(-0.6,0.6)) +
+  scale_y_continuous(limits = c(-70,70),
+                     breaks = c(-50,-25,0,25,50),
+                     labels = c(50,25,0,25,50)) +
   scale_x_discrete(limits = rev(levels(as.factor(dt_summary$variable)))) +
   coord_flip() +
-  scale_fill_manual(values = c("grey70", "grey70","grey40", "grey40")) +
+  scale_fill_manual(values = c("grey90", "grey90","#dfc27d", "#dfc27d", "#80cdc1", "#80cdc1", "#018571","#018571"),
+                    breaks = c("no-lag-neg","lag-neg","h-no-corr-neg","few-events-neg"),
+                    labels = c(" in-phase   "," lag   "," no correlation   "," too few events   ")) +
   geom_hline(yintercept = 0, color =c("white")) +
-  annotate("text", x = 3.1, y = 0.55, label = "n = 34") + #paste("n = ",counts_dec_turn)) +
-  labs(y = "",
+  annotate("text", x = 3.2, y = 65, label = paste("n = ",counts_dec_turn), size = 3) +
+  labs(y = "% species with neg. or pos. correlations",
        x = "Turnover") +
   theme_minimal() +
   theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
@@ -941,27 +1014,36 @@ p_dt <- ggplot(dt_summary,
         plot.background = element_rect(fill = 'white', colour = 'white'),
         strip.text = element_text(hjust = 0),
         axis.line.x = element_blank(),
-        # axis.text.x = element_blank(),
         axis.text.x = element_text(),
-        axis.title.x = element_blank(),
+        axis.title.x = element_text(),
         axis.title.y = element_text(vjust = 3),
-        legend.position = "none",
+        legend.position = "bottom",
+        legend.title = element_blank(),
         plot.margin = unit(c(0,0,0.2,0.5),"cm")
   )
+
 
 #-----------------------------
 # summary plot
 #-----------------------------
-p_all <- grid.arrange(p_ed, p_et, p_dd, p_dt, heights = c(1,1,1,1))
+# p_all <- grid.arrange(p_ed, p_et, p_dd, p_dt, heights = c(1,1,1,1))
+
+# p_ed <- ggplot_gtable(ggplot_build(p_ed))
+# p_et <- ggplot_gtable(ggplot_build(p_et))
+# p_dd <- ggplot_gtable(ggplot_build(p_dd))
+# p_dt <- ggplot_gtable(ggplot_build(p_dt))
+#
+# p_et$heights <-p_ed$heights
+# p_dd$heights <-p_ed$heights
+# p_dt$heights <-p_ed$heights
 
 
-
-p_all <- grid.arrange(arrangeGrob(p_ed, p_et, heights = c(1,1),
-                                 left = textGrob("Evergreen", gp=gpar(fontsize=12), rot = 90)), #, hjust = 0.05, vjust = 2
-                     arrangeGrob(p_dd, p_dt, heights = c(1,1),
-                                 left = textGrob("Deciduous", gp=gpar(fontsize=12), rot = 90)),
+p_all <- grid.arrange(arrangeGrob(p_ed, p_et, heights = c(1,0.65),
+                                 left = textGrob("Evergreen", gp=gpar(fontsize=12), rot = 90, hjust = 0.7)), #, hjust = 0.05, vjust = 2
+                     arrangeGrob(p_dd, p_dt, heights = c(0.5,1),
+                                 left = textGrob("Deciduous", gp=gpar(fontsize=12), rot = 90, hjust = 0.02)),
                      ncol = 1,
-                     heights = c(1,1))
+                     heights = c(0.85,1))
 
 pdf("~/Desktop/figure3_corr.pdf",6,4) # 5,10)
 plot(p_all)
