@@ -173,7 +173,6 @@ transition_dates_dormancy_dec <- data %>%
 # weeks to degrees
 transition_dates_dormancy_dec <- transition_dates_dormancy_dec %>%
   mutate(degree = (week_start-1) * 360/48) # -1 so that week 1 in janurari is degree 0
-
 # summary of onset dates per species
 onset_dormancy_dec <- transition_dates_dormancy_dec %>%
   group_by(species_full) %>%

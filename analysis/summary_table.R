@@ -227,8 +227,12 @@ overview$dec_label <- ifelse(overview$deciduousness %in% c("deciduous","deciduou
 tapply(overview$species_full, overview$dec_label, length)
 
 # test <- overview %>%
-#   filter(grepl("evergreen",deciduousness)) %>%
-#   filter(percentage_site_years_with_leaf_turnover == 0 & percentage_site_years_with_leaf_dormancy == 0)
+#   # filter(grepl("evergreen",deciduousness)) %>%
+#   # filter(total_nr_events_leaf_turnover == 0 & total_nr_events_leaf_dormancy == 0)
+#   # filter(total_nr_events_leaf_dormancy < 5)
+#   filter(total_nr_events_leaf_turnover < 5 & total_nr_events_leaf_dormancy < 5)
+
+
 #--------------------------------------------------------------------
 #--------------------------------------------------------------------
 # write to file
@@ -406,16 +410,17 @@ write.table(table2_turnover, "data/SI_table2_turnover.csv",
 #--------------------------------------------------------------------
 #--------------------------------------------------------------------
 species_table_manuscript <- c("Scorodophloeus zenkeri",
-                  "Panda oleosa",
-                  "Staudtia kamerunensis",
-                  "Synsepalum subcordatum",
-                  "Prioria oxyphylla",
-                  "Petersianthus macrocarpus",
-                  "Irvingia grandifolia",
-                  "Erythrophleum suaveolens",
-                  "Antrocaryon nannanii",
-                  #"Autranella congolensis",
-                  "Pericopsis elata")
+                              "Strombosia pustulata",
+                              "Synsepalum subcordatum",
+                              "Dacryodes osika",
+                              "Quassia silvestris",
+                              "Petersianthus macrocarpus",
+                              "Irvingia grandifolia",
+                              "Erythrophleum suaveolens",
+                              "Antrocaryon nannanii",
+                              "Pericopsis elata")
+
+
 
 table_manuscript <- overview %>%
   filter(species_full %in% species_table_manuscript)

@@ -34,20 +34,20 @@ data <- data %>%
 data$id <- as.character(data$id)
 #----------------------------------------------------------------------
 
-
 # specieslist based on selection made in advance
 sp_evergreen <- c("Scorodophloeus zenkeri",
-                  "Panda oleosa",
+                  # "Panda oleosa",
                   # "Anonidium mannii",
-                  "Staudtia kamerunensis",
+                  # "Staudtia kamerunensis",
+                  "Strombosia pustulata",
                   # "Pancovia harmsiana",
                   # "Garcinia punctata",
-                  # "Carapa procera",
                   "Synsepalum subcordatum",
                   # "Pycnanthus angolensis",
-                  "Prioria oxyphylla")
+                  # "Prioria oxyphylla"
                   # "Blighia welwitschii",
-                  # "Dacryodes edulis",
+                  "Dacryodes osika",
+                  "Quassia silvestris")
                  # "Phyllocosmus africanus")
 sp_deciduous <- c("Petersianthus macrocarpus",
                   # "Greenwayodendron suaveolens",
@@ -66,43 +66,37 @@ query_deciduous <- paste(sp_deciduous,collapse = "|")
 
 p_deciduous <- circular_linear_plot(data,
                                     species_name = query_deciduous,
-                                    viridis_rescaling = 0.15,
+                                    # viridis_rescaling = 0.05,
+                                    # leg_pos = c(1,0.1),
+                                    leg_gradient = c(0,0.3,1),
                                     title_name = "(b) Deciduous")
-pdf("~/Desktop/deciduous.pdf",8.6,12)
+pdf("~/Desktop/figure1b_deciduous.pdf",8.85,12.1)
 plot(p_deciduous)
 dev.off()
 
 p_evergreen <- circular_linear_plot(data,
                                     species_name = query_evergreen,
-                                    viridis_rescaling = 0.05,
                                     title_name = "(a) Evergreen")
-pdf("~/Desktop/evergreen.pdf",8.6,12)
+pdf("~/Desktop/figure1a_evergreen.pdf",8.85,12.1)
 plot(p_evergreen)
 dev.off()
 
-# p_circular_evergreen <- circle_plot(data, species_name = query_evergreen)
-# pdf("~/Desktop/evergreen_selection.pdf",10,20)
-# plot(p_circular_evergreen)
-# dev.off()
+#---------------------------------------------------------------------
+#---------------------------------------------------------------------
+# getting the max frequency in the color scales of figure 1 evergreen v deciduous
+#---------------------------------------------------------------------
+#---------------------------------------------------------------------
+# data_subset_circ <- data %>%
+#   filter(species_full %in% "Irvingia grandifolia")
 #
-# p_circular_deciduous <- circle_plot(data, species_name = query_deciduous)
-# pdf("~/Desktop/deciduous_selection.pdf",10,20)
-# plot(p_circular_deciduous)
-# dev.off()
+# # group by week and take the mean value
+# data_subset_circ <- data_subset_circ %>%
+#   group_by(species_full, week, phenophase) %>%
+#   dplyr::summarise(mean_value = mean(value, na.rm=TRUE))#,
 #
-# # query_evergreen1 <- paste(sp_evergreen[c(1:8)],collapse = "|")
-# # query_evergreen2 <- paste(sp_evergreen[c(8:14)],collapse = "|")
-# # query_deciduous1 <- paste(sp_deciduous[c(1:6)],collapse = "|")
-# # query_deciduous2 <- paste(sp_deciduous[c(6:10)],collapse = "|")
+# data_subset_circ <- data_subset_circ %>%
+#   filter(phenophase %in% "leaf_turnover")
 #
-# p_linear_evergreen <- linear_plot_senescence(data = data, species_name = query_evergreen)
-# pdf("~/Desktop/evergreen_selection_linear.pdf",5,8)
-# plot(p_linear_evergreen)
-# dev.off()
-#
-# p_linear_deciduous <- linear_plot_senescence(data = data, species_name = query_deciduous)
-# pdf("~/Desktop/deciduous_selection_linear.pdf",5,8)
-# plot(p_linear_deciduous)
-# dev.off()
+# max(data_subset_circ$mean_value)
 
 

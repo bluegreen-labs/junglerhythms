@@ -13,7 +13,9 @@ circular_linear_plot <- function(
   data,
   species_name = "Millettia laurentii",
   drought_mm = 140,
-  viridis_rescaling = 0.15,
+  # viridis_rescaling = 0.15,
+  leg_pos = c(1,0.1),
+  leg_gradient = c(0,0.2,1),
   title_name = "(a) evergreen"
 ){
 
@@ -139,7 +141,7 @@ circular_linear_plot <- function(
     scale_colour_distiller(palette = "YlOrBr",
                            direction = 1,
                            name = "Freq.",
-                           values = c(0,0.3,1)) +
+                           values = leg_gradient) + #c(0,0.2,1)
     annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 2.4, alpha = .2) + #jan - feb
     annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 2.4, alpha = .2) + # jun-jul
     annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 2.4, alpha = .2) + # dec
@@ -176,8 +178,9 @@ circular_linear_plot <- function(
           axis.text.x = element_text(size = 11),
           strip.text = element_blank(), #element_text(face = "italic", size = 13),
           strip.background = element_rect(fill="white"),
-          legend.position = "right",
-          plot.margin = unit(c(0,0.5,0.7,0.5),"cm")
+          legend.position = leg_pos,
+          legend.box.margin=margin(c(50,50,50,150)),
+          plot.margin = unit(c(0,3,0.7,0.5),"cm") #unit(c(0,0.5,0.7,0.5)
     ) +
     facet_wrap(~ species_full,ncol=1)
 
@@ -197,7 +200,8 @@ circular_linear_plot <- function(
     scale_x_date(date_breaks = "1 years",
                  date_labels = "%Y",
                  limits = as.Date(c('1937-01-01','1956-12-31'))) +
-    scale_y_continuous(breaks = c(0,0.5,1)) +
+    scale_y_continuous(limits = c(0,1),
+                       breaks = c(0,0.5,1)) +
     theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
           panel.grid.minor.x = element_blank(),
           panel.grid.minor.y = element_blank(),

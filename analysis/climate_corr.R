@@ -726,6 +726,22 @@ df_turn$tmax_phase <- ifelse(df_turn$total_nr_events_leaf_turnover <5, "few-even
                                                   NA)))))
 df_turn$tmax_phase <- ifelse(is.na(df_turn$tmax_phase) & df_turn$total_nr_events_leaf_turnover >= 5, "h-no-corr", df_turn$tmax_phase)
 
+## time lag of dormancy and turnover together for insol and tmax
+# test <- df_dorm %>%
+#   filter(insol_phase %in% "lag-neg")
+# test2 <- df_turn %>%
+#   filter(insol_phase %in% "lag-neg")
+# a <- c(test$corr_dormancy_insol_JR_timing,test2$corr_turnover_insol_JR_timing)
+# mean(as.numeric(a))
+# sd(as.numeric(a))
+# test3 <- df_dorm %>%
+#   filter(tmax_phase %in% "lag-neg")
+# test4 <- df_turn %>%
+#   filter(tmax_phase %in% "lag-neg")
+# b <- c(test3$corr_dormancy_tmax_JR_timing,test4$corr_turnover_tmax_JR_timing)
+# mean(as.numeric(b))
+# sd(as.numeric(b))
+
 
 #-----------------------------
 # evergreen - dormancy
