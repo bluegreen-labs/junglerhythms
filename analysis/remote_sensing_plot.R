@@ -59,11 +59,21 @@ VI_s <- VI %>%
   group_by(site, doy) %>%
   summarise(EVI = mean(value, na.rm = TRUE),
             EVI_sd = sd(value, na.rm = TRUE))
+VI_conf <- VI_s %>%
+  group_by(doy) %>%
+  summarise(EVImax = max(EVI, na.rm = TRUE) + max(EVI_sd),
+            EVImin = min(EVI, na.rm = TRUE) - max(EVI_sd),
+            EVImean = mean(EVI, na.rm = TRUE))
 
 # plot EVI by site
 p_modis <- ggplot(VI_s) +
-  geom_point(aes(doy, EVI, shape = site), col = "grey40") +
-  geom_smooth(aes(doy, EVI), span = 0.3, se = FALSE, col = "black", size = 1.2) +
+  annotate("rect", xmin = 0, xmax = 61, ymin = 0.25, ymax = 0.77, alpha = .1) + # jan - febr
+  annotate("rect", xmin = 152.5, xmax = 213.5, ymin = 0.25, ymax = 0.77, alpha = .1) + # jun - jul
+  annotate("rect", xmin = 335.5, xmax = 365, ymin = 0.25, ymax = 0.77, alpha = .1) + # dec
+  # geom_point(aes(doy, EVI, shape = site), col = "grey40") +
+  geom_ribbon(data = VI_conf, aes(x = doy, ymin = EVImin ,ymax = EVImax), fill="grey60", alpha="0.5") +
+  geom_point(data = VI_conf, aes(doy, EVImean), col = "grey30") +
+  geom_smooth(aes(doy, EVI), span = 0.3, se = FALSE, col = "grey30", size = 1.2) +
   #geom_line(aes(doy, EVI + EVI_sd)) +
   #geom_line(aes(doy, EVI - EVI_sd)) +
   labs(#title = "MOD13Q1",
@@ -76,9 +86,6 @@ p_modis <- ggplot(VI_s) +
   # scale_y_continuous(limits = c(0.4,0.6),
   #                    breaks = c(0.4,0.5,0.6),
   #                    labels = scales::number_format(accuracy = 0.1)) +
-  annotate("rect", xmin = 0, xmax = 61, ymin = 0.4, ymax = 0.6, alpha = .2) + # jan - febr
-  annotate("rect", xmin = 152.5, xmax = 213.5, ymin = 0.4, ymax = 0.6, alpha = .2) + # jun - jul
-  annotate("rect", xmin = 335.5, xmax = 365, ymin = 0.4, ymax = 0.6, alpha = .2) + # dec
   theme_minimal() +
   theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
         panel.grid.minor.x =  element_blank(),
@@ -87,8 +94,8 @@ p_modis <- ggplot(VI_s) +
         plot.background = element_rect(fill = 'white', colour = 'white'),
         strip.text = element_text(hjust = 0),
         axis.line.x = element_blank(),
-        # axis.text.x=element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1,vjust = 1.5,size = 10), # vjust to center the label
+        axis.text.x=element_blank(),
+        # axis.text.x = element_text(angle = 90, hjust = 1,vjust = 2,size = 10), # vjust to center the label
         axis.title.x=element_blank(),
         axis.title.y = element_text(vjust = 3),
         legend.position = "none",

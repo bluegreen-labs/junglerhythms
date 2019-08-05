@@ -14,7 +14,7 @@ df <- df[which(df$value != 0),]
 
 df$join_id <- paste0("R",df$image,"-",df$image_row)
 
-metadata <- read.csv("data/phenology_archives_species_long_format_20190314.csv",
+metadata <- read.csv("data/phenology_archives_species_long_format_20190626.csv",
            header = TRUE, sep = ",")
 metadata$join_id <- paste(metadata$image,metadata$row, sep = "-")
 
@@ -22,7 +22,7 @@ metadata$join_id <- paste(metadata$image,metadata$row, sep = "-")
 test <- merge(df, metadata, by = "join_id", all.x = TRUE)
 
 # read in census data and convert basal area
-census <- read.csv2("data/YGB_ForestPlotsNET.csv",
+census <- read.csv2("data/YGB_ForestPlotsNET_corrected_indet.csv",
                      header = TRUE,
                      sep = ",",
                      stringsAsFactors = FALSE)

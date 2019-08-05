@@ -64,8 +64,7 @@ circular_linear_plot <- function(
 
   # add a month column
   data_subset_circ$month <- months(as.Date(paste("1952",
-                                            round(data_subset_circ$week*7.625),sep="-"), "%Y-%j"))
-
+                                            round((data_subset_circ$week*7.625)-7),sep="-"), "%Y-%j"))
   # locate positions on a y-axis
   data_subset_circ$pos <- NA
   data_subset_circ$pos[data_subset_circ$phenophase == "leaf_dormancy"] <- 2
@@ -98,7 +97,7 @@ circular_linear_plot <- function(
   # convert date
   data_subset_lin_LD$date <- as.Date(
     paste(data_subset_lin_LD$year,
-          round(data_subset_lin_LD$week*7.6),sep="-"), "%Y-%j")
+          round((data_subset_lin_LD$week*7.6)-7),sep="-"), "%Y-%j")
 
   # average by week
   data_subset_lin_LD <- data_subset_lin_LD %>%
@@ -120,7 +119,8 @@ circular_linear_plot <- function(
   # convert date
   data_subset_lin_LT$date <- as.Date(
     paste(data_subset_lin_LT$year,
-          round(data_subset_lin_LT$week*7.6),sep="-"), "%Y-%j")
+          round((data_subset_lin_LT$week*7.6)-7),sep="-"), "%Y-%j")
+
   # average by week
   data_subset_lin_LT <- data_subset_lin_LT %>%
     group_by(species_full, date) %>%

@@ -90,6 +90,32 @@ traits <- traits %>%
          "height_m_literature" = Height_lit_m,
          "dbh_max_cm_literature" = Dmax_lit_cm)
 
+# clear
+traits$deciduousness <- ifelse(traits$species_full %in% "Pericopsis elata", "deciduous*",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Trichilia welwitschii", "evergreen*",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Copaifera mildbraedii", "deciduous*",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Tridesmostemon omphalocarpoides", "evergreen*",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Omphalocarpum lecomteanum", "evergreen*",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Fernandoa adolfi-friderici", "deciduous*",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Tabernaemontana crassa", "evergreen*",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Trichilia tessmannii", "deciduous*",traits$deciduousness)
+# not so sure, limited data
+traits$deciduousness <- ifelse(traits$species_full %in% "Trichilia gilletii", "evergreen* (?)",traits$deciduousness)
+# not so sure, unclear phenological data
+traits$deciduousness <- ifelse(traits$species_full %in% "Radlkofera calodendron", "evergreen* (?)",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Gilletiodendron mildbraedii", "evergreen* (?)",traits$deciduousness)
+
+## two stars, in literature found as evergreen or (sometimes) deciduous
+## selected a class based on the actual data
+traits$deciduousness <- ifelse(traits$species_full %in% "Celtis mildbraedii", "evergreen**",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Combretum lokele", "deciduous**",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Homalium africanum", "evergreen**",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Quassia silvestris", "evergreen**",traits$deciduousness)
+
+# not so sure, unclear phenological data
+traits$deciduousness <- ifelse(traits$species_full %in% "Homalium longistylum", "evergreen** (?)",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Irvingia gabonensis", "deciduous** (?)",traits$deciduousness)
+
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 # summary statistics: start year, end year, site years, site years with events, nr of individuals
