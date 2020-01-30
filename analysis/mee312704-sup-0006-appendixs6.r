@@ -170,7 +170,8 @@ raw_plots
 # with bandwidth similar to 0.1 (span size is linked to the length of the
 # oringal timeseries data, we give options here for data from 24 to 360 months
 # long).
-spans_lookup<-list(months=c(24,48,72,96,120,144,168,192,216,240,264,288,312,336,360), spans_smooth=list(3,3,3,3,c(3,3),c(3,5),c(3,5),c(5,5),c(5,5),c(5,7),c(5,7),c(7,7),c(7,9),c(7,9),c(7,9)))
+spans_lookup<-list(months=c(24,48,72,96,120,144,168,192,216,240,264,288,312,336,360),
+                   spans_smooth=list(3,3,3,3,c(3,3),c(3,5),c(3,5),c(5,5),c(5,5),c(5,7),c(5,7),c(7,7),c(7,9),c(7,9),c(7,9)))
 
 ##Functions ##
 
