@@ -10,6 +10,7 @@ library(Hmisc)
 library(scales)
 #----- source required files  --------------------------------------------------#
 source("analysis/remote_sensing_plot.R")
+source("R/event_length.R")
 #-------------------------------------------------------------------------------#
 
 
@@ -60,14 +61,13 @@ metadata$join_id <- paste(metadata$image,metadata$row, sep = "-")
 
 # test merge the two tables based upon the unique join ID
 data <- merge(df, metadata, by = c("join_id"), all.x = TRUE)
-data$species_full <- paste(data$genus_Meise, data$species_Meise)
+data$species_full <- as.character(paste(data$genus_Meise, data$species_Meise))
 
 # remove column id.x and rename id.y to id (--> in id.y, empty ids are renamed to EK1, EK2, etc...)
-data = data[,!(names(data) %in% "id.x")]
-data <- data %>%
-  rename("id" = id.y)
-data$id <- as.character(data$id)
-data$species_full <- as.character(data$species_full)
+data$id <- as.character(data$id.y)
+data = data[,!(names(data) %in% c("id.x","id.y"))]
+
+
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
@@ -165,7 +165,7 @@ data_LT <- data_LT %>%
 
 # data_LT <- data_LT %>%
 #   filter(mean_week >= minimum_event_frequency)
-data_LT$mean_week <- ifelse(data_LT$mean_week < minimum_event_frequency, 0, data_LT$mean_week)
+# data_LT$mean_week <- ifelse(data_LT$mean_week < minimum_event_frequency, 0, data_LT$mean_week)
 
 # if(rescale_event){
 #   data_LT <- data_LT %>%
@@ -242,6 +242,60 @@ final_LD_plot <- data_LD_plot %>%
   summarise(ss = sum(mean_week*basal_area_plot, na.rm = TRUE))
 final_LD_plot <- inner_join(final_LD_plot, total_basal_area_plot, by = c("Plot"))
 final_LD_plot <- final_LD_plot %>%
+  mutate(ss = ss/total_basal_area_plot*100)
+#-----------------------------------------------------------------------
+
+
+#-----------------------------------------------------------------------
+#------------ Leaf flushing  -------------------------------------------
+#-----------------------------------------------------------------------
+data_flush <- data %>%
+  filter(phenophase == "leaf_dormancy") %>%
+  filter(basal_area_site > 0)
+data_flush$flushing_date <- paste(data_flush$year, data_flush$week, sep = "-")
+
+data_flush_ones <- data_flush[which(data_flush$value != 0),]
+flushing_timing <- data_flush_ones %>%
+  group_by(species_full, id) %>%
+  do(event_length(.))
+
+flushing_timing$flushing_date <- paste(flushing_timing$year_end, flushing_timing$week_end +1, sep = "-")
+
+flushing_timing <- flushing_timing[,(names(flushing_timing) %in% c("species_full",
+                                                                   "id",
+                                                                   "flushing_date"))]
+flushing_timing$flushing_value <- 1
+
+data_flush <- merge(data_flush, flushing_timing, by = c("species_full","id","flushing_date"), all.x = TRUE)
+data_flush$flushing_value <- ifelse(is.na(data_flush$flushing_value),"0", data_flush$flushing_value)
+data_flush$flushing_value <- ifelse(is.na(data_flush$value),NA, data_flush$flushing_value)
+data_flush$flushing_value <- as.numeric(data_flush$flushing_value)
+
+data_flush <- data_flush %>%
+  group_by(species_full, week) %>%
+  summarise(mean_week = mean(flushing_value, na.rm = TRUE),
+            count_week = sum(flushing_value),
+            total_week = length(flushing_value))
+
+# filter out species with too few total siteyears to have a meaningfull average year
+data_flush <- data_flush %>%
+  filter(total_week >= minimum_siteyears)
+
+data_flush$mean_week <- ifelse(data_flush$mean_week < minimum_event_frequency, 0, data_flush$mean_week)
+
+data_flush_site <- inner_join(data_flush, census_site, by = c("species_full"))
+data_flush_plot <- inner_join(data_flush, census_plot, by = c("species_full"))
+
+
+final_flush_site <- data_flush_site %>%
+  group_by(week) %>%
+  summarise(ss = sum(mean_week*basal_area_site, na.rm = TRUE)/total_basal_area_site *100) #,
+
+final_flush_plot <- data_flush_plot %>%
+  group_by(Plot, week) %>%
+  summarise(ss = sum(mean_week*basal_area_plot, na.rm = TRUE))
+final_flush_plot <- inner_join(final_flush_plot, total_basal_area_plot, by = c("Plot"))
+final_flush_plot <- final_flush_plot %>%
   mutate(ss = ss/total_basal_area_plot*100)
 #-----------------------------------------------------------------------
 
@@ -381,46 +435,49 @@ final_LD_plot <- final_LD_plot %>%
 combined <- final_LT_site
 colnames(combined)[2] <- "ss_turn"
 combined <- merge(combined, final_LD_site, by = c("week"), all.x = TRUE)
-combined$ss_both <- combined$ss_turn + combined$ss
+combined$ss_senescence <- combined$ss_turn + combined$ss
 
-p_turn_dorm <- ggplot() +
+colnames(final_flush_site)[2] <- "ss_flush"
+combined <- merge(combined, final_flush_site, by = c("week"), all.x = TRUE)
+
+
+p_combined <- ggplot() +
   annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 2.2, alpha = .1) + # jan - febr
   annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 2.2, alpha = .1) + # jun - jul
   annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 2.2, alpha = .1) + # dec
-  # both
+  # senescence
   geom_smooth(data = combined,
-              aes(week, ss_both, colour = "line3"), span = 0.2, se = FALSE, size = 1.2, linetype = "twodash",
+              aes(week, ss_senescence, colour = "line4"), span = 0.2, se = FALSE, size = 1.2, linetype = "twodash",
               show.legend = TRUE) +
-  # geom_point(data = combined,
-  #            aes(week, ss_both),
-  #            col="black",
-  #            size=2) +
   # turnover
-  # geom_point(data = final_LT_plot,
-  #            aes(week, ss, shape = Plot),
-  #            col="grey40") +
   geom_smooth(data = final_LT_site,
               aes(week, ss, colour = "line2"), span = 0.2, se = FALSE, size = 1.2,
               show.legend = TRUE) +
   geom_point(data = final_LT_site,
              aes(week, ss),
-             col="#018571",
+             col="#d8b365",
              shape = 1,
              stroke = 1.3
              ) +
   # dormancy
-  # geom_point(data = final_LD_plot,
-  #            aes(week, ss, shape = Plot),
-  #            col="grey40") +
   geom_smooth(data = final_LD_site,
               aes(week, ss, colour = "line1"), span = 0.2, se = FALSE, size = 1.2,
               show.legend = TRUE) +
   geom_point(data = final_LD_site,
              aes(week, ss),
-             col="#a6611a",
+             col="#8c510a",
              size=2) +
-  scale_colour_manual(values = c("line1" = "#a6611a", "line2" = "#018571", "line3" = "grey30"),
-                    labels = c(" dormacy   "," turnover   "," senescence   ")) +
+  # flushing
+  geom_smooth(data = combined,
+              aes(week, ss_flush, colour = "line3"), span = 0.2, se = FALSE, size = 1.2,
+              show.legend = TRUE) +
+  geom_point(data = combined,
+             aes(week, ss_flush),
+             col="#018571",
+             size=2) +
+
+  scale_colour_manual(values = c("line1" = "#8c510a", "line2" = "#d8b365", "line3" = "#018571", "line4" = "grey30"),
+                    labels = c(" dormacy   "," turnover   ", " flushing   "," senescence   ")) +
   scale_x_continuous(limits = c(1,49),
                      breaks = seq(1,48,4),
                      labels = month.abb) +
@@ -443,12 +500,7 @@ p_turn_dorm <- ggplot() +
         legend.text = element_text(size = 11),
         plot.margin = unit(c(0,0,0,0.5),"cm")
   )
-# p_turn_dorm
-
-
-
-
-
+# p_combined
 
 p_turnover <- ggplot() +
   geom_point(data = final_LT_plot,
@@ -650,16 +702,16 @@ p_turnover <- ggplot_gtable(ggplot_build(p_turnover))
 p_precip <- ggplot_gtable(ggplot_build(p_precip))
 p_sun <- ggplot_gtable(ggplot_build(p_sun))
 p_tmax <- ggplot_gtable(ggplot_build(p_tmax))
-p_turn_dorm <- ggplot_gtable(ggplot_build(p_turn_dorm))
+p_combined <- ggplot_gtable(ggplot_build(p_combined))
 
 p_modis$widths <-p_turnover$widths
 p_precip$widths <-p_turnover$widths
 p_sun$widths <-p_turnover$widths
 p_tmax$widths <-p_turnover$widths
-p_turn_dorm$widths <-p_turnover$widths
+p_combined$widths <-p_turnover$widths
 
-# p_all <- grid.arrange(p_turn_dorm, p_tmax, p_sun, p_precip, heights = c(5,1,1,4))
-p_all <- grid.arrange(p_turn_dorm, p_modis, p_tmax, p_sun, p_precip, heights = c(5,4,1,1,4))
+# p_all <- grid.arrange(p_combined, p_tmax, p_sun, p_precip, heights = c(5,1,1,4))
+p_all <- grid.arrange(p_combined, p_modis, p_tmax, p_sun, p_precip, heights = c(5,4,1,1,4))
 
 # supplementary information
 p_all_phases <- grid.arrange(p_turnover, p_dormancy, heights = c(1,1.2))
@@ -687,42 +739,6 @@ dev.off()
 #-----------------------------------------------------------------------
 #-----------------------------------------------------------------------
 
-final_LT_site$Month <- ifelse(final_LT_site$week %in% c(1,2,3,4),1,
-                              ifelse(final_LT_site$week %in% c(5,6,7,8),2,
-                                     ifelse(final_LT_site$week %in% c(9,10,11,12),3,
-                                            ifelse(final_LT_site$week %in% c(13,14,15,16),4,
-                                                   ifelse(final_LT_site$week %in% c(17,18,19,20),5,
-                                                          ifelse(final_LT_site$week %in% c(21,22,23,24),6,
-                                                                 ifelse(final_LT_site$week %in% c(25,26,27,28),7,
-                                                                        ifelse(final_LT_site$week %in% c(29,30,31,32),8,
-                                                                               ifelse(final_LT_site$week %in% c(33,34,35,36),9,
-                                                                                      ifelse(final_LT_site$week %in% c(37,38,39,40),10,
-                                                                                             ifelse(final_LT_site$week %in% c(41,42,43,44),11,
-                                                                                                    ifelse(final_LT_site$week %in% c(45,46,47,48),12,
-                                                                                                           NA))))))))))))
-
-final_LT_month <- final_LT_site %>%
-  group_by(Month) %>%
-  summarise(turnover_stand = mean(ss))
-
-final_LD_site$Month <- ifelse(final_LD_site$week %in% c(1,2,3,4),1,
-                              ifelse(final_LD_site$week %in% c(5,6,7,8),2,
-                                     ifelse(final_LD_site$week %in% c(9,10,11,12),3,
-                                            ifelse(final_LD_site$week %in% c(13,14,15,16),4,
-                                                   ifelse(final_LD_site$week %in% c(17,18,19,20),5,
-                                                          ifelse(final_LD_site$week %in% c(21,22,23,24),6,
-                                                                 ifelse(final_LD_site$week %in% c(25,26,27,28),7,
-                                                                        ifelse(final_LD_site$week %in% c(29,30,31,32),8,
-                                                                               ifelse(final_LD_site$week %in% c(33,34,35,36),9,
-                                                                                      ifelse(final_LD_site$week %in% c(37,38,39,40),10,
-                                                                                             ifelse(final_LD_site$week %in% c(41,42,43,44),11,
-                                                                                                    ifelse(final_LD_site$week %in% c(45,46,47,48),12,
-                                                                                                           NA))))))))))))
-
-final_LD_month <- final_LD_site %>%
-  group_by(Month) %>%
-  summarise(dormancy_stand = mean(ss))
-
 combined$Month <- ifelse(combined$week %in% c(1,2,3,4),1,
                               ifelse(combined$week %in% c(5,6,7,8),2,
                                      ifelse(combined$week %in% c(9,10,11,12),3,
@@ -739,38 +755,33 @@ combined$Month <- ifelse(combined$week %in% c(1,2,3,4),1,
 
 combined_month <- combined %>%
   group_by(Month) %>%
-  summarise(senescence_stand = mean(ss))
+  summarise(dormancy_stand = mean(ss),
+            turnover_stand = mean(ss_turn),
+            senescence_stand = mean(ss_senescence),
+            flushing_stand = mean(ss_flush))
 
-climate.corr <- merge(climate, final_LT_month, by = c("Month"), all.x = TRUE)
-climate.corr <- merge(climate.corr, final_LD_month, by = c("Month"), all.x = TRUE)
-climate.corr <- merge(climate.corr, combined_month, by = c("Month"), all.x = TRUE)
+climate.corr <- merge(climate, combined_month, by = c("Month"), all.x = TRUE)
+
 
 
 # turnover
-# cor.test(climate.corr$PAR_Ygb_Yoko_Hauser, climate.corr$turnover_stand, method = 'pearson')
-# cor.test(climate.corr$PAR_Ygb_Hauser, climate.corr$turnover_stand, method = 'pearson')
-# cor.test(climate.corr$insol_all, climate.corr$turnover_stand, method = 'pearson')
 cor.test(climate.corr$insol_JR, climate.corr$turnover_stand, method = 'pearson')
-# cor.test(climate.corr$prec_all, climate.corr$turnover_stand, method = 'pearson')
 cor.test(climate.corr$prec_JR, climate.corr$turnover_stand, method = 'pearson')
 cor.test(climate.corr$tmax_JR, climate.corr$turnover_stand, method = 'pearson')
 
 
 # dormancy
-# cor.test(climate.corr$PAR_Ygb_Yoko_Hauser, climate.corr$dormancy_stand, method = 'pearson')
-# cor.test(climate.corr$PAR_Ygb_Hauser, climate.corr$dormancy_stand, method = 'pearson')
-# cor.test(climate.corr$insol_all, climate.corr$dormancy_stand, method = 'pearson')
 cor.test(climate.corr$insol_JR, climate.corr$dormancy_stand, method = 'pearson')
-# cor.test(climate.corr$prec_all, climate.corr$dormancy_stand, method = 'pearson')
 cor.test(climate.corr$prec_JR, climate.corr$dormancy_stand, method = 'pearson')
 cor.test(climate.corr$tmax_JR, climate.corr$dormancy_stand, method = 'pearson')
 
+# flushin
+cor.test(climate.corr$insol_JR, climate.corr$flushing_stand, method = 'pearson')
+cor.test(climate.corr$prec_JR, climate.corr$flushing_stand, method = 'pearson')
+cor.test(climate.corr$tmax_JR, climate.corr$flushing_stand, method = 'pearson')
+
 # senescence
-# cor.test(climate.corr$PAR_Ygb_Yoko_Hauser, climate.corr$senescence_stand, method = 'pearson')
-# cor.test(climate.corr$PAR_Ygb_Hauser, climate.corr$senescence_stand, method = 'pearson')
-# cor.test(climate.corr$insol_all, climate.corr$senescence_stand, method = 'pearson')
 cor.test(climate.corr$insol_JR, climate.corr$senescence_stand, method = 'pearson')
-# cor.test(climate.corr$prec_all, climate.corr$senescence_stand, method = 'pearson')
 cor.test(climate.corr$prec_JR, climate.corr$senescence_stand, method = 'pearson')
 cor.test(climate.corr$tmax_JR, climate.corr$senescence_stand, method = 'pearson')
 
@@ -791,6 +802,9 @@ climate.corr <- merge(climate.corr, modis, by = c("Month"), all.x = TRUE)
 cor.test(climate.corr$EVIm, climate.corr$prec_all, method = 'pearson')
 cor.test(climate.corr$EVIm, climate.corr$insol_all, method = 'pearson')
 cor.test(climate.corr$EVIm, climate.corr$PAR_Ygb_Hauser, method = 'pearson')
+cor.test(climate.corr$EVIm, climate.corr$tmax_JR, method = 'pearson')
+
 cor.test(climate.corr$EVIm, climate.corr$dormancy_stand, method = 'pearson')
 cor.test(climate.corr$EVIm, climate.corr$turnover_stand, method = 'pearson')
 cor.test(climate.corr$EVIm, climate.corr$senescence_stand, method = 'pearson')
+cor.test(climate.corr$EVIm, climate.corr$flushing_stand, method = 'pearson')

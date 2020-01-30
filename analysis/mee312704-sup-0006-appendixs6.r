@@ -101,12 +101,12 @@ sim_list<-llply(conds,.fun=function(x) ts(x$ts,start=c(1986,1),freq=12)) #Output
 #Format list and dataframe outputs for further analysis (arrive here if inputting own empirical data)
 #make list of timeseries "data_ls" (can input own empirical data here as list of timeseries)
 
-data_ls<-sim_list #substitute "sim_list" for named list of empirical data
+data_ls <- sim_list #substitute "sim_list" for named list of empirical data
 str(data_ls)
 
 #make dataframe of timeseries "data_df"
-individuals<-length(data_ls)
-IDs<-names(data_ls)
+individuals <- length(data_ls)
+IDs <- names(data_ls)
 
 data_df<-data.frame()
 for(i in 1:individuals){

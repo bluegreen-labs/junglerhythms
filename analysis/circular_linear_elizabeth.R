@@ -36,37 +36,21 @@ data$id <- as.character(data$id)
 
 # specieslist based on selection made in advance
 sp_evergreen <- c("Scorodophloeus zenkeri",
-                  # "Panda oleosa",
-                  # "Anonidium mannii",
-                  # "Staudtia kamerunensis",
                   "Strombosia pustulata",
-                  # "Pancovia harmsiana",
-                  # "Garcinia punctata",
                   "Synsepalum subcordatum",
-                  # "Pycnanthus angolensis",
-                  # "Prioria oxyphylla"
-                  # "Blighia welwitschii",
                   "Dacryodes osika",
                   "Quassia silvestris")
-                 # "Phyllocosmus africanus")
 sp_deciduous <- c("Petersianthus macrocarpus",
-                  # "Greenwayodendron suaveolens",
                   "Irvingia grandifolia",
                   "Erythrophleum suaveolens",
                   "Antrocaryon nannanii",
-                  #"Autranella congolensis",
                   "Pericopsis elata")
-                  # "Vitex ferruginea",
-                  # "Ricinodendron heudelotii",
-                  # "Milicia excelsa",
-                  # "Lovoa trichilioides")
 
 query_evergreen <- paste(sp_evergreen,collapse = "|")
 query_deciduous <- paste(sp_deciduous,collapse = "|")
 
 p_deciduous <- circular_linear_plot(data,
                                     species_name = query_deciduous,
-                                    # viridis_rescaling = 0.05,
                                     # leg_pos = c(1,0.1),
                                     leg_gradient = c(0,0.3,1),
                                     title_name = "(b) Deciduous")

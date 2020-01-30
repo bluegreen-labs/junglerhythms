@@ -7,7 +7,7 @@
 
 library(tidyverse)
 library(viridis)
-
+library(gridExtra)
 
 circular_linear_plot <- function(
   data,
@@ -99,11 +99,19 @@ circular_linear_plot <- function(
     paste(data_subset_lin_LD$year,
           round((data_subset_lin_LD$week*7.6)-7),sep="-"), "%Y-%j")
 
-  # average by week
+  # grow dataset to full range
+  years <- sort(rep(min(data_subset_lin_LD$year):max(data_subset_lin_LD$year), 48))
+  days <- rep(round((1:48 * 7.6) - 7),length(unique(years)))
+  df <- data.frame(date = as.Date(paste(years, days, sep = "-"), "%Y-%j"))
+
+  # average by date
   data_subset_lin_LD <- data_subset_lin_LD %>%
     group_by(species_full, date) %>%
     dplyr::summarise(mean_value = mean(value),
               scaled_value = ifelse(any(value > 0), 1, 0))
+
+  data_subset_lin_LD <- merge(data_subset_lin_LD, df, by = "date", all.y = TRUE)
+  data_subset_lin_LD$species_full <- unique(na.omit(data_subset_lin_LD$species_full))
 
   #------------------------------------------------------------------------
   # linear leaf turnover
@@ -121,11 +129,19 @@ circular_linear_plot <- function(
     paste(data_subset_lin_LT$year,
           round((data_subset_lin_LT$week*7.6)-7),sep="-"), "%Y-%j")
 
-  # average by week
+  # grow dataset to full range
+  years <- sort(rep(min(data_subset_lin_LT$year):max(data_subset_lin_LT$year), 48))
+  days <- rep(round((1:48 * 7.6) - 7),length(unique(years)))
+  df <- data.frame(date = as.Date(paste(years, days, sep = "-"), "%Y-%j"))
+
+  # average by date
   data_subset_lin_LT <- data_subset_lin_LT %>%
     group_by(species_full, date) %>%
     dplyr::summarise(mean_value = mean(value),
               scaled_value = ifelse(any(value > 0), 1, 0))
+
+  data_subset_lin_LT <- merge(data_subset_lin_LT, df, by = "date", all.y = TRUE)
+  data_subset_lin_LT$species_full <- unique(na.omit(data_subset_lin_LT$species_full))
 
   #------------------------------------------------------------------------
   # circular plot
@@ -189,12 +205,12 @@ circular_linear_plot <- function(
   #------------------------------------------------------------------------
   p_lin <- ggplot(data_subset_lin_LD, aes(x = date,
                                y = mean_value)) +
-    geom_line(stat = "identity",aes(color="Canopy dormancy")) +
+    geom_line(aes(color="Canopy dormancy")) + #stat = "identity",
     geom_line(data=data_subset_lin_LT,aes(color="Canopy turnover")) +
     scale_colour_manual(values = c("black","grey60")) +
     theme_minimal() +
     labs(title = title_name,
-         y = "Freq. phenological event",
+         y = "Freq. phenophase",
          x = "Year",
          color = "Event") +
     scale_x_date(date_breaks = "1 years",
@@ -208,7 +224,7 @@ circular_linear_plot <- function(
           panel.background = element_blank(),
           plot.background = element_rect(fill = 'white', colour = 'white'),
           plot.title = element_text(hjust = -0.25),
-          strip.text = element_text(hjust = 0, size = 13),
+          strip.text = element_text(hjust = 0, size = 13, face = "italic"),
           axis.line.x = element_blank(),
           axis.title.x = element_blank(),
           axis.text.x = element_text(angle = 90, hjust = 1),
@@ -248,9 +264,9 @@ circular_linear_plot <- function(
 
 
 # p_deciduous <- circular_linear_plot(data,
-#                                     species_name = "Entandrophragma angolense",
-#                                     viridis_rescaling = 0.15,
+#                                     species_name = "Erythrophleum suaveolens",
 #                                     title_name = "(b) Deciduous")
+
 # pdf("~/Desktop/deciduous.pdf",8.4,12)
 # plot(p_deciduous)
 # dev.off()

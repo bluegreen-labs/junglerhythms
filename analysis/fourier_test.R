@@ -6,8 +6,8 @@ library(TSA)
 library(tidyverse)
 library(plyr)
 library(ggplot2)
-library(reshape)
-library(RColorBrewer)
+# library(reshape)
+# library(RColorBrewer)
 library(gtools)
 library(grid)
 library(circular)
@@ -17,9 +17,6 @@ library(truncnorm)
 #-------------------------------------------------------------------------------#
 
 
-
-###################################
-#combine species-specific lists of individual time-series
 
 #----------------------------------------------------------------------
 #--------   Phenology data - species correction Meise   ---------------
@@ -39,11 +36,13 @@ data <- merge(df, metadata, by = c("join_id"), all.x = TRUE)
 data$species_full <- paste(data$genus_Meise, data$species_Meise)
 
 # remove column id.x and rename id.y to id (--> in id.y, empty ids are renamed to EK1, EK2, etc...)
-data = data[,!(names(data) %in% "id.x")]
-data <- data %>%
-  rename("id" = id.y)
-data$id <- as.character(data$id)
-data$species_full <- as.character(data$species_full)
+data$id <- as.character(data$id.y)
+data = data[,!(names(data) %in% c("id.x","id.y"))]
+# data$id <- as.character(data$id)
+# data$species_full <- as.character(data$species_full)
+
+# remove rows with NA's in year -> individuals with 'no_data' in the archive
+data <- data[!(is.na(data$year)),]
 #----------------------------------------------------------------------
 
 
@@ -51,9 +50,9 @@ data$species_full <- as.character(data$species_full)
 #-----subset for testing -------------------------------------
 #----------------------------------------------------------------------
 data_subset <- data %>%
-  filter(species_full %in% "Anonidium mannii") %>%
-  filter(phenophase %in% "flowers") %>%
-  filter(id %in% "304")
+  filter(species_full %in% "Pericopsis elata") %>% # Irvingia grandifolia
+  filter(phenophase %in% "leaf_dormancy") %>% #flowers #leaf_dormancy
+  filter(id %in% "127") #587
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
@@ -68,18 +67,8 @@ data_subset <- data_subset %>%
 # add a month column
 data_subset$month <- format.Date(data_subset$date, "%m")
 
-# raw data plot
-p_lin <- ggplot(data_subset,
-                aes(x = date,
-                    y = value)) +
-  geom_line() +
-  scale_x_date(date_breaks = "1 years",
-               date_labels = "%Y",
-               limits = as.Date(c('1938-01-01','1951-12-31'))) +
-  theme_minimal() +
-  theme(panel.grid.major.x = element_line(colour = "grey50", size = 0.3))
-
-p_lin
+# data_subset <- data_subset %>%
+#   filter(date > "1947-01-01")
 
 #----------------------------------------------------------------------
 #----------------------------------------------------------------------
@@ -108,29 +97,12 @@ p_lin
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
-#-----subset for testing -------------------------------------
+#----- figures showing raw data from Bush (same as our circular - linear plots)
 #----------------------------------------------------------------------
-data_subset <- data %>%
-  filter(species_full %in% "Anonidium mannii") %>%
-  filter(phenophase %in% "flowers")
-
-### Data format introduction ###
-
-# To work this code, empirical or simulated data should be arranged initially as a named list of
-# individual time series (called "data_ls"). These should each be of class “time series” and
-# have no gaps (any small gaps, for example up to 3 data points long, could be
-# interpolated using a simple linear estimator). This will then also be arranged
-# into data frame format (data_df) for some graphics / analyses.
-
-
-
-test <- ts(data = data_subset$value, start = 1, end = 624, frequency = 1)
-
 #Summarise phenology scores across sample for each month and year
 #(to give proportions for boxplots)
 data_df_sample_summary <- ddply(data_subset,.(year,month),summarize,
                               propPhenophase = length(value[value > 0])/length(id))
-
 data_df_sample_summary$month <- mapvalues(data_df_sample_summary$month,from=c("01","02","03","04","05","06","07","08","09","10","11","12"), to=c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"))
 data_df_sample_summary$month <- factor(data_df_sample_summary$month,ordered=T,levels=c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"))
 
@@ -141,80 +113,137 @@ Phenology_circular_boxplot<-ggplot(data_df_sample_summary,aes(x=factor(month),y=
   theme_minimal(base_size=16)+
   theme(legend.position="none",axis.title.x=element_blank(),axis.ticks=element_blank())+
   ylab("")
-Phenology_circular_boxplot
 ##Figure 1b - timeseries plot of raw data for each individual
-raw_plots <- ggplot(data_subset,aes(x=date,y=value))+ #,colour=ID
-  geom_line()+
-  scale_y_continuous(labels=NULL)+
-  ylab("Canopy score")+
-  xlab("")+
-  theme_light(base_size=14)+
-  theme(legend.position="none",strip.background = element_blank(), strip.text = element_blank())
-  # facet_wrap(~ID,ncol=1)
-raw_plots
-
+# raw data plot
+p_lin <- ggplot(data_subset,
+                aes(x = date,
+                    y = value)) +
+  geom_line() +
+  scale_x_date(date_breaks = "1 years",
+               date_labels = "%Y",
+               limits = as.Date(c('1938-01-01','1951-12-31'))) +
+  theme_minimal() +
+  theme(panel.grid.major.x = element_line(colour = "grey50", size = 0.3))
+# facet_wrap(~ID,ncol=1)
+grid.arrange(Phenology_circular_boxplot,p_lin, widths = c(1,2))
 
 ####################################################
-#### Intitial observation of the Periodogram #######
+#### Initial observation of the Periodogram #######
 ###################################################
 
-###To display smoothed periodograms - Figure 1c (main text)
-
-##Parameters ##
-
-# Spans for the Daniel kernel to smooth the spectrum The following
-# list allows the spec_fun function to find appropriate spans for the Daniel
-# kernel to successively apply to the spectrum to give a smoothed periodogram
-# with bandwidth similar to 0.1 (span size is linked to the length of the
-# oringal timeseries data, we give options here for data from 24 to 360 months
-# long).
-
-##Functions ##
-
-#Spectrum fucntion
+# Spectrum function from Bush
 spec_fun <- function(x) spectrum(x,#spans = 3,
                                plot=F,demean=T,detrend=T) #spectrum function for normal smoother periodogram
 
-##Run fourier analysis using function "spectrum" on each list object (individual
-##time series) to give Fourier outputs for each individual
+# data as timeseries
+test <- ts(data = data_subset$value, start = 1938, frequency = 48) # 1938 # time series of the data
 
-fourier <- spec_fun(test)
+# fourier transform
+Fourier_df <- data.frame(freq = spec_fun(test)$freq/48,
+                         spec = spec_fun(test)$spec,
+                         spec_norm = spec_fun(test)$spec*(1/mean(spec_fun(test)$spec)))
 
-Fourier_df <- data.frame()
-d <- data.frame(freq = fourier$freq)
-d$spec = fourier$spec
-d$spec_norm = fourier$spec*(1/mean(fourier$spec))
-Fourier_df <- rbind(Fourier_df,d)
-
-# for (i in 1:length(data_ls)){
-#   d<-data.frame(freq=spec_fun(data_ls[[i]])$freq/12)
-#   d$spec=spec_fun(data_ls[[i]])$spec
-#   d$spec_norm=spec_fun(data_ls[[i]])$spec*(1/mean(spec_fun(data_ls[[i]])$spec))
-#   d$ID=as.factor(IDs[i])
-#   Fourier_df<-rbind(Fourier_df,d)
-# }
 
 ##Plot periodograms for visual inspection
 
 #Periogorams for each individual on one plot - Figure 1c
-Periodograms<-ggplot(data=Fourier_df,aes(x=freq,y=spec_norm)) +
-  geom_line()+
+Periodogram <- ggplot(data=Fourier_df) +
+  geom_line(aes(x=freq,y=spec_norm))+
   theme_minimal(base_size=14)+
   ylab("Power (standardised spectrum)")+
-  xlab("Cycle frequency (cycles per month")+
+  xlab("Cycle frequency (cycles per month)")+
   ggtitle("Smoothed periodograms of phenology cycles by individual")
 
-Periodograms
+Periodogram
 
-# #Summarise dominant peaks
-# Fourier_df_sample_summary<-ddply(Fourier_df, .(ID), summarize,
-#                                  maxFreq=freq[which.max(spec)],
-#                                  maxSpec_norm=max(spec_norm))
-#Dominant phenology cycle for sample
-# Median_cycle<-1/median(Fourier_df_sample_summary$maxFreq)
-# Median_cycle<-1/median(Fourier_df_sample_summary$maxFreq)
-# Median_cycle
+# Summarise dominant peak
 maxFreq = Fourier_df$freq[which.max(Fourier_df$spec)]
 cycle = 1/maxFreq
-cycle
+cycle # if months then yes correct 24 = 2 years, if observations then no to short
 
+
+#####################################################################################
+#### Periodogram analysis with confidence intervals to find frequency and phase #####
+#####################################################################################
+
+
+#Function to calculate the null continuum (super-smoothed spectrum of data) for null hypothesis test
+spec_null_fun <- function(x) spectrum(x,spans=c(55,57), # a large span from Bush
+                                    plot=F,demean=T,detrend=T) #spectrum function for null hypothesis spectrum
+
+
+# Summarise dominant peak
+freq_dom <- (spec_fun(test)$freq[which.max(spec_fun(test)$spec)])/48 #frequency of the dominant peak
+cycle_dom <- 1/freq_dom
+spec_dom <- max(spec_fun(test)$spec) #spectrum of dominant peak
+spec_dom_norm =  spec_dom*(1/mean(spec_fun(test)$spec)) #normalised spectrum so that mean power is equal to 1 enabling comparisons of "Power" between individuals
+# stats compared to null hypothesis
+dfree <- spec_fun(test)$df #degrees of freedom of the smoothed periodogram
+lower_ci <- (dfree*spec_dom)/(qchisq(c(0.975),dfree)) #lower CI of dominant peak of smoothed periodogram
+spec_null_dom <- spec_null_fun(test)$spec[which(abs((spec_null_fun(test)$freq)/48-freq_dom)==min(abs((spec_null_fun(test)$freq)/48-freq_dom)))] #the corresponding dominant peak from the null continuum
+
+sig <- lower_ci > spec_null_dom #If the null spectrum is lower than the lower confidence interval, dominant peak can be considered "signficantly different" to null hypothesis
+# Categorise dominant cycles and screen results for positive false results where dominant peak is same as full length of the data - "No cyclicity"
+cycle_category <- as.factor(ifelse(cycle_dom > length(test)/2,"No cyclicity",
+                                   ifelse(cycle_dom > 49,"Supra-annual",
+                                          ifelse(cycle_dom >= 47,"Annual","Sub-annual"))))
+#Is the dominant cycle both significant and represent a regular cycle?
+sig_cycle <- as.factor(ifelse(cycle_category!="No cyclicity" & sig==TRUE,TRUE,FALSE))
+
+
+#####################################################################################
+### Find phase of significant dominant cycles and assess synchrony between individuals
+#####################################################################################
+
+# Calculate the modal dominant cycle length of the sample
+Dominant_cycle <- as.numeric(round(cycle_dom[sig_cycle==TRUE],digits=0))
+
+#Simulate a "template" time series using the sample modal cycle peaking at the beginning of January 1986 to act as guide in co-Fourier analysis
+w = 2*pi*(1/Dominant_cycle) # wavelength in radians
+simulated_phase_ts <- ts(4*cos(w*1:720),start=c(1938,1),end=c(1949,48),freq=48) #1:360 -> 1:720 -> no interuption in cosinus for longer time series
+ts_cross <- ts.intersect(simulated_phase_ts,test)
+
+# Function for co-Fourier analysis of a simulated cosine curve against the empirical data
+spec_cross_fun <- function(x)spec.pgram(x,#spans=spans_lookup$spans_smooth[[which.min(abs(spans_lookup$months-length(x)))]],
+                                        demean=T,detrend=T,plot=F)
+
+#the phase difference (in radians) at the dominant frequency
+crosstest <- spec_cross_fun(ts_cross)
+crosstest_df <- data.frame(freq = crosstest$freq,
+                         spec1 = crosstest$spec[,1],
+                         spec1_norm = crosstest$spec[,1]*(1/mean(crosstest$spec[,1])),
+                         spec2 = crosstest$spec[,2],
+                         spec2_norm = crosstest$spec[,2]*(1/mean(crosstest$spec[,2])),
+                         phase = crosstest$phase
+                         )
+plot(ts_cross)
+##Plot periodograms for visual inspection
+Periodogram <- ggplot(data=crosstest_df) +
+  geom_line(aes(x=freq,y=spec1_norm))+
+  geom_line(aes(x=freq,y=spec2_norm), col = "blue")+
+  theme_minimal(base_size=14)+
+  ylab("Power (standardised spectrum)")+
+  xlab("Cycle frequency")
+Periodogram
+p_phase <- ggplot(data=crosstest_df) +
+  geom_line(aes(x=freq,y=phase))+
+  theme_minimal(base_size=14)+
+  ylab("Power (standardised spectrum)")+
+  xlab("Cycle frequency")
+p_phase
+
+phase_radians <- spec_cross_fun(ts_cross)$phase[which.max(spec_cross_fun(ts_cross)$spec[,1])]
+# different formats of timing
+phase_degree <- deg(phase_radians)
+phase_week <- phase_degree*48/360
+phase_doy <- round((phase_week*7.6)-7)
+timing_peak <- as.Date(phase_doy, origin = "1938-01-01")
+timing_peak <- format.Date(timing_peak, "%m-%d")
+
+# return data as data frame
+return(data.frame(cycle_dom = cycle_dom,
+                  sig = sig,
+                  cycle_category = cycle_category,
+                  phase_doy = phase_doy,
+                  timing_peak = timing_peak
+                  ))

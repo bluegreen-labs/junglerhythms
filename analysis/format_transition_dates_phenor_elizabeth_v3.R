@@ -39,10 +39,11 @@ data <- merge(df, metadata, by = c("join_id"), all.x = TRUE)
 data$species_full <- paste(data$genus_Meise, data$species_Meise)
 
 # remove column id.x and rename id.y to id (--> in id.y, empty ids are renamed to EK1, EK2, etc...)
-data = data[,!(names(data) %in% "id.x")]
-data <- data %>%
-  rename("id" = id.y)
-data$id <- as.character(data$id)
+data$id <- as.character(data$id.y)
+data = data[,!(names(data) %in% c("id.x","id.y"))]
+
+# remove rows with NA's in year -> individuals with 'no_data' in the archive
+data <- data[!(is.na(data$year)),]
 
 
 # #----------------------------------------------------------------------
@@ -220,13 +221,15 @@ onset_dormancy_dec_CItwosegments$phase <- "dormancy"
 onset_dec_CItwosegments <- rbind(onset_turnover_dec_CItwosegments, onset_dormancy_dec_CItwosegments)
 
 #
-onset_dec_allphases <- onset_dec[,(names(onset_dec) %in% c("y_value",
+onset_dec_allphases <- onset_dec[,(names(onset_dec) %in% c("species_full",
+                                                           "y_value",
                                                          "median_rescaled",
                                                          "phase"))]
-onset_dec_flushing <- onset_dec[,(names(onset_dec) %in% c("y_value",
+onset_dec_flushing <- onset_dec[,(names(onset_dec) %in% c("species_full",
+                                                          "y_value",
                                                 "flushing_rescaled"
                                                 ))]
-colnames(onset_dec_flushing)[2] <- "median_rescaled"
+colnames(onset_dec_flushing)[3] <- "median_rescaled"
 onset_dec_flushing <- onset_dec_flushing[!(is.na(onset_dec_flushing$median_rescaled)),]
 onset_dec_flushing$phase <- "flushing"
 
@@ -235,6 +238,16 @@ onset_dec_allphases <- rbind(onset_dec_allphases, onset_dec_flushing)
 #------------------------------------------------------------------------
 # FIGURE DECIDUOUS
 #------------------------------------------------------------------------
+sp_clust <- read.csv("data/cluster_test.csv",
+                     header = TRUE,
+                     sep = ",",
+                     stringsAsFactors = FALSE)
+# merge with data to filter on deciduousness
+onset_dec_allphases <- merge(onset_dec_allphases, sp_clust, by = "species_full", all.x = TRUE)
+onset_dec_allphases$cluster_id <- ifelse(onset_dec_allphases$phase %in% 'dormancy', onset_dec_allphases$cluster_id, "0")
+onset_dec_allphases$cluster_id <- as.character(onset_dec_allphases$cluster_id)
+
+#--------------------------------
 p_onset_dec <- ggplot(data = onset_dec) +
   annotate("rect", xmin = 330, xmax = 360, ymin = 0, ymax = max(onset_dec$y_value) , alpha = .2) + #Dec
   annotate("rect", xmin = 0, xmax = 60, ymin = 0, ymax = max(onset_dec$y_value) , alpha = .2) + # jan - feb
@@ -258,12 +271,13 @@ p_onset_dec <- ggplot(data = onset_dec) +
                    yend = y_value),
                color = "grey60") +
   geom_point(data = onset_dec_allphases,
-             aes(x = median_rescaled, y = y_value, shape = phase)) +
+             aes(x = median_rescaled, y = y_value, shape = phase, colour = cluster_id)) + #
   # geom_point(aes(x = mean_rescaled, y = y_value, col = phase),
   #            shape = 4) +
   scale_shape_manual(values = c(19,4,1),
                      name = "onset of:",
                      labels = c("dormancy", "flushing","turnover")) +
+  scale_colour_manual(values = c("black","red","green","blue","purple","darkblue","orange")) +
   scale_x_continuous(limits = c(0,360),
                      breaks = seq(0,359,30),
                      labels = month.abb) +
@@ -290,7 +304,7 @@ p_onset_dec <- ggplot(data = onset_dec) +
         legend.key = element_rect(fill = "white"),
         plot.margin=unit(c(0,0,0,0),"cm")
   )
-
+p_onset_dec
 #------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------
