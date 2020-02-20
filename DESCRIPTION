@@ -16,6 +16,6 @@ Imports:
     tidyverse,
     ggplot2,
     ggthemes
-License: 
+License: AGPLv3
 Encoding: UTF-8
 RoxygenNote: 6.1.1
