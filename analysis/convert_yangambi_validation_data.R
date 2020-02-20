@@ -1,15 +1,17 @@
 library(tidyverse)
+library(cowplot)
 
 # process Luki data into compatible format
-df <- readxl::read_xlsx("data-raw/yangambi_validation_data.xlsx")
+if(!exists("df")){
+  df <- readxl::read_xlsx("data-raw/yangambi_validation_data.xlsx")
 
-# create date
-week <- rep(1:48,22)
-year <- sort(rep(1937:1958,48))
-dates <- paste(year, week, sep = "-")
-colnames(df)[7:ncol(df)] <- dates
-colnames(df)[1:6] <- df[2,1:6]
-df <- df[-c(1:2),]
+  week <- rep(1:48,22)
+  year <- sort(rep(1937:1958,48))
+  dates <- paste(year, week, sep = "-")
+  colnames(df)[7:ncol(df)] <- dates
+  colnames(df)[1:6] <- df[2,1:6]
+  df <- df[-c(1:2),]
+}
 
 # rearrange
 tmp <- df %>% gather(key="dates",
@@ -42,21 +44,27 @@ tmp <- df %>% gather(key="dates",
 #tmp %>% filter(phenophase == "Fruit") %>% select(value) %>% table()
 
 # recode labels
-tmp <- tmp %>% mutate(phenophase = recode(phenophase,Flower = "flowering"),
-              phenophase = recode(phenophase,Fruit = "fruiting"),
+# What about the different numbers in the coding 2 and 4 in the
+# leaf dormancy section (probably leaf_dormancy / leaf_turnover differences)
+# check with original data
+
+tmp <- tmp %>% mutate(phenophase = recode(phenophase,Flower = "flowers"),
+              phenophase = recode(phenophase,Fruit = "fruit"),
               phenophase = recode(phenophase,Dissemination = "fruit_drop"),
               phenophase = recode(phenophase,dissemination = "fruit_drop"),
               phenophase = recode(phenophase,Defoliation = "leaf_dormancy"))
 
-data <- df %>%
-  group_by(species_full, year) %>%
+# data retention strategy, very strict, needs to align with
+# other processing to make validation valid.
+tmp <- tmp %>%
+  group_by(species_full, id, year) %>%
   mutate(selection = if(all(value == 0)){
    NA
   }else{
     value
   }) %>%
-  na.omit() %>%
-  ungroup()
+  ungroup()  %>%
+  na.omit()
 
 # save the new tidy data
-saveRDS(df, "data/luki_weekly_annotations.rds")
+saveRDS(tmp, "data/yangambi_validation_annotations.rds")
