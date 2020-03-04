@@ -64,14 +64,13 @@ overview <- read.csv("data/species_meta_data.csv",
 overview <- overview %>%
   dplyr::select(species_full,
                 deciduousness,
-                # site_years_with_leaf_dormancy,
-                # site_years_with_leaf_turnover,
+                site_years_with_leaf_dormancy, # in summary figure, only species with events are included
+                site_years_with_leaf_turnover,
                 total_nr_events_leaf_dormancy, # species with too few events (< 5) not included for cross correlation analysis
                 total_nr_events_leaf_turnover)
 
 species_list <- overview$species_full
-# species_list <-c("Afzelia bipindensis","Panda oleosa","Albizia adianthifolia",
-#                  "Chrysophyllum africanum","Entandrophragma cylindricum")
+
 #--- leaf turnover ----------------------------------------------------------------------------------------------------
 # for selected species and phenophase: get extended timelines at ID level with 2 year-gaps filled with zero
 timelines_id_turn <- two_year_gaps(data = data,
@@ -151,13 +150,12 @@ output <- merge(overview, output, by = "species_full", all.x = TRUE)
 #----------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------
 # corr summary figure
+# only species that have events of dormancy or turnover
 #----------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------
 # dormancy
 df_dorm <- output %>%
-  # filter(grepl("deciduous",deciduousness)) %>%
-  filter(site_years_with_leaf_dormancy > 0) #%>%
-# filter(total_nr_events_leaf_dormancy >=5)
+  filter(site_years_with_leaf_dormancy > 0)
 
 df_dorm$precip_phase <- ifelse(df_dorm$total_nr_events_leaf_dormancy <5, "few-events",
                                ifelse(df_dorm$corr_leaf_dormancy_precip_timing == "0" & df_dorm$corr_leaf_dormancy_precip < 0, "no-lag-neg",
@@ -187,9 +185,7 @@ df_dorm$tmax_phase <- ifelse(is.na(df_dorm$tmax_phase) & df_dorm$total_nr_events
 
 # turnover
 df_turn <- output %>%
-  # filter(grepl("deciduous",deciduousness)) %>%
-  filter(site_years_with_leaf_turnover > 0) #%>%
-# filter(total_nr_events_leaf_turnover >=5)
+  filter(site_years_with_leaf_turnover > 0)
 
 df_turn$precip_phase <- ifelse(df_turn$total_nr_events_leaf_turnover <5, "few-events",
                                ifelse(df_turn$corr_leaf_turnover_precip_timing == "0" & df_turn$corr_leaf_turnover_precip < 0, "no-lag-neg",
