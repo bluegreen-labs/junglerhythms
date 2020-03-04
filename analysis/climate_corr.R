@@ -9,9 +9,9 @@ library(grid)
 library(gridExtra)
 library(tseries)
 #----- source required functions -----------------------------------------------#
-source("analysis/timeline_gap_fill.R")
-source("analysis/consec_years.R")
-source("analysis/climate_ccf_function.R")
+source("R/timeline_gap_fill.R")
+source("R/consec_years.R")
+source("R/climate_ccf_function.R")
 #-------------------------------------------------------------------------------#
 
 

@@ -13,10 +13,10 @@ library(gridExtra)
 # library(DescTools)
 # library(truncnorm)
 #----- source required functions -----------------------------------------------#
-source("analysis/timeline_gap_fill.R")
-source("analysis/consec_years.R")
-source("analysis/fourier_function_species_level.R")
-source("analysis/climate_coherence_function.R")
+source("R/timeline_gap_fill.R")
+source("R/consec_years.R")
+source("R/fourier_function_species_level.R")
+source("R/climate_coherence_function.R")
 #-------------------------------------------------------------------------------#
 
 
