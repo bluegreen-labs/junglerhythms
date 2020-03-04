@@ -1,9 +1,11 @@
 #' coherence analysis (co-fourier analysis) with climate data
 #'
 #' @param data timelines of consecutive years, already at species level
+#' @param climate
 #' @param species_name
+#' @param pheno
 #' @export
-#' @return timing and stats for peaks
+#' @return phase difference between climate and phenology time series, coherence values and significance
 
 
 spans_lookup_monthly <- list(observations = c(24, 36, 48, 60, 72, 84, 96, 108, 120, 132, 144, 156, 168, 180, 192, 204, 216, 228, 240),
