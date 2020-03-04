@@ -1,7 +1,7 @@
 #----- reset your R session. ---------------------------------------------------#
 rm(list=ls())
 # graphics.off()
-#----- load required packages --------------------------------------------------#
+#----- load required libraries -------------------------------------------------#
 library(tidyverse)
 library(ggplot2)
 library(ggthemes)
