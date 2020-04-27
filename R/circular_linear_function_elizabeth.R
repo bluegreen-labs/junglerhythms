@@ -8,6 +8,7 @@
 library(tidyverse)
 library(viridis)
 library(gridExtra)
+library(ggplot2)
 
 circular_linear_plot <- function(
   data,
@@ -38,6 +39,7 @@ circular_linear_plot <- function(
   #                             "(N = ",data$N,", S = ",
   #                             data$S,")")
 
+
   # split out a particular species
   data_subset_circ <- data %>%
     filter(grepl(tolower(species_name),
@@ -46,7 +48,7 @@ circular_linear_plot <- function(
   # group by week and take the mean value
   data_subset_circ <- data_subset_circ %>%
     group_by(species_full, week, phenophase) %>%
-    dplyr::summarise(mean_value = mean(value, na.rm=TRUE))#,
+    dplyr::summarise(percent_value = mean(value, na.rm=TRUE) *100)#,
               # N = unique(N),
               # S = unique(S))
 
@@ -89,29 +91,31 @@ circular_linear_plot <- function(
     filter(grepl(tolower(species_name), tolower(species_full)),
            phenophase == "leaf_dormancy")
 
-  species_nr <- length(unique(data_subset_lin_LD$species_full))
-  if (species_nr == 1){
-    species_nr = 4
-  }
+  # # convert date
+  # data_subset_lin_LD$date <- as.Date(
+  #   paste(data_subset_lin_LD$year,
+  #         round((data_subset_lin_LD$week*7.6)-7),sep="-"), "%Y-%j")
+  #
+  # # grow dataset to full range
+  # years <- sort(rep(min(data_subset_lin_LD$year):max(data_subset_lin_LD$year), 48))
+  # days <- rep(round((1:48 * 7.6) - 7),length(unique(years)))
+  # df <- data.frame(date = as.Date(paste(years, days, sep = "-"), "%Y-%j"))
 
-  # convert date
-  data_subset_lin_LD$date <- as.Date(
-    paste(data_subset_lin_LD$year,
-          round((data_subset_lin_LD$week*7.6)-7),sep="-"), "%Y-%j")
-
-  # grow dataset to full range
-  years <- sort(rep(min(data_subset_lin_LD$year):max(data_subset_lin_LD$year), 48))
-  days <- rep(round((1:48 * 7.6) - 7),length(unique(years)))
-  df <- data.frame(date = as.Date(paste(years, days, sep = "-"), "%Y-%j"))
-
+  ids <- data_subset_lin_LD %>% # to add in facet_wrap titles (n = xx)
+    group_by(species_full) %>%
+    dplyr::summarise(ids = length(unique(id)))
   # average by date
   data_subset_lin_LD <- data_subset_lin_LD %>%
     group_by(species_full, date) %>%
-    dplyr::summarise(mean_value = mean(value),
+    dplyr::summarise(percent_value = mean(value, na.rm=TRUE) *100,
               scaled_value = ifelse(any(value > 0), 1, 0))
 
-  data_subset_lin_LD <- merge(data_subset_lin_LD, df, by = "date", all.y = TRUE)
-  data_subset_lin_LD$species_full <- unique(na.omit(data_subset_lin_LD$species_full))
+  data_subset_lin_LD <- merge(data_subset_lin_LD, ids, by = c("species_full"), all.x = TRUE)
+  data_subset_lin_LD$sp_title <- paste(data_subset_lin_LD$species_full, " (n = ", data_subset_lin_LD$ids, ")", sep = "")
+
+
+  # data_subset_lin_LD <- merge(data_subset_lin_LD, df, by = "date", all.y = TRUE)
+  # data_subset_lin_LD$species_full <- unique(na.omit(data_subset_lin_LD$species_full))
 
   #------------------------------------------------------------------------
   # linear leaf turnover
@@ -120,28 +124,16 @@ circular_linear_plot <- function(
   data_subset_lin_LT <- data %>%
     filter(grepl(tolower(species_name), tolower(species_full)),
            phenophase == "leaf_turnover")
-  species_nr2 <- length(unique(data_subset_lin_LT$species_full))
-  if (species_nr == 1){
-    species_nr = 4
-  }
-  # convert date
-  data_subset_lin_LT$date <- as.Date(
-    paste(data_subset_lin_LT$year,
-          round((data_subset_lin_LT$week*7.6)-7),sep="-"), "%Y-%j")
-
-  # grow dataset to full range
-  years <- sort(rep(min(data_subset_lin_LT$year):max(data_subset_lin_LT$year), 48))
-  days <- rep(round((1:48 * 7.6) - 7),length(unique(years)))
-  df <- data.frame(date = as.Date(paste(years, days, sep = "-"), "%Y-%j"))
 
   # average by date
   data_subset_lin_LT <- data_subset_lin_LT %>%
     group_by(species_full, date) %>%
-    dplyr::summarise(mean_value = mean(value),
+    dplyr::summarise(percent_value = mean(value, na.rm=TRUE) *100,
               scaled_value = ifelse(any(value > 0), 1, 0))
 
-  data_subset_lin_LT <- merge(data_subset_lin_LT, df, by = "date", all.y = TRUE)
-  data_subset_lin_LT$species_full <- unique(na.omit(data_subset_lin_LT$species_full))
+  data_subset_lin_LT <- merge(data_subset_lin_LT, ids, by = c("species_full"), all.x = TRUE)
+  data_subset_lin_LT$sp_title <- paste(data_subset_lin_LT$species_full, " (n = ", data_subset_lin_LT$ids, ")", sep = "")
+
 
   #------------------------------------------------------------------------
   # circular plot
@@ -152,15 +144,19 @@ circular_linear_plot <- function(
                 xend = week + 1,
                 y = pos,
                 yend = pos,
-                colour = mean_value
+                colour = percent_value
               )) +
     scale_colour_distiller(palette = "YlOrBr",
                            direction = 1,
-                           name = "Freq.",
+                           name = "mean annual \n% individuals\nwith events",
                            values = leg_gradient) + #c(0,0.2,1)
     annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 2.4, alpha = .2) + #jan - feb
     annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 2.4, alpha = .2) + # jun-jul
     annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 2.4, alpha = .2) + # dec
+    annotate("text", x = 1, y = 0.8, label = "LD", col = "grey50") +
+    annotate("text", x = 25, y = 0.8, label = "SD", col = "grey50") +
+    annotate("text", x = 37, y = 0.8, label = "LW", col = "grey50") +
+    annotate("text", x = 13, y = 0.8, label = "SW", col = "grey50") +
     # scale_color_viridis_c(option="plasma",
     #                       name = "Freq.",
     #                       direction = 1,
@@ -204,20 +200,21 @@ circular_linear_plot <- function(
   # linear plot
   #------------------------------------------------------------------------
   p_lin <- ggplot(data_subset_lin_LD, aes(x = date,
-                               y = mean_value)) +
-    geom_line(aes(color="Canopy dormancy")) + #stat = "identity",
+                               y = percent_value)) +
+    geom_line(aes(color="Canopy dormancy")) +
     geom_line(data=data_subset_lin_LT,aes(color="Canopy turnover")) +
     scale_colour_manual(values = c("black","grey60")) +
     theme_minimal() +
     labs(title = title_name,
-         y = "Freq. phenophase",
+         y = "% of individuals with events",
          x = "Year",
          color = "Event") +
     scale_x_date(date_breaks = "1 years",
                  date_labels = "%Y",
-                 limits = as.Date(c('1937-01-01','1956-12-31'))) +
-    scale_y_continuous(limits = c(0,1),
-                       breaks = c(0,0.5,1)) +
+                 limits = as.Date(c('1937-01-01','1956-12-31')),
+                 expand = c(0, 0)) +
+    scale_y_continuous(limits = c(0,100),
+                       breaks = c(0,50,100)) +
     theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
           panel.grid.minor.x = element_blank(),
           panel.grid.minor.y = element_blank(),
@@ -229,11 +226,11 @@ circular_linear_plot <- function(
           axis.title.x = element_blank(),
           axis.text.x = element_text(angle = 90, hjust = 1),
           axis.ticks.x = element_blank(),
-          legend.position="none",
+          legend.position = "none",
           plot.margin = unit(c(0.1,0,1,1),"cm")#,
           # panel.margin.y = unit(2, "lines")
     ) +
-    facet_wrap( ~ species_full, ncol = 1)
+    facet_wrap( ~ sp_title, ncol = 1)
 
   # p_bottom <- ggplot() +
   #   geom_col(data = climate, aes(x = date,

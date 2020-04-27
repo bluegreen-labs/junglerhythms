@@ -31,7 +31,7 @@ climate_ccf <- function(
 
 
     # data_subset <- timelines_sp_consec_turn %>%
-    #   filter(species_full %in% "Chrysophyllum africanum")
+    #   filter(species_full %in% "Afrostyrax lepidophyllus")
 
     # convert date
     data_subset$date_monthly <- format(data_subset$date, "%Y-%m")
@@ -75,17 +75,19 @@ climate_ccf <- function(
     ci <- 0.95
     # cross-correlation + confidence interval
     if(max(data_sp_monthly$monthly_value) > 0 & nr_events >= 5){
-      corr.clim <- ccf(climate_ts, data_sp_monthly$monthly_value, lag = 6, pl = FALSE) #data_sp_monthly$precip
-      # plot(corr.clim, main = paste(species_list[j], pheno, climate.variable, sep = "-"))
+      corr.clim <- ccf(climate_ts, data_sp_monthly$monthly_value, lag = 6, pl = FALSE)
+      # plot(corr.clim, main = paste(species_name[j], pheno, climate.variable, sep = "-"))
       ci_value <- qnorm((1 + ci)/2)/sqrt(corr.clim$n.used)
+      ccf_output_clim[j,1] <- species_name[j]
+      ccf_output_clim[j,2:14] <- as.numeric(corr.clim$acf)
+      ccf_output_clim[j,15] <- as.numeric(ci_value)
     } else {
-      corr.clim$acf <- NA
-      ci_value <- NA
+      ccf_output_clim[j,1] <- species_name[j]
+      ccf_output_clim[j,2:14] <- NA
+      ccf_output_clim[j,15] <- NA
     }
 
-    ccf_output_clim[j,1] <- species_list[j]
-    ccf_output_clim[j,2:14] <- as.numeric(corr.clim$acf)
-    ccf_output_clim[j,15] <- as.numeric(ci_value)
+
   }
 
   if(climate.variable == "precip"){

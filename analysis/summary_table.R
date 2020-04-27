@@ -8,13 +8,13 @@ library(tidyverse)
 #-----------------------------------------------------------------------
 # read in summary data (file made in summary_statistics_elizabeth.r)
 #-----------------------------------------------------------------------
-overview <- read.csv("data/species_meta_data.csv",
+overview <- read.csv("data/species_meta_data_phase2.csv",
                      header = TRUE,
                      sep = ",",
                      stringsAsFactors = FALSE)
 
 # add full name and family
-metadata <- read.csv("data/phenology_archives_species_long_format_20190626.csv",
+metadata <- read.csv("data/phenology_archives_species_long_format_20200324.csv",
                      header = TRUE, sep = ",")
 metadata$species_full <- paste(metadata$genus_Meise, metadata$species_Meise)
 metadata$full_name <- paste(metadata$genus_Meise, metadata$species_Meise, metadata$author_Meise)
@@ -22,13 +22,17 @@ metadata = metadata[,(names(metadata) %in% c("species_full",
                                               "full_name",
                                               "family_Meise"))]
 metadata <- metadata[!duplicated(metadata), ]
-metadata$species_full <- ifelse(metadata$full_name %in% "Albizia adianthifolia (J.F.Gmel.) C.A.Sm.","NA",metadata$species_full)
+# test <- metadata %>%
+#   filter(species_full %in% "Albizia adianthifolia")
+metadata$species_full <- ifelse(metadata$full_name %in% "Albizia adianthifolia (De Wild.& T. Durand) Villiers","NA",metadata$species_full)
 overview <- merge(overview, metadata, by = "species_full", all.x = TRUE)
 
 
+
+
 # remove some columns you don't want in the overview table
-overview = overview[,!(names(overview) %in% c("start_year",
-                                              "end_year",
+overview = overview[,!(names(overview) %in% c(#"start_year",
+                                              #"end_year",
                                               "site_years_with_leaf_dormancy",
                                               "site_years_with_leaf_turnover",
                                               "basal_area_site",
@@ -36,7 +40,8 @@ overview = overview[,!(names(overview) %in% c("start_year",
                                               "dbh_max_mm_census",
                                               "mating_system",
                                               "diaspora",
-                                              "height_m_literature"))]
+                                              "height_m_literature",
+                                              "ref"))]
 # round up some numbers
 overview$percentage_site_years_with_leaf_dormancy <- round(overview$ratio_site_years_with_leaf_dormancy, digits=3) *100
 overview$percentage_site_years_with_leaf_turnover <- round(overview$ratio_site_years_with_leaf_turnover, digits=3) *100
@@ -138,7 +143,7 @@ overview = overview[,!(names(overview) %in% c("mean_synchrony_individuals_onset_
 #--------------------------------------------------------------------
 #--------------------------------------------------------------------
 
-tseries <- read.csv("data/timeseries_correlations.csv",
+tseries <- read.csv("data/timeseries_correlations_phase2.csv",
                      header = TRUE,
                      sep = ",",
                      stringsAsFactors = FALSE)
@@ -146,41 +151,80 @@ tseries <- read.csv("data/timeseries_correlations.csv",
 # round to 3 digits and add timing to corr
 
 # dormancy x precip
-tseries$corr_dormancy_precip <- paste(round(tseries$corr_dormancy_precip, digits=3),
-                                          " (t",tseries$corr_dormancy_precip_timing,")", sep="")
-tseries$corr_dormancy_precip <- ifelse(tseries$corr_dormancy_precip %in% "NA (tNA)", "",tseries$corr_dormancy_precip)
+tseries$corr_leaf_dormancy_precip <- paste(round(tseries$corr_leaf_dormancy_precip, digits=3),
+                                          " (t",tseries$corr_leaf_dormancy_precip_timing,")", sep="")
+tseries$corr_leaf_dormancy_precip <- ifelse(tseries$corr_leaf_dormancy_precip %in% "NA (tNA)", "",tseries$corr_leaf_dormancy_precip)
 # turnover x precip
-tseries$corr_turnover_precip <- paste(round(tseries$corr_turnover_precip, digits=3),
-                                          " (t",tseries$corr_turnover_precip_timing,")", sep="")
-tseries$corr_turnover_precip <- ifelse(tseries$corr_turnover_precip %in% "NA (tNA)", "",tseries$corr_turnover_precip)
+tseries$corr_leaf_turnover_precip <- paste(round(tseries$corr_leaf_turnover_precip, digits=3),
+                                          " (t",tseries$corr_leaf_turnover_precip_timing,")", sep="")
+tseries$corr_leaf_turnover_precip <- ifelse(tseries$corr_leaf_turnover_precip %in% "NA (tNA)", "",tseries$corr_leaf_turnover_precip)
 
 # dormancy x sun
-tseries$corr_dormancy_insol_JR <- paste(round(tseries$corr_dormancy_insol_JR, digits=3),
-                                      " (t",tseries$corr_dormancy_insol_JR_timing,")", sep="")
-tseries$corr_dormancy_insol_JR <- ifelse(tseries$corr_dormancy_insol_JR %in% "NA (tNA)", "",tseries$corr_dormancy_insol_JR)
+tseries$corr_leaf_dormancy_sun <- paste(round(tseries$corr_leaf_dormancy_sun, digits=3),
+                                      " (t",tseries$corr_leaf_dormancy_sun_timing,")", sep="")
+tseries$corr_leaf_dormancy_sun <- ifelse(tseries$corr_leaf_dormancy_sun %in% "NA (tNA)", "",tseries$corr_leaf_dormancy_sun)
 # turnover x sun
-tseries$corr_turnover_insol_JR <- paste(round(tseries$corr_turnover_insol_JR, digits=3),
-                                      " (t",tseries$corr_turnover_insol_JR_timing,")", sep="")
-tseries$corr_turnover_insol_JR <- ifelse(tseries$corr_turnover_insol_JR %in% "NA (tNA)", "",tseries$corr_turnover_insol_JR)
+tseries$corr_leaf_turnover_sun <- paste(round(tseries$corr_leaf_turnover_sun, digits=3),
+                                      " (t",tseries$corr_leaf_turnover_sun_timing,")", sep="")
+tseries$corr_leaf_turnover_sun <- ifelse(tseries$corr_leaf_turnover_sun %in% "NA (tNA)", "",tseries$corr_leaf_turnover_sun)
 
 # dormancy x tmax
-tseries$corr_dormancy_tmax_JR <- paste(round(tseries$corr_dormancy_tmax_JR, digits=3),
-                                        " (t",tseries$corr_dormancy_tmax_JR_timing,")", sep="")
-tseries$corr_dormancy_tmax_JR <- ifelse(tseries$corr_dormancy_tmax_JR %in% "NA (tNA)", "",tseries$corr_dormancy_tmax_JR)
+tseries$corr_leaf_dormancy_temp <- paste(round(tseries$corr_leaf_dormancy_temp, digits=3),
+                                        " (t",tseries$corr_leaf_dormancy_temp_timing,")", sep="")
+tseries$corr_leaf_dormancy_temp <- ifelse(tseries$corr_leaf_dormancy_temp %in% "NA (tNA)", "",tseries$corr_leaf_dormancy_temp)
 # turnover x tmax
-tseries$corr_turnover_tmax_JR <- paste(round(tseries$corr_turnover_tmax_JR, digits=3),
-                                        " (t",tseries$corr_turnover_tmax_JR_timing,")", sep="")
-tseries$corr_turnover_tmax_JR <- ifelse(tseries$corr_turnover_tmax_JR %in% "NA (tNA)", "",tseries$corr_turnover_tmax_JR)
+tseries$corr_leaf_turnover_temp <- paste(round(tseries$corr_leaf_turnover_temp, digits=3),
+                                        " (t",tseries$corr_leaf_turnover_temp_timing,")", sep="")
+tseries$corr_leaf_turnover_temp <- ifelse(tseries$corr_leaf_turnover_temp %in% "NA (tNA)", "",tseries$corr_leaf_turnover_temp)
 
-tseries = tseries[,!(names(tseries) %in% c("corr_dormancy_precip_timing",
-                                           "corr_turnover_precip_timing",
-                                           "corr_dormancy_insol_JR_timing",
-                                           "corr_turnover_insol_JR_timing",
-                                           "corr_dormancy_tmax_JR_timing",
-                                           "corr_turnover_tmax_JR_timing"
+tseries = tseries[,!(names(tseries) %in% c("corr_leaf_dormancy_precip_timing",
+                                           "corr_leaf_turnover_precip_timing",
+                                           "corr_leaf_dormancy_sun_timing",
+                                           "corr_leaf_turnover_sun_timing",
+                                           "corr_leaf_dormancy_temp_timing",
+                                           "corr_leaf_turnover_temp_timing"
                                            ))]
 
 overview <- merge(overview, tseries, by = "species_full", all.x = TRUE)
+
+#--------------------------------------------------------------------
+#--------------------------------------------------------------------
+# fourier analysis
+#--------------------------------------------------------------------
+#--------------------------------------------------------------------
+four_dorm <- read.csv("data/fourier_coherence_leaf_dormancy.csv",
+                    header = TRUE,
+                    sep = ",",
+                    stringsAsFactors = FALSE)
+four_dorm <- four_dorm %>%
+  select(species_full,
+         cyclicity,
+         cycle_dom_months) %>%
+  dplyr::rename(cyclicity_dormancy = cyclicity,
+                cycle_dom_months_dormancy = cycle_dom_months)
+
+four_dorm$cyclicity_dormancy <- ifelse(is.na(four_dorm$cyclicity_dormancy), "",four_dorm$cyclicity_dormancy)
+four_dorm$cycle_dom_months_dormancy <- round(four_dorm$cycle_dom_months_dormancy, digits=1)
+four_dorm$cycle_dom_months_dormancy <- ifelse(is.na(four_dorm$cycle_dom_months_dormancy), "",four_dorm$cycle_dom_months_dormancy)
+#--------------------------------------------------------------------
+four_turn <- read.csv("data/fourier_coherence_leaf_turnover.csv",
+                      header = TRUE,
+                      sep = ",",
+                      stringsAsFactors = FALSE)
+four_turn <- four_turn %>%
+  select(species_full,
+         cyclicity,
+         cycle_dom_months) %>%
+  dplyr::rename(cyclicity_turnover = cyclicity,
+                cycle_dom_months_turnover = cycle_dom_months)
+
+four_turn$cyclicity_turnover <- ifelse(is.na(four_turn$cyclicity_turnover), "",four_turn$cyclicity_turnover)
+four_turn$cycle_dom_months_turnover <- round(four_turn$cycle_dom_months_turnover, digits=1)
+four_turn$cycle_dom_months_turnover <- ifelse(is.na(four_turn$cycle_dom_months_turnover), "",four_turn$cycle_dom_months_turnover)
+#--------------------------------------------------------------------
+four <- merge(four_dorm, four_turn, by = "species_full", all.x = TRUE)
+overview <- merge(overview, four, by = "species_full", all.x = TRUE)
+#--------------------------------------------------------------------
 
 
 #--------------------------------------------------------------------
@@ -246,7 +290,9 @@ table1 <- overview[,(names(overview) %in% c("dec_label",
                                             "dbh_max_cm_literature",
                                             "basal_area_percentage",
                                             "nr_indiv",
-                                            "site_years"))]
+                                            "site_years",
+                                            "start_year",
+                                            "end_year"))]
 # correct column order
 table1 <- table1[c("dec_label",
                    "full_name",
@@ -256,8 +302,9 @@ table1 <- table1[c("dec_label",
                    "dbh_max_cm_literature",
                    "basal_area_percentage",
                    "nr_indiv",
-                   "site_years"
-                   )]
+                   "site_years",
+                   "start_year",
+                   "end_year")]
 # correct column names
 colnames(table1) <- c("dec_label",
                       "Species",
@@ -267,7 +314,9 @@ colnames(table1) <- c("dec_label",
                       "DBH max",
                       "% BA Yangambi",
                       "Nr ind in JR",
-                      "Total site-years in JR"
+                      "Total site-years in JR",
+                      "Start year",
+                      "End year"
                       )
 
 write.table(table1, "data/SI_table1.csv",
@@ -285,22 +334,26 @@ table2 <- overview[,(names(overview) %in% c("dec_label",
                                             "site_years",
                                             "percentage_site_years_with_leaf_dormancy",
                                             "total_nr_events_leaf_dormancy",
+                                            "cyclicity_dormancy",
+                                            "cycle_dom_months_dormancy",
                                             "duration_dormancy_weeks",
                                             "median_onset_dormancy_weeks",
                                             "intra_species_synchr_dormancy_weeks",
                                             "intra_annual_indiv_synchr_dormancy_weeks",
-                                            "corr_dormancy_precip",
-                                            "corr_dormancy_insol_JR",
-                                            "corr_dormancy_tmax_JR",
+                                            "corr_leaf_dormancy_precip",
+                                            "corr_leaf_dormancy_sun",
+                                            "corr_leaf_dormancy_temp",
                                             "percentage_site_years_with_leaf_turnover",
                                             "total_nr_events_leaf_turnover",
+                                            "cyclicity_turnover",
+                                            "cycle_dom_months_turnover",
                                             "duration_turnover_weeks",
                                             "median_onset_turnover_weeks",
                                             "intra_species_synchr_turnover_weeks",
                                             "intra_annual_indiv_synchr_turnover_weeks",
-                                            "corr_turnover_precip",
-                                            "corr_turnover_insol_JR",
-                                            "corr_turnover_tmax_JR"))]
+                                            "corr_leaf_turnover_precip",
+                                            "corr_leaf_turnover_sun",
+                                            "corr_leaf_turnover_temp"))]
 table2 <- table2[c("dec_label",
                    "deciduousness",
                    "species_full",
@@ -308,22 +361,26 @@ table2 <- table2[c("dec_label",
                    "site_years",
                    "percentage_site_years_with_leaf_dormancy",
                    "total_nr_events_leaf_dormancy",
+                   "cyclicity_dormancy",
+                   "cycle_dom_months_dormancy",
                    "duration_dormancy_weeks",
                    "median_onset_dormancy_weeks",
                    "intra_species_synchr_dormancy_weeks",
                    "intra_annual_indiv_synchr_dormancy_weeks",
-                   "corr_dormancy_precip",
-                   "corr_dormancy_insol_JR",
-                   "corr_dormancy_tmax_JR",
+                   "corr_leaf_dormancy_precip",
+                   "corr_leaf_dormancy_sun",
+                   "corr_leaf_dormancy_temp",
                    "percentage_site_years_with_leaf_turnover",
                    "total_nr_events_leaf_turnover",
+                   "cyclicity_turnover",
+                   "cycle_dom_months_turnover",
                    "duration_turnover_weeks",
                    "median_onset_turnover_weeks",
                    "intra_species_synchr_turnover_weeks",
                    "intra_annual_indiv_synchr_turnover_weeks",
-                   "corr_turnover_precip",
-                   "corr_turnover_insol_JR",
-                   "corr_turnover_tmax_JR"
+                   "corr_leaf_turnover_precip",
+                   "corr_leaf_turnover_sun",
+                   "corr_leaf_turnover_temp"
                    )]
 
 write.table(table2, "data/SI_table2.csv",
@@ -339,13 +396,15 @@ table2_dormancy <- table2[,(names(table2) %in% c("dec_label",
                                             "site_years",
                                             "percentage_site_years_with_leaf_dormancy",
                                             "total_nr_events_leaf_dormancy",
+                                            "cyclicity_dormancy",
+                                            "cycle_dom_months_dormancy",
                                             "duration_dormancy_weeks",
                                             "median_onset_dormancy_weeks",
                                             "intra_species_synchr_dormancy_weeks",
                                             "intra_annual_indiv_synchr_dormancy_weeks",
-                                            "corr_dormancy_precip",
-                                            "corr_dormancy_insol_JR",
-                                            "corr_dormancy_tmax_JR"
+                                            "corr_leaf_dormancy_precip",
+                                            "corr_leaf_dormancy_sun",
+                                            "corr_leaf_dormancy_temp"
                                             ))]
 
 colnames(table2_dormancy) <- c("dec_label",
@@ -355,6 +414,8 @@ colnames(table2_dormancy) <- c("dec_label",
                       "Total site-years in JR",
                       "% site-years with events",
                       "Total nr of events",
+                      "cyclicity_dormancy",
+                      "cycle_dom_months_dormancy",
                       "Length event (weeks)",
                       "Timing onset event (WOY)",
                       "DSI intra-species",
@@ -376,13 +437,15 @@ table2_turnover <- table2[,(names(table2) %in% c("dec_label",
                                             "site_years",
                                             "percentage_site_years_with_leaf_turnover",
                                             "total_nr_events_leaf_turnover",
+                                            "cyclicity_turnover",
+                                            "cycle_dom_months_turnover",
                                             "duration_turnover_weeks",
                                             "median_onset_turnover_weeks",
                                             "intra_species_synchr_turnover_weeks",
                                             "intra_annual_indiv_synchr_turnover_weeks",
-                                            "corr_turnover_precip",
-                                            "corr_turnover_insol_JR",
-                                            "corr_turnover_tmax_JR"))]
+                                            "corr_leaf_turnover_precip",
+                                            "corr_leaf_turnover_sun",
+                                            "corr_leaf_turnover_temp"))]
 
 colnames(table2_turnover) <- c("dec_label",
                                "Leaf phenology",
@@ -391,6 +454,8 @@ colnames(table2_turnover) <- c("dec_label",
                                "Total site-years in JR",
                                "% site-years with events",
                                "Total nr of events",
+                               "cyclicity_turnover",
+                               "cycle_dom_months_turnover",
                                "Length event (weeks)",
                                "Timing onset event (WOY)",
                                "DSI intra-species",
@@ -415,9 +480,9 @@ species_table_manuscript <- c("Scorodophloeus zenkeri",
                               "Dacryodes osika",
                               "Quassia silvestris",
                               "Petersianthus macrocarpus",
-                              "Irvingia grandifolia",
+                              "Vitex ferruginea",
                               "Erythrophleum suaveolens",
-                              "Antrocaryon nannanii",
+                              "Pterocarpus soyauxii",
                               "Pericopsis elata")
 
 

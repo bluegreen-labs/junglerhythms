@@ -1,6 +1,6 @@
 #----- reset your R session. ---------------------------------------------------#
 rm(list=ls())
-# graphics.off()
+graphics.off()
 #----- load required packages --------------------------------------------------#
 library(zoo)
 library(tidyverse)
@@ -10,6 +10,7 @@ library(gridExtra)
 library(scales)
 #----- source required functions -----------------------------------------------#
 source("R/event_length.R")
+source("R/timeline_gap_fill.R")
 #-------------------------------------------------------------------------------#
 
 
@@ -22,19 +23,16 @@ minimum_events = 5    # species will only be included in this analysis
 #----------------------------------------------------------------------
 
 
-
 #----------------------------------------------------------------------
 #--------   Phenology data - species correction Meise   ---------------
 #----------------------------------------------------------------------
 df <- readRDS("data/jungle_rhythms_weekly_annotations.rds")
-df <- df[which(df$value != 0),]
 df$join_id <- paste0("R",df$image,"-",df$image_row)
 
-metadata <- read.csv("data/phenology_archives_species_long_format_20190626.csv",
+metadata <- read.csv("data/phenology_archives_species_long_format_20200324.csv",
                      header = TRUE, sep = ",")
 metadata$join_id <- paste(metadata$image,metadata$row, sep = "-")
-
-# test merge the two tables based upon the unique join ID
+# merge the two tables based upon the unique join ID
 data <- merge(df, metadata, by = c("join_id"), all.x = TRUE)
 data$species_full <- paste(data$genus_Meise, data$species_Meise)
 
@@ -45,25 +43,68 @@ data = data[,!(names(data) %in% c("id.x","id.y"))]
 # remove rows with NA's in year -> individuals with 'no_data' in the archive
 data <- data[!(is.na(data$year)),]
 
+# sum events for each id, each year, across phenophases
+# years with zero observations across phenophases are possibly not observed
+empty_years <- data %>%
+  group_by(species_full,join_id,year) %>%
+  dplyr::summarise(check_empty_years = sum(value))
+data <- merge(data, empty_years, by = c("join_id","species_full","year"), all.x = TRUE)
+data <- data %>%
+  filter(check_empty_years > 0)
+#----------------------------------------------------------------------
+# only select parameters you need, more clear structure to work with
+data <- data %>%
+  select(species_full,
+         id,
+         phenophase,
+         year,
+         week,
+         value)
+#----------------------------------------------------------------------
+rm(df,metadata, empty_years)
+#----------------------------------------------------------------------
 
 # #----------------------------------------------------------------------
 # #-------- get the species list ----------------------------------------
 # #----------------------------------------------------------------------
-overview <- read.csv("data/species_meta_data.csv",
+overview <- read.csv("data/species_meta_data_phase2.csv",
                      header = TRUE,
                      sep = ",",
                      stringsAsFactors = FALSE)
 
 # merge number of events to data, so you can filter on minimum number of events
-overview <- overview[,(names(overview) %in% c("species_full",
-                                              "deciduousness",
-                                              "basal_area_site"))]
+overview <- overview %>%
+  select(species_full,
+         deciduousness,
+         basal_area_site)
 
 #--------------------------------
-# merge with data to filter on deciduousness
+# merge with metadata to filter on deciduousness
 data <- merge(data, overview, by = "species_full", all.x = TRUE)
 #--------------------------------
 
+#----------------------------------------------------------------------
+#-- for this species list at ID level: --------------------------------
+#-- get full range timelines with 2-year gap filled -------------------
+#----------------------------------------------------------------------
+species_list <- overview$species_full
+timelines_dorm <- two_year_gaps(data = data,
+                                species_name = species_list,
+                                pheno = "leaf_dormancy")
+timelines_turn <- two_year_gaps(data = data,
+                                species_name = species_list,
+                                pheno = "leaf_turnover")
+data_timeline <- rbind(timelines_dorm, timelines_turn)
+#----------------------------------------------------------------------
+rm(timelines_dorm, timelines_turn)
+#----------------------------------------------------------------------
+
+dec_timeline <- data_timeline %>%
+  filter(grepl("deciduous",deciduousness))
+dec_sp <- unique(dec_timeline$species_full)
+ever_timeline <- data_timeline %>%
+  filter(grepl("evergreen",deciduousness))
+ever_sp <- unique(ever_timeline$species_full)
 #--------------------------------------------------------------------------
 #--------------------------------------------------------------------------
 #--------- This is onset of event
@@ -73,14 +114,13 @@ data <- merge(data, overview, by = "species_full", all.x = TRUE)
 #--------------------------------------------------------------------------
 #--------------------------------------------------------------------------
 # use function event_length to get the starting week of an event
-transition_dates_turnover_dec <- data %>%
-  filter(phenophase == "leaf_turnover") %>%
-  filter(grepl("deciduous",deciduousness)) %>%
-  group_by(species_full, id) %>%
-  do(event_length(.))
+transition_dates_turnover_dec <- event_length(data = dec_timeline,
+                                              species_name = dec_sp,
+                                              pheno = "leaf_turnover")
 
 # weeks to degrees
 transition_dates_turnover_dec <- transition_dates_turnover_dec %>%
+  filter(!is.na(year_start)) %>%
   mutate(degree = (week_start-1) * 360/48) %>%# -1 so that week 1 in janurari is degree 0
   mutate(duration = (phenophase_length) * 360/48)
 
@@ -89,7 +129,7 @@ transition_dates_turnover_dec <- transition_dates_turnover_dec %>%
 onset_turnover_dec <- transition_dates_turnover_dec %>%
   group_by(species_full) %>%
   filter(length(week_start) >= minimum_events) %>%    # only species with a minimum of events
-  summarise(
+  dplyr::summarise(
     mean_degree = mean.circular(
       circular(degree, units = "degrees")
     ),
@@ -146,15 +186,12 @@ onset_turnover_dec_CIonesegments <- onset_turnover_dec %>%
 #--------------------------------------------------------------------------
 #--------------------------------------------------------------------------
 #--------------------------------------------------------------------------
-# use function event_length to get the starting week of an event
-transition_dates_dormancy_dec <- data %>%
-  filter(phenophase == "leaf_dormancy") %>%
-  filter(grepl("deciduous",deciduousness)) %>%
-  group_by(species_full, id) %>%
-  do(event_length(.))
-
+transition_dates_dormancy_dec <- event_length(data = dec_timeline,
+                                              species_name = dec_sp,
+                                              pheno = "leaf_dormancy")
 # weeks to degrees
 transition_dates_dormancy_dec <- transition_dates_dormancy_dec %>%
+  filter(!is.na(year_start)) %>%
   mutate(degree = (week_start-1) * 360/48) %>%# -1 so that week 1 in janurari is degree 0
   mutate(duration = (phenophase_length) * 360/48)
 
@@ -162,7 +199,7 @@ transition_dates_dormancy_dec <- transition_dates_dormancy_dec %>%
 onset_dormancy_dec <- transition_dates_dormancy_dec %>%
   group_by(species_full) %>%
   filter(length(week_start) >= minimum_events) %>%    # only species with a minimum of events
-  summarise(
+  dplyr::summarise(
     mean_degree = mean.circular(
       circular(degree, units = "degrees")
     ),
@@ -238,20 +275,16 @@ onset_dec_allphases <- rbind(onset_dec_allphases, onset_dec_flushing)
 #------------------------------------------------------------------------
 # FIGURE DECIDUOUS
 #------------------------------------------------------------------------
-sp_clust <- read.csv("data/cluster_test.csv",
-                     header = TRUE,
-                     sep = ",",
-                     stringsAsFactors = FALSE)
-# merge with data to filter on deciduousness
-onset_dec_allphases <- merge(onset_dec_allphases, sp_clust, by = "species_full", all.x = TRUE)
-onset_dec_allphases$cluster_id <- ifelse(onset_dec_allphases$phase %in% 'dormancy', onset_dec_allphases$cluster_id, "0")
-onset_dec_allphases$cluster_id <- as.character(onset_dec_allphases$cluster_id)
-
-#--------------------------------
 p_onset_dec <- ggplot(data = onset_dec) +
-  annotate("rect", xmin = 330, xmax = 360, ymin = 0, ymax = max(onset_dec$y_value) , alpha = .2) + #Dec
-  annotate("rect", xmin = 0, xmax = 60, ymin = 0, ymax = max(onset_dec$y_value) , alpha = .2) + # jan - feb
-  annotate("rect", xmin = 150, xmax = 210, ymin = 0, ymax = max(onset_dec$y_value) , alpha = .2) + # jun-jul
+  annotate("rect", xmin = 330, xmax = 360, ymin = -20, ymax = max(onset_dec$y_value) , alpha = .2) + #Dec
+  annotate("rect", xmin = 0, xmax = 60, ymin = -20, ymax = max(onset_dec$y_value) , alpha = .2) + # jan - feb
+  annotate("rect", xmin = 150, xmax = 210, ymin = -20, ymax = max(onset_dec$y_value) , alpha = .2) + # jun-jul
+
+  annotate("text", x = 0, y = -8, label = "LD", col = "grey50") +
+  annotate("text", x = 90, y = -8, label = "SW", col = "grey50") +
+  annotate("text", x = 180, y = -8, label = "SD", col = "grey50") +
+  annotate("text", x = 270, y = -8, label = "LW", col = "grey50") +
+
   geom_segment(data = onset_dec_CIonesegments,
                aes(x = lower_rescaled,
                    xend = upper_rescaled,
@@ -271,13 +304,10 @@ p_onset_dec <- ggplot(data = onset_dec) +
                    yend = y_value),
                color = "grey60") +
   geom_point(data = onset_dec_allphases,
-             aes(x = median_rescaled, y = y_value, shape = phase, colour = cluster_id)) + #
-  # geom_point(aes(x = mean_rescaled, y = y_value, col = phase),
-  #            shape = 4) +
+             aes(x = median_rescaled, y = y_value, shape = phase)) +
   scale_shape_manual(values = c(19,4,1),
                      name = "onset of:",
                      labels = c("dormancy", "flushing","turnover")) +
-  scale_colour_manual(values = c("black","red","green","blue","purple","darkblue","orange")) +
   scale_x_continuous(limits = c(0,360),
                      breaks = seq(0,359,30),
                      labels = month.abb) +
@@ -316,14 +346,13 @@ p_onset_dec
 #--------------------------------------------------------------------------
 #--------------------------------------------------------------------------
 # use function event_length to get the starting week of an event
-transition_dates_turnover_ever <- data %>%
-  filter(phenophase == "leaf_turnover") %>%
-  filter(grepl("evergreen",deciduousness)) %>%
-  group_by(species_full, id) %>%
-  do(event_length(.))
+transition_dates_turnover_ever <- event_length(data = ever_timeline,
+                                              species_name = ever_sp,
+                                              pheno = "leaf_turnover")
 
 # weeks to degrees
 transition_dates_turnover_ever <- transition_dates_turnover_ever %>%
+  filter(!is.na(year_start)) %>%
   mutate(degree = (week_start-1) * 360/48) %>%# -1 so that week 1 in janurari is degree 0
   mutate(duration = (phenophase_length) * 360/48)
 
@@ -331,7 +360,7 @@ transition_dates_turnover_ever <- transition_dates_turnover_ever %>%
 onset_turnover_ever <- transition_dates_turnover_ever %>%
   group_by(species_full) %>%
   filter(length(week_start) >= minimum_events) %>%    # only species with a minimum of events
-  summarise(
+  dplyr::summarise(
     mean_degree = mean.circular(
       circular(degree, units = "degrees")
     ),
@@ -389,14 +418,13 @@ onset_turnover_ever_CIonesegments <- onset_turnover_ever %>%
 #--------------------------------------------------------------------------
 #--------------------------------------------------------------------------
 # use function event_length to get the starting week of an event
-transition_dates_dormancy_ever <- data %>%
-  filter(phenophase == "leaf_dormancy") %>%
-  filter(grepl("evergreen",deciduousness)) %>%
-  group_by(species_full, id) %>%
-  do(event_length(.))
+transition_dates_dormancy_ever <- event_length(data = ever_timeline,
+                                               species_name = ever_sp,
+                                               pheno = "leaf_dormancy")
 
 # weeks to degrees
 transition_dates_dormancy_ever <- transition_dates_dormancy_ever %>%
+  filter(!is.na(year_start)) %>%
   mutate(degree = (week_start-1) * 360/48) %>%# -1 so that week 1 in janurari is degree 0
   mutate(duration = (phenophase_length) * 360/48)
 
@@ -404,7 +432,7 @@ transition_dates_dormancy_ever <- transition_dates_dormancy_ever %>%
 onset_dormancy_ever <- transition_dates_dormancy_ever %>%
   group_by(species_full) %>%
   filter(length(week_start) >= minimum_events) %>%    # only species with a minimum of events
-  summarise(
+  dplyr::summarise(
     mean_degree = mean.circular(
       circular(degree, units = "degrees")
     ),
@@ -479,9 +507,15 @@ onset_ever_allphases <- rbind(onset_ever_allphases, onset_ever_flushing)
 # FIGURE EVERGREEN
 #------------------------------------------------------------------------
 p_onset_ever <- ggplot(data = onset_ever) +
-  annotate("rect", xmin = 330, xmax = 360, ymin = 0, ymax = max(onset_ever$y_value) , alpha = .2) + #Dec
-  annotate("rect", xmin = 0, xmax = 60, ymin = 0, ymax = max(onset_ever$y_value) , alpha = .2) + # jan - feb
-  annotate("rect", xmin = 150, xmax = 210, ymin = 0, ymax = max(onset_ever$y_value) , alpha = .2) + # jun-jul
+  annotate("rect", xmin = 330, xmax = 360, ymin = -20, ymax = max(onset_ever$y_value) , alpha = .2) + #Dec
+  annotate("rect", xmin = 0, xmax = 60, ymin = -20, ymax = max(onset_ever$y_value) , alpha = .2) + # jan - feb
+  annotate("rect", xmin = 150, xmax = 210, ymin = -20, ymax = max(onset_ever$y_value) , alpha = .2) + # jun-jul
+
+  annotate("text", x = 0, y = -8, label = "LD", col = "grey50") +
+  annotate("text", x = 90, y = -8, label = "SW", col = "grey50") +
+  annotate("text", x = 180, y = -8, label = "SD", col = "grey50") +
+  annotate("text", x = 270, y = -8, label = "LW", col = "grey50") +
+
   geom_segment(data = onset_ever_CIonesegments,
                aes(x = lower_rescaled,
                    xend = upper_rescaled,
@@ -533,7 +567,7 @@ p_onset_ever <- ggplot(data = onset_ever) +
 p_onset <- grid.arrange(p_onset_ever, p_onset_dec, heights = c(0.9,1))
 
 
-pdf("~/Desktop/figure2_onset.pdf",4.5,10)
+pdf("~/Desktop/figure2_onset1.pdf",4.5,10)
 plot(p_onset)
 dev.off()
 

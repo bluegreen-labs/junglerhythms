@@ -6,17 +6,17 @@
 #' @return timing and stats for peaks
 
 spans_lookup <- list(observations = c(96,144, 192, 240, 288, 336, 384, 432, 480, 528,576,624,672,720,768,816,864,912,960, 1008),
-                     spans_smooth = list(NULL, NULL, NULL, NULL, # smoothed spectrum of data -> smoothed periodogram bandwith to approx. 0.05
-                                         NULL, NULL, NULL, NULL,
-                                         3,3,3,3,
-                                         3,3,3,
-                                         c(3,3), c(3,3), c(3,3), c(3,3), c(3,3)),
-                     # spans_smooth=list(NULL, NULL, NULL, NULL, # smoothed spectrum of data -> smoothed periodogram bandwith to approx. 0.1
-                     #                   3,3,3,3,
-                     #                   c(3,3), c(3,3), c(3,3),
-                     #                   c(3,5), c(3,5), c(3,5),
-                     #                   c(5,5), c(5,5), c(5,5),
-                     #                   c(5,7), c(5,7), c(5,7)),
+                     # spans_smooth = list(NULL, NULL, NULL, NULL, # smoothed spectrum of data -> smoothed periodogram bandwith to approx. 0.05
+                     #                     NULL, NULL, NULL, NULL,
+                     #                     3,3,3,3,
+                     #                     3,3,3,
+                     #                     c(3,3), c(3,3), c(3,3), c(3,3), c(3,3)),
+                     spans_smooth=list(NULL, NULL, NULL, NULL, # smoothed spectrum of data -> smoothed periodogram bandwith to approx. 0.1
+                                       3,3,3,3,
+                                       c(3,3), c(3,3), c(3,3),
+                                       c(3,5), c(3,5), c(3,5),
+                                       c(5,5), c(5,5), c(5,5),
+                                       c(5,7), c(5,7), c(5,7)),
                      spans_super_smooth = list(c(5,7), c(7,9), c(11,11), c(13,13), # super-smoothed spectrum of data -> smoothed periodogram bandwith to approx. 1
                                                c(15,17), c(19,19), c(19,21), c(23,23),
                                                c(25,27), c(27,29), c(29,31),
@@ -25,7 +25,7 @@ spans_lookup <- list(observations = c(96,144, 192, 240, 288, 336, 384, 432, 480,
                                                c(49,51), c(49,51), c(49,51)))
 
 # spectrum function for normal smoother periodogram
-spec_fun <- function(x) spectrum(x,spans = spans_lookup$spans_smooth[[which.min(abs(spans_lookup$observations - length(x)))]],
+spec_fun <- function(x) spectrum(x,#spans = spans_lookup$spans_smooth[[which.min(abs(spans_lookup$observations - length(x)))]],
                                  plot = F, demean = T, detrend = T)
 
 # spectrum function for null hypothesis spectrum (super-smoothed spectrum of data -> smoothed periodogram bandwith to approx. 1)
@@ -71,29 +71,41 @@ peak_detection <- function(
     freq_dom = (spec_fun(data_ts)$freq[which.max(spec_fun(data_ts)$spec)])/48 # frequency of the dominant peak
     cycle_dom = 1/freq_dom
     spec_dom = max(spec_fun(data_ts)$spec) # spectrum of dominant peak
-    spec_dom_norm =  spec_dom*(1/mean(spec_fun(data_ts)$spec)) # normalised spectrum so that mean power is equal to 1 enabling comparisons of "Power" between individuals
     dfree = spec_fun(data_ts)$df # degrees of freedom of the smoothed periodogram
-    lower_ci = (dfree*spec_dom)/(qchisq(c(0.975),dfree)) # lower CI of dominant peak of smoothed periodogram
-    spec_null_dom <- spec_null_fun(data_ts)$spec[which(abs((spec_null_fun(data_ts)$freq)/48-freq_dom)==min(abs((spec_null_fun(data_ts)$freq)/48-freq_dom)))] # the corresponding dominant peak from the null continuum
-    sig = lower_ci > spec_null_dom # If the null spectrum is lower than the lower confidence interval, dominant peak can be considered "signficantly different" to null hypothesis
-    cycle_category <- as.factor(ifelse(1/freq_dom > length(data_ts)/2,"No cyclicity",
-                                       ifelse(1/freq_dom > 49,"Supra-annual",
-                                              ifelse(1/freq_dom >= 47,"Annual","Sub-annual"))))
-    # Is the dominant cycle both significant and represent a regular cycle?
-    sig_cycle <- as.factor(ifelse(cycle_category!="No cyclicity" & sig==TRUE,TRUE,FALSE))
 
-    spectrum_output_species <- data.frame(species = species_name[j],
+    lower_ci_95 = (dfree*spec_dom)/(qchisq(c(0.975),dfree)) # lower CI of dominant peak of smoothed periodogram
+    spec_null_dom <- spec_null_fun(data_ts)$spec[which(abs((spec_null_fun(data_ts)$freq)/48-freq_dom)==min(abs((spec_null_fun(data_ts)$freq)/48-freq_dom)))] # the corresponding dominant peak from the null continuum
+    sig_95 = lower_ci_95 > spec_null_dom # If the null spectrum is lower than the lower confidence interval, dominant peak can be considered "signficantly different" to null hypothesis
+    cycle_category <- as.factor(ifelse(1/freq_dom > length(data_ts)/2,"No cyclicity","cyclicity"))
+    # Is the dominant cycle both significant and represent a regular cycle?
+    sig_cycle_95 <- as.factor(ifelse(cycle_category!="No cyclicity" & sig_95==TRUE,TRUE,FALSE))
+
+    lower_ci_99 = (dfree*spec_dom)/(qchisq(c(0.995),dfree)) # lower CI of dominant peak of smoothed periodogram
+    sig_99 = lower_ci_99 > spec_null_dom # If the null spectrum is lower than the lower confidence interval, dominant peak can be considered "signficantly different" to null hypothesis
+    # Is the dominant cycle both significant and represent a regular cycle?
+    sig_cycle_99 <- as.factor(ifelse(cycle_category!="No cyclicity" & sig_99==TRUE,TRUE,FALSE))
+
+    spec_zero = spec_fun(data_ts)$spec[1]
+    spec_ratio = spec_zero/spec_dom
+
+
+    spectrum_output_species <- data.frame(species_full = species_name[j],
       phenophase = pheno,
       freq_dom = freq_dom,
       cycle_dom = cycle_dom,
       spec_dom = spec_dom,
-      spec_dom_norm =  spec_dom_norm,
+      spec_zero = spec_zero,
+      spec_ratio = spec_ratio,
       dfree = dfree,
-      lower_ci = lower_ci,
+      lower_ci_95 = lower_ci_95,
       spec_null_dom = spec_null_dom,
-      sig = sig,
+      sig_95 = sig_95,
       cycle_category = cycle_category,
-      sig_cycle = sig_cycle)
+      sig_cycle_95 = sig_cycle_95,
+
+      lower_ci_99 = lower_ci_99,
+      sig_99 = sig_99,
+      sig_cycle_99 = sig_cycle_99)
 
     spectrum_output <- rbind(spectrum_output, spectrum_output_species)
 
@@ -118,7 +130,7 @@ peak_detection <- function(
     spectrum_output_species$xloc <- 0.4
     spectrum_output_species$yloc <- max(fourier_df$spec_norm, na.rm=T)*0.75
     spectrum_output_species$yloc2 <- max(fourier_df$spec_norm, na.rm=T)*0.5
-    spectrum_output_species$cycle_months <- ifelse(spectrum_output_species$sig %in% "TRUE",
+    spectrum_output_species$cycle_months <- ifelse(spectrum_output_species$sig_95 %in% "TRUE",
                                                    format(round(spectrum_output_species$cycle_dom/4,1)), NA)
 
     periodogram <- ggplot(fourier_df) +
@@ -144,14 +156,13 @@ peak_detection <- function(
                     label = paste("cycle = ",cycle_months, "months")))
 
 
-    grid.arrange(timeline_plot, periodogram, widths = c(1,1))
-    # # Periodograms
-    # if(perio_plot == TRUE){
-    #   plot_name <- paste("~/Desktop/FFT/",species_name[j], "_", pheno,".png",sep = "")
-    #   png(plot_name, width = 925, height = 700)
-    #   grid.arrange(raw_plots, Periodograms, widths = c(1,1))
-    #   dev.off()
-    # } else {
+    # Periodograms
+    if(perio_plot == TRUE && sig_95 == TRUE){
+      plot_name <- paste("~/Desktop/FFT/",species_name[j], "_", pheno,".png",sep = "")
+      png(plot_name, width = 925, height = 700)
+      grid.arrange(timeline_plot, periodogram, widths = c(1,1))
+      dev.off()
+    } #else {
     #   grid.arrange(raw_plots, Periodograms, widths = c(1,1))
     # }
 

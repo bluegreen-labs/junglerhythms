@@ -11,6 +11,7 @@ library(scales)
 #----- source required files  --------------------------------------------------#
 source("analysis/remote_sensing_plot.R")
 source("R/event_length.R")
+source("R/timeline_gap_fill.R")
 #-------------------------------------------------------------------------------#
 
 
@@ -18,7 +19,6 @@ source("R/event_length.R")
 # SETTINGS                                                                      #
 # Change these setting according to the output you want.                        #
 #-------------------------------------------------------------------------------#
-# zero_events_remove: remove events = 0 from initial annotations                #
 # understory.remove:  remove individuals in the census with understory_dbh_max  #
 # understory_dbh_max: every dbh above this is assumed to be in the canopy       #
 #                     also used for defining classes 'understory','canopy'      #
@@ -30,9 +30,7 @@ source("R/event_length.R")
 # rescale_event: at species-level, event freq. will be rescaled                 #
 #                between c(minimum_event_frequency,1)                           #
 #-------------------------------------------------------------------------------#
-zero_events_remove <- FALSE  # in this case FALSE because zero_events are used to calculate event frequency
-                             # and zero_events are needed so that sum(basal_area) per week is constant
-understory_remove <- FALSE
+# understory_remove <- FALSE
 understory_dbh_max = 0 # unit = cm
 minimum_siteyears = 10
 minimum_event_frequency = 0 # range c(0,1)
@@ -50,24 +48,41 @@ minimum_event_frequency = 0 # range c(0,1)
 #--------   Phenology data - species correction Meise   ---------------
 #----------------------------------------------------------------------
 df <- readRDS("data/jungle_rhythms_weekly_annotations.rds")
-if(zero_events_remove){
-  df <- df[which(df$value != 0),]
-}
-
 df$join_id <- paste0("R",df$image,"-",df$image_row)
-metadata <- read.csv("data/phenology_archives_species_long_format_20190626.csv",
+
+metadata <- read.csv("data/phenology_archives_species_long_format_20200324.csv",
                      header = TRUE, sep = ",")
 metadata$join_id <- paste(metadata$image,metadata$row, sep = "-")
-
-# test merge the two tables based upon the unique join ID
+# merge the two tables based upon the unique join ID
 data <- merge(df, metadata, by = c("join_id"), all.x = TRUE)
-data$species_full <- as.character(paste(data$genus_Meise, data$species_Meise))
+data$species_full <- paste(data$genus_Meise, data$species_Meise)
 
 # remove column id.x and rename id.y to id (--> in id.y, empty ids are renamed to EK1, EK2, etc...)
 data$id <- as.character(data$id.y)
 data = data[,!(names(data) %in% c("id.x","id.y"))]
 
+# remove rows with NA's in year -> individuals with 'no_data' in the archive
+data <- data[!(is.na(data$year)),]
 
+# sum events for each id, each year, across phenophases
+# years with zero observations across phenophases are possibly not observed
+empty_years <- data %>%
+  group_by(species_full,join_id,year) %>%
+  dplyr::summarise(check_empty_years = sum(value))
+data <- merge(data, empty_years, by = c("join_id","species_full","year"), all.x = TRUE)
+data <- data %>%
+  filter(check_empty_years > 0)
+#----------------------------------------------------------------------
+# only select parameters you need, more clear structure to work with
+data <- data %>%
+  select(species_full,
+         id,
+         phenophase,
+         year,
+         week,
+         value)
+#----------------------------------------------------------------------
+rm(df,metadata, empty_years)
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
@@ -109,9 +124,6 @@ total_basal_area_site <- sum(census_site$basal_area_site)
 total_basal_area_plot <- census_plot %>%
   group_by(Plot) %>%
   dplyr::summarise(total_basal_area_plot = sum(basal_area_plot))
-
-
-
 #----------------------------------------------------------------------
 
 
@@ -128,7 +140,20 @@ total_basal_area_plot <- census_plot %>%
 #-------- just to have the right species, without duplication at plot-level
 #----------------------------------------------------------------------
 data <- inner_join(data, census_site, by = "species_full")
+#----------------------------------------------------------------------
+#-- for this species list at ID level: --------------------------------
+#-- get full range timelines with 2-year gap filled -------------------
+#----------------------------------------------------------------------
+test <- data %>%
+  filter(!grepl("sp\\.",species_full))
+species_list <- unique(test$species_full)
 
+timelines_dorm <- two_year_gaps(data = data,
+                                species_name = species_list,
+                                pheno = "leaf_dormancy")
+timelines_turn <- two_year_gaps(data = data,
+                                species_name = species_list,
+                                pheno = "leaf_turnover")
 
 #----------------------------------------------------------------------
 #-------- load climate data -------------------------------------------
@@ -139,27 +164,19 @@ climate <- read.csv("data/ClimData_monthly_avg.csv",
 #----------------------------------------------------------------------
 
 
-
-
 #-----------------------------------------------------------------------
 #------------ Leaf turnover  -------------------------------------------
 #-----------------------------------------------------------------------
-data_LT <- data %>%
-  filter(phenophase == "leaf_turnover") %>%
-  # filter(layer == "canopy") %>%
-  # filter(Ecology == "shade") %>%
-  na.omit()
+timelines_turn <- timelines_turn %>%
+  filter(!is.na(value))
 
-data_LT <- data_LT %>%
+data_LT <- timelines_turn %>%
   group_by(species_full, week) %>%
-  summarise(mean_week = mean(value, na.rm = TRUE),
+  summarise(mean_week = mean(value),
             count_week = sum(value),
             total_week = length(value))
 
-test <- data_LT %>%
-  filter(species_full == "Combretum lokele")
-
-# filter out species with too few total siteyears to have a meaningfull average year
+# filter out species with too few total siteyears across individuals to have a meaningfull average year
 data_LT <- data_LT %>%
   filter(total_week >= minimum_siteyears)
 
@@ -201,15 +218,12 @@ final_LT_plot <- final_LT_plot %>%
 #-----------------------------------------------------------------------
 #------------ Leaf dormancy  -------------------------------------------
 #-----------------------------------------------------------------------
-data_LD <- data %>%
-  filter(phenophase == "leaf_dormancy") %>%
-  # filter(layer == "canopy") %>%
-  # filter(Ecology == "shade") %>%
-  na.omit()
+timelines_dorm <- timelines_dorm %>%
+  filter(!is.na(value))
 
-data_LD <- data_LD %>%
+data_LD <- timelines_dorm %>%
   group_by(species_full, week) %>%
-  summarise(mean_week = mean(value, na.rm = TRUE),
+  summarise(mean_week = mean(value),
             count_week = sum(value),
             total_week = length(value))
 
@@ -217,15 +231,6 @@ data_LD <- data_LD %>%
 data_LD <- data_LD %>%
   filter(total_week >= minimum_siteyears)
 
-# data_LD <- data_LD %>%
-#   filter(mean_week >= minimum_event_frequency)
-data_LD$mean_week <- ifelse(data_LD$mean_week < minimum_event_frequency, 0, data_LD$mean_week)
-
-# if(rescale_event){
-#   data_LD <- data_LD %>%
-#     group_by(species_full) %>%
-#     mutate(mean_week = rescale(count_week, c(minimum_event_frequency,1)))
-# }
 
 data_LD_site <- inner_join(data_LD, census_site, by = c("species_full"))
 data_LD_plot <- inner_join(data_LD, census_plot, by = c("species_full"))
@@ -233,9 +238,6 @@ data_LD_plot <- inner_join(data_LD, census_plot, by = c("species_full"))
 final_LD_site <- data_LD_site %>%
   group_by(week) %>%
   summarise(ss = sum(mean_week*basal_area_site, na.rm = TRUE)/total_basal_area_site *100) #,
-# ss2 = wtd.mean(mean_week, basal_area_site, na.rm = TRUE)*100,
-# weighted_sd = sqrt(wtd.var(mean_week, basal_area_site, na.rm = TRUE))*100,
-# weighted_CI = ss2 + 1.96*weighted_sd)
 
 final_LD_plot <- data_LD_plot %>%
   group_by(Plot, week) %>%
@@ -249,24 +251,28 @@ final_LD_plot <- final_LD_plot %>%
 #-----------------------------------------------------------------------
 #------------ Leaf flushing  -------------------------------------------
 #-----------------------------------------------------------------------
-data_flush <- data %>%
-  filter(phenophase == "leaf_dormancy") %>%
-  filter(basal_area_site > 0)
-data_flush$flushing_date <- paste(data_flush$year, data_flush$week, sep = "-")
+timelines_flush <- two_year_gaps(data = data,
+                                species_name = species_list,
+                                pheno = "leaf_dormancy")
 
-data_flush_ones <- data_flush[which(data_flush$value != 0),]
-flushing_timing <- data_flush_ones %>%
-  group_by(species_full, id) %>%
-  do(event_length(.))
+
+timelines_flush$flushing_date <- paste(timelines_flush$year, timelines_flush$week, sep = "-")
+
+flushing_timing <- event_length(data = timelines_flush,
+                                species_name = species_list,
+                                pheno = "leaf_dormancy")
+flushing_timing <- flushing_timing %>%
+  filter(!is.na(year_start))
 
 flushing_timing$flushing_date <- paste(flushing_timing$year_end, flushing_timing$week_end +1, sep = "-")
 
-flushing_timing <- flushing_timing[,(names(flushing_timing) %in% c("species_full",
-                                                                   "id",
-                                                                   "flushing_date"))]
+flushing_timing <- flushing_timing %>%
+  select(species_full,
+         id,
+         flushing_date)
 flushing_timing$flushing_value <- 1
 
-data_flush <- merge(data_flush, flushing_timing, by = c("species_full","id","flushing_date"), all.x = TRUE)
+data_flush <- merge(timelines_flush, flushing_timing, by = c("species_full","id","flushing_date"), all.x = TRUE)
 data_flush$flushing_value <- ifelse(is.na(data_flush$flushing_value),"0", data_flush$flushing_value)
 data_flush$flushing_value <- ifelse(is.na(data_flush$value),NA, data_flush$flushing_value)
 data_flush$flushing_value <- as.numeric(data_flush$flushing_value)
@@ -281,7 +287,7 @@ data_flush <- data_flush %>%
 data_flush <- data_flush %>%
   filter(total_week >= minimum_siteyears)
 
-data_flush$mean_week <- ifelse(data_flush$mean_week < minimum_event_frequency, 0, data_flush$mean_week)
+# data_flush$mean_week <- ifelse(data_flush$mean_week < minimum_event_frequency, 0, data_flush$mean_week)
 
 data_flush_site <- inner_join(data_flush, census_site, by = c("species_full"))
 data_flush_plot <- inner_join(data_flush, census_plot, by = c("species_full"))
@@ -481,7 +487,8 @@ p_combined <- ggplot() +
   scale_x_continuous(limits = c(1,49),
                      breaks = seq(1,48,4),
                      labels = month.abb) +
-  labs(y = "freq. canopy phenophase",
+  scale_y_continuous(limits = c(0,2.2)) +
+  labs(y = "% of canopy in state of phenophase",
        x = "") +
   theme_minimal() +
   theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
@@ -500,7 +507,7 @@ p_combined <- ggplot() +
         legend.text = element_text(size = 11),
         plot.margin = unit(c(0,0,0,0.5),"cm")
   )
-# p_combined
+p_combined
 
 p_turnover <- ggplot() +
   geom_point(data = final_LT_plot,
@@ -525,7 +532,7 @@ p_turnover <- ggplot() +
   annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 2.2, alpha = .1) + # jan - febr
   annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 2.2, alpha = .1) + # jun - jul
   annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 2.2, alpha = .1) + # dec
-  labs(y = "freq. canopy turnover",
+  labs(y = "% of canopy in state of turnover",
        x = "") +
   theme_minimal() +
   theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
@@ -568,7 +575,7 @@ p_dormancy <- ggplot() +
   annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 2.2, alpha = .1) + # jan - febr
   annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 2.2, alpha = .1) + # jun - jul
   annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 2.2, alpha = .1) + # dec
-  labs(y = "freq. canopy dormancy",
+  labs(y = "% of canopy in state of dormancy",
        x = "") +
   theme_minimal() +
   theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
@@ -592,6 +599,12 @@ p_precip <- ggplot(climate) +
   annotate("rect", xmin = 0.5, xmax = 2.5, ymin = 0, ymax = 330, alpha = .1) + # jan - febr
   annotate("rect", xmin = 5.5, xmax = 7.5, ymin = 0, ymax = 330, alpha = .1) + # jun - jul
   annotate("rect", xmin = 11.5, xmax = 12.5, ymin = 0, ymax = 330, alpha = .1) + # dec
+
+  annotate("text", x = 1.5, y = 310, label = "LD", col = "grey50") +
+  annotate("text", x = 4, y = 310, label = "SW", col = "grey50") +
+  annotate("text", x = 6.5, y = 310, label = "SD", col = "grey50") +
+  annotate("text", x = 9.5, y = 310, label = "LW", col = "grey50") +
+
   geom_col(aes(x = Month,
                y = prec_JR),
            col = "grey70",
@@ -721,7 +734,7 @@ p_all_modis <- grid.arrange(p_modis, heights = c(1))
 # p_all <- grid.arrange(p_sun, p_precip, p_modis, p_dormancy, p_turnover, heights = c(1,2,3,3,3.4)) #
 
 
-pdf("~/Desktop/figure4_standlevel.pdf",4,8.5) # 5,10)
+pdf("~/Desktop/figure4_standlevel3.pdf",5,10)
 plot(p_all)
 dev.off()
 

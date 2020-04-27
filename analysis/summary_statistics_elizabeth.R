@@ -1,6 +1,6 @@
 #----- reset your R session. ---------------------------------------------------#
 rm(list=ls())
-# graphics.off()
+graphics.off()
 #----- load required packages --------------------------------------------------#
 library(tidyverse)
 library(ggplot2)
@@ -8,49 +8,54 @@ library(ggthemes)
 library(circular)
 #----- source required functions -----------------------------------------------#
 source("R/event_length.R")
+source("R/timeline_gap_fill.R")
 #-------------------------------------------------------------------------------#
 
 #----------------------------------------------------------------------
 #--------   Phenology data - species correction Meise   ---------------
 #----------------------------------------------------------------------
 df <- readRDS("data/jungle_rhythms_weekly_annotations.rds")
-df <- df[which(df$value != 0),]
 df$join_id <- paste0("R",df$image,"-",df$image_row)
 
-metadata <- read.csv("data/phenology_archives_species_long_format_20190626.csv",
+metadata <- read.csv("data/phenology_archives_species_long_format_20200324.csv",
                      header = TRUE, sep = ",")
 metadata$join_id <- paste(metadata$image,metadata$row, sep = "-")
 
 # test merge the two tables based upon the unique join ID
-df <- merge(df, metadata, by = c("join_id"), all.x = TRUE)
-df$species_full <- paste(df$genus_Meise, df$species_Meise)
+data <- merge(df, metadata, by = c("join_id"), all.x = TRUE)
+data$species_full <- paste(data$genus_Meise, data$species_Meise)
+
 # remove column id.x and rename id.y to id (--> in id.y, empty ids are renamed to EK1, EK2, etc...)
-df = df[,!(names(df) %in% "id.x")]
-df <- df %>%
-  rename("id" = id.y)
-df$id <- as.character(df$id)
+data$id <- as.character(data$id.y)
+data = data[,!(names(data) %in% c("id.x","id.y"))]
+# data$id <- as.character(data$id)
+# data$species_full <- as.character(data$species_full)
+
+# remove rows with NA's in year -> individuals with 'no_data' in the archive
+data <- data[!(is.na(data$year)),]
+
+# sum events for each id, each year, across phenophases
+# years with zero observations across phenophases are possibly not observed
+empty_years <- data %>%
+  group_by(species_full,join_id,year) %>%
+  dplyr::summarise(check_empty_years = sum(value))
+data <- merge(data, empty_years, by = c("join_id","species_full","year"), all.x = TRUE)
+data <- data %>%
+  filter(check_empty_years > 0)
+#----------------------------------------------------------------------
+# only select parameters you need, more clear structure to work with
+data <- data %>%
+  select(species_full,
+         id,
+         phenophase,
+         year,
+         week,
+         value)
+#----------------------------------------------------------------------
+rm(df,metadata, empty_years)
 #----------------------------------------------------------------------
 
-# # read in census data and convert basal area
-# census <- read.csv2("data/YGB_ForestPlotsNET.csv",
-#                      header = TRUE,
-#                      sep = ",",
-#                      stringsAsFactors = FALSE)
-#
-# # calculate mean basal area across all species across all
-# # mixed plots
-# census <- census %>%
-#   filter(grepl("MIX",Plot)) %>%
-#   group_by(Plot, Species) %>%
-#   summarize(basal_area = sum(pi*(C2DBH4/2000)^2, na.rm = TRUE)) %>%
-#   group_by(Species) %>%
-#   summarize(basal_area = mean(basal_area))
-#
-# # replace empty slots with Unknown for consistency
-# df$genus <- ifelse(df$genus == "","Unknown",df$genus)
-# df$species <- ifelse(df$species == "","Unknown",df$species)
 
-#----------------------------------------------------------------------
 #-------- read in census data  ----------------------------------------
 #-------- get species-specific basal area at plot and site level ------
 #----------------------------------------------------------------------
@@ -60,10 +65,10 @@ census <- read.csv("data/YGB_ForestPlotsNET_corrected_indet.csv",
                    sep = ",",
                    stringsAsFactors = FALSE)
 census <- census %>%
-  rename("species_full" = Species)
+  dplyr::rename("species_full" = Species)
 census$species_full <- ifelse(census$species_full == "Unknown", NA, census$species_full)
 
-# remove individuals without C1DBH4, these are new recruits for census2 + understory if understory.remove = TRUE
+# remove individuals without C1DBH4, these are new recruits for census2
 # and calculate basal_area for each individual
 census <- census[!(is.na(census$C1DBH4)),]
 census$basal_area = pi*(census$C1DBH4/2000)^2
@@ -78,164 +83,95 @@ census <- census %>%
 basal_area_total <- sum(census$basal_area_site)
 census$basal_area_percentage <- census$basal_area_site/basal_area_total *100
 #----------------------------------------------------------------------
+rm(basal_area_total)
+#----------------------------------------------------------------------
 
-# read in trait data from Steven Janssens
-traits <- read.csv("data/Dataset_traits_African_trees.csv",
-                    header = TRUE,
-                    sep = ",",
-                    stringsAsFactors = FALSE)
-traits <- traits %>%
-  rename("mating_system" = Mating_system,
-         "ecology" = Ecology,
-         "height_m_literature" = Height_lit_m,
-         "dbh_max_cm_literature" = Dmax_lit_cm)
+#----------------------------------------------------------------------
+#-- get a species list for analysis to reduce computing time ----------
+#-- only species in the census + at species level (not genus) ---------
+#----------------------------------------------------------------------
+# remove those only at genus level
+census_sp <- census %>%
+  filter(!grepl("sp\\.",species_full))
+# species lists different datasets
+census_species <- unique(census_sp$species_full)
+phen_species <- unique(data$species_full)
+species_list <- intersect(census_species, phen_species)
+#----------------------------------------------------------------------
+rm(census_species, phen_species, census_sp)
+#----------------------------------------------------------------------
 
-# clear
-traits$deciduousness <- ifelse(traits$species_full %in% "Pericopsis elata", "deciduous*",traits$deciduousness)
-traits$deciduousness <- ifelse(traits$species_full %in% "Trichilia welwitschii", "evergreen*",traits$deciduousness)
-traits$deciduousness <- ifelse(traits$species_full %in% "Copaifera mildbraedii", "deciduous*",traits$deciduousness)
-traits$deciduousness <- ifelse(traits$species_full %in% "Tridesmostemon omphalocarpoides", "evergreen*",traits$deciduousness)
-traits$deciduousness <- ifelse(traits$species_full %in% "Omphalocarpum lecomteanum", "evergreen*",traits$deciduousness)
-traits$deciduousness <- ifelse(traits$species_full %in% "Fernandoa adolfi-friderici", "deciduous*",traits$deciduousness)
-traits$deciduousness <- ifelse(traits$species_full %in% "Tabernaemontana crassa", "evergreen*",traits$deciduousness)
-traits$deciduousness <- ifelse(traits$species_full %in% "Trichilia tessmannii", "deciduous*",traits$deciduousness)
-# not so sure, limited data
-traits$deciduousness <- ifelse(traits$species_full %in% "Trichilia gilletii", "evergreen* (?)",traits$deciduousness)
-# not so sure, unclear phenological data
-traits$deciduousness <- ifelse(traits$species_full %in% "Radlkofera calodendron", "evergreen* (?)",traits$deciduousness)
-traits$deciduousness <- ifelse(traits$species_full %in% "Gilletiodendron mildbraedii", "evergreen* (?)",traits$deciduousness)
 
-## two stars, in literature found as evergreen or (sometimes) deciduous
-## selected a class based on the actual data
-traits$deciduousness <- ifelse(traits$species_full %in% "Celtis mildbraedii", "evergreen**",traits$deciduousness)
-traits$deciduousness <- ifelse(traits$species_full %in% "Combretum lokele", "deciduous**",traits$deciduousness)
-traits$deciduousness <- ifelse(traits$species_full %in% "Homalium africanum", "evergreen**",traits$deciduousness)
-traits$deciduousness <- ifelse(traits$species_full %in% "Quassia silvestris", "evergreen**",traits$deciduousness)
+#----------------------------------------------------------------------
+#-- for this species list at ID level: --------------------------------
+#-- get full range timelines with 2-year gap filled -------------------
+#----------------------------------------------------------------------
+# species_list <- unique(data$species_full)
 
-# not so sure, unclear phenological data
-traits$deciduousness <- ifelse(traits$species_full %in% "Homalium longistylum", "evergreen** (?)",traits$deciduousness)
-traits$deciduousness <- ifelse(traits$species_full %in% "Irvingia gabonensis", "deciduous** (?)",traits$deciduousness)
+timelines_dorm <- two_year_gaps(data = data,
+                              species_name = species_list,
+                              pheno = "leaf_dormancy")
+timelines_turn <- two_year_gaps(data = data,
+                                species_name = species_list,
+                                pheno = "leaf_turnover")
+data_timeline <- rbind(timelines_dorm, timelines_turn)
+#----------------------------------------------------------------------
+rm(timelines_dorm, timelines_turn)
+#----------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
+
 #-------------------------------------------------------------------------------
 # summary statistics: start year, end year, site years, site years with events, nr of individuals
-# this is now per id
-# counting unique year - id combinations for either
-# the full or reduced (phenophase based) subsets
-phenophase_selected <- c("leaf_dormancy")
-out_LD <- lapply(unique(df$species_full), function(species_selected){
-
-  # list of all observed data regardless of phenophase
-  # get then number of unique years
-  ss_full <- subset(df, species_full == species_selected,
-                    select = c('year','id'))
-  nr_years_full <- length(unique(paste(ss_full$year, ss_full$id)))
-  nr_indiv <- length(unique(ss_full$id))
-
-  start_year <- min(ss_full$year)
-  end_year <- max(ss_full$year)
-
-  # subset based on phenophase of interest + species
-  # get the number of unique years (with observations)
-  ss_phen <- subset(df,
-                    species_full == species_selected &
-                      phenophase == phenophase_selected,
-                    select = c('year','id'))
-  nr_years_phen <- length(unique(paste(ss_phen$year, ss_phen$id)))
-
-  # return the ratio
-  ratio <- nr_years_phen/nr_years_full
-
-  return(data.frame(
-    "species_full" = species_selected,
-    "nr_indiv" = nr_indiv,
-    "start_year" = start_year,
-    "end_year"= end_year,
-    "site_years" = nr_years_full,
-    "site_years_with_leaf_dormancy" = nr_years_phen,
-    "ratio_site_years_with_leaf_dormancy" = ratio))
-})
-
-# bind everything row wise
-out_LD <- do.call("rbind", out_LD)
 #-------------------------------------------------------------------------------
-phenophase_selected <- c("leaf_turnover")
-out_LT <- lapply(unique(df$species_full), function(species_selected){
-
-  # list of all observed data regardless of phenophase
-  # get then number of unique years
-  ss_full <- subset(df, species_full == species_selected,
-                    select = c('year','id'))
-  nr_years_full <- length(unique(paste(ss_full$year, ss_full$id)))
-  nr_indiv <- length(unique(ss_full$id))
-
-  start_year <- min(ss_full$year)
-  end_year <- max(ss_full$year)
-
-  # subset based on phenophase of interest + species
-  # get the number of unique years (with observations)
-  ss_phen <- subset(df,
-                    species_full == species_selected &
-                      phenophase == phenophase_selected,
-                    select = c('year','id'))
-  nr_years_phen <- length(unique(paste(ss_phen$year, ss_phen$id)))
-
-  # return the ratio
-  ratio <- nr_years_phen/nr_years_full
-
-  return(data.frame(
-    "species_full" = species_selected,
-    "nr_indiv" = nr_indiv,
-    "start_year" = start_year,
-    "end_year"= end_year,
-    "site_years" = nr_years_full,
-    "site_years_with_leaf_turnover" = nr_years_phen,
-    "ratio_site_years_with_leaf_turnover" = ratio))
-})
-
-# bind everything row wise
-out_LT <- do.call("rbind", out_LT)
-
+stats_LD <- overview_stats(data = data_timeline,
+                           species_name = species_list,
+                           pheno = "leaf_dormancy")
+stats_LD <- stats_LD %>%
+  dplyr::rename("site_years_with_leaf_dormancy" = site_years_with_phenophase,
+                "ratio_site_years_with_leaf_dormancy" = ratio_site_years_with_phenophase)
+#-------------------------------------------------------------------------------
+stats_LT <- overview_stats(data = data_timeline,
+                           species_name = species_list,
+                           pheno = "leaf_turnover")
+stats_LT <- stats_LT %>%
+  dplyr::rename("site_years_with_leaf_turnover" = site_years_with_phenophase,
+                "ratio_site_years_with_leaf_turnover" = ratio_site_years_with_phenophase)
+#-------------------------------------------------------------------------------
 # merge and drop merge column
-out <- merge(out_LD, out_LT, by = c("species_full","nr_indiv","start_year","end_year","site_years"), all.x = TRUE)
-rm(out_LD)
-rm(out_LT)
+stats_LD <- stats_LD %>%
+  select(-phenophase)
+stats_LT <- stats_LT %>%
+  select(-phenophase)
+output_stats <- merge(stats_LD, stats_LT, by = c("species_full","nr_indiv","start_year","end_year","site_years"), all.x = TRUE)
+rm(stats_LD, stats_LT)
 #-------------------------------------------------------------------------------
-
-
-
 
 
 #-------------------------------------------------------------------------------
 #------------ Average duration of an event -------------------------------------
 #-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-event_LD <- df %>%
-  filter(phenophase == "leaf_dormancy") %>%
-  group_by(species_full, id) %>%
-  do(event_length(.))
-
+event_LD <- event_length(data = data_timeline,
+                         species_name = species_list,
+                         pheno = "leaf_dormancy")
+# mean and sd of length phenophase
+# rescaling 48-week year to 52-week year
 event_duration_LD <- event_LD %>%
   group_by(species_full) %>%
-  dplyr::summarise(mean_duration_leaf_dormancy_weeks = mean(phenophase_length),
-                   sd_duration_leaf_dormancy_weeks = sd(phenophase_length),
-                   total_nr_events_leaf_dormancy = length(phenophase_length))
-# rescaling 48-week year to 52-week year
+  dplyr::summarise(mean_duration_leaf_dormancy_weeks = mean(phenophase_length, na.rm = TRUE),
+                   sd_duration_leaf_dormancy_weeks = sd(phenophase_length, na.rm = TRUE),
+                   total_nr_events_leaf_dormancy = length(phenophase_length[!(is.na(phenophase_length))]))
 event_duration_LD <- event_duration_LD %>%
   mutate(mean_duration_leaf_dormancy_weeks = mean_duration_leaf_dormancy_weeks /48 *52,
          sd_duration_leaf_dormancy_weeks = sd_duration_leaf_dormancy_weeks /48 *52)
 #-------------------------------------------------------------------------------
-event_LT <- df %>%
-  filter(phenophase == "leaf_turnover") %>%
-  group_by(species_full, id) %>%
-  do(event_length(.))
-
+event_LT <- event_length(data = data_timeline,
+                         species_name = species_list,
+                         pheno = "leaf_turnover")
 event_duration_LT <- event_LT %>%
   group_by(species_full) %>%
-  dplyr::summarise(mean_duration_leaf_turnover_weeks = mean(phenophase_length),
-                   sd_duration_leaf_turnover_weeks = sd(phenophase_length),
-                   total_nr_events_leaf_turnover = length(phenophase_length))
-# rescaling 48-week year to 52-week year
+  dplyr::summarise(mean_duration_leaf_turnover_weeks = mean(phenophase_length, na.rm = TRUE),
+                   sd_duration_leaf_turnover_weeks = sd(phenophase_length, na.rm = TRUE),
+                   total_nr_events_leaf_turnover = length(phenophase_length[!(is.na(phenophase_length))]))
 event_duration_LT <- event_duration_LT %>%
   mutate(mean_duration_leaf_turnover_weeks = mean_duration_leaf_turnover_weeks /48 *52,
          sd_duration_leaf_turnover_weeks = sd_duration_leaf_turnover_weeks /48 *52)
@@ -246,39 +182,66 @@ event_duration_LT <- event_duration_LT %>%
 #-------------------------------------------------------------------------------
 #------------ Synchrony index among individuals across years -------------------
 #-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
 # calculate the synchrony between events as mean and SD of onset
 # then reformat those taking the year - date line into consideration
 transition_dates_LD <- event_LD %>%
-  mutate(degree = week_start * 360/48) #%>%
+  filter(!is.na(week_start)) %>%
+  mutate(degree = week_start * 360/48)
 
 onset_LD <- transition_dates_LD %>%
   group_by(species_full) %>%
-  # filter(length(week_start) >= 5) %>%    # only species with more than 5 events ## but now you don't get the timing of the events, so SD for few events removed later
-  summarise(
-    mean_degree = mean.circular(
-      circular(degree, units = "degrees")
-    ),
-    median_degree = median.circular(
-      circular(degree, units = "degrees")
-    ),
-    sd_rad = sd.circular(
-      circular(degree, units = "degrees") # eventhough units in degree, sd calculated in radians
-    ),                                    # https://stats.stackexchange.com/questions/185361/how-do-i-interpret-the-standard-deviation-of-a-directional-dataset
-    nr_events_onset = length(week_start)
-  )
+  dplyr::summarise(
+    mean_degree = mean.circular(circular(degree, units = "degrees")),
+    median_degree = median.circular(circular(degree, units = "degrees")),
+    sd_rad = sd.circular(circular(degree, units = "degrees")), # eventhough units in degree, sd calculated in radians # https://stats.stackexchange.com/questions/185361/how-do-i-interpret-the-standard-deviation-of-a-directional-dataset
+    nr_events_onset = length(week_start)) %>%
+  mutate(sd_degree = deg(sd_rad))
 # only sd for species with more than 5 events
-onset_LD$sd_rad <- ifelse(onset_LD$nr_events_onset >= 5, onset_LD$sd_rad, NA)
-# sd: rad back to degrees
-onset_LD$sd_degree <- deg(onset_LD$sd_rad)
+onset_LD$sd_degree <- ifelse(onset_LD$nr_events_onset >= 3, onset_LD$sd_degree, NA)
 # mean: rescaling between 0 and 360 degrees
 onset_LD$mean_rescaled <- ifelse(onset_LD$mean_degree < 0, onset_LD$mean_degree +360, onset_LD$mean_degree)
 onset_LD$median_rescaled <- ifelse(onset_LD$median_degree < 0, onset_LD$median_degree +360, onset_LD$median_degree)
 # rescaling degrees to weeks
+# and only keep columns you need
 onset_LD <- onset_LD %>%
   mutate(mean_intrasp_onset_leaf_dormancy_weeks = mean_rescaled /360 *52,
          median_intrasp_onset_leaf_dormancy_weeks = median_rescaled /360 *52,
-         sd_intrasp_onset_leaf_dormancy_weeks = sd_degree/360*52)
+         sd_intrasp_onset_leaf_dormancy_weeks = sd_degree/360*52) %>%
+  select(species_full,
+         mean_intrasp_onset_leaf_dormancy_weeks,
+         median_intrasp_onset_leaf_dormancy_weeks,
+         sd_intrasp_onset_leaf_dormancy_weeks)
+#-------------------------------------------------------------------------------
+transition_dates_LT <- event_LT %>%
+  filter(!is.na(week_start)) %>%
+  mutate(degree = week_start * 360/48)
+
+onset_LT <- transition_dates_LT %>%
+  group_by(species_full) %>%
+  dplyr::summarise(
+    mean_degree = mean.circular(circular(degree, units = "degrees")),
+    median_degree = median.circular(circular(degree, units = "degrees")),
+    sd_rad = sd.circular(circular(degree, units = "degrees")),
+    nr_events_onset = length(week_start)) %>%
+  mutate(sd_degree = deg(sd_rad))
+# only sd for species with more than 5 events
+onset_LT$sd_degree <- ifelse(onset_LT$nr_events_onset >= 3, onset_LT$sd_degree, NA)
+# mean: rescaling between 0 and 360 degrees
+onset_LT$mean_rescaled <- ifelse(onset_LT$mean_degree < 0, onset_LT$mean_degree +360, onset_LT$mean_degree)
+onset_LT$median_rescaled <- ifelse(onset_LT$median_degree < 0, onset_LT$median_degree +360, onset_LT$median_degree)
+# rescaling degrees to weeks
+# and only keep columns you need
+onset_LT <- onset_LT %>%
+  mutate(mean_intrasp_onset_leaf_turnover_weeks = mean_rescaled /360 *52,
+         median_intrasp_onset_leaf_turnover_weeks = median_rescaled /360 *52,
+         sd_intrasp_onset_leaf_turnover_weeks = sd_degree/360*52) %>%
+  select(species_full,
+         mean_intrasp_onset_leaf_turnover_weeks,
+         median_intrasp_onset_leaf_turnover_weeks,
+         sd_intrasp_onset_leaf_turnover_weeks)
+#-------------------------------------------------------------------------------
+
+
 # #-------------------------------------------------------------------------------
 # #------------ Synchrony index between species as -------------------
 # #----- average pairwise distance between median onset date of species
@@ -321,94 +284,11 @@ onset_LD <- onset_LD %>%
 # #-----------
 # onset_LD <- merge(onset_LD, d, by = "species_full", all.x = TRUE)
 # onset_LD <- merge(onset_LD, d_minfreq, by = "species_full", all.x = TRUE)
-# remove columns you don't need
-onset_LD = onset_LD[,!(names(onset_LD) %in% c("mean_degree","sd_rad","sd_degree","nr_events_onset","mean_rescaled","median_degree","median_rescaled","median_rad"))]
+# # remove columns you don't need
+# onset_LD = onset_LD[,!(names(onset_LD) %in% c("mean_degree","sd_rad","sd_degree","nr_events_onset","mean_rescaled","median_degree","median_rescaled","median_rad"))]
 #-------------------------------------------------------------------------------
 
 
-
-#-------------------------------------------------------------------------------
-#------------ Synchrony index among individuals across years -------------------
-#------------Leaf turnover---------------------------------------------
-#-------------------------------------------------------------------------------
-# calculate the synchrony between events as mean and SD of onset
-# then reformat those taking the year - date line into consideration
-transition_dates_LT <- event_LT %>%
-  mutate(degree = week_start * 360/48) #%>%
-
-onset_LT <- transition_dates_LT %>%
-  group_by(species_full) %>%
-  # filter(length(week_start) >= 5) %>%    # only species with more than 5 events
-  summarise(
-    mean_degree = mean.circular(
-      circular(degree, units = "degrees")
-    ),
-    median_degree = median.circular(
-      circular(degree, units = "degrees")
-    ),
-    sd_rad = sd.circular(
-      circular(degree, units = "degrees") # eventhough units in degree, sd calculated in radians
-    ),                                    # https://stats.stackexchange.com/questions/185361/how-do-i-interpret-the-standard-deviation-of-a-directional-dataset
-    nr_events_onset = length(week_start)
-  )
-# only sd for species with more than 5 events
-onset_LT$sd_rad <- ifelse(onset_LT$nr_events_onset >= 5, onset_LT$sd_rad, NA)
-# sd: rad back to degrees
-onset_LT$sd_degree <- deg(onset_LT$sd_rad)
-# mean: rescaling between 0 and 360 degrees
-onset_LT$mean_rescaled <- ifelse(onset_LT$mean_degree < 0, onset_LT$mean_degree +360, onset_LT$mean_degree)
-onset_LT$median_rescaled <- ifelse(onset_LT$median_degree < 0, onset_LT$median_degree +360, onset_LT$median_degree)
-# rescaling degrees to weeks
-onset_LT <- onset_LT %>%
-  mutate(mean_intrasp_onset_leaf_turnover_weeks = mean_rescaled /360 *52,
-         median_intrasp_onset_leaf_turnover_weeks = median_rescaled /360 *52,
-         sd_intrasp_onset_leaf_turnover_weeks = sd_degree/360*52)
-# #-------------------------------------------------------------------------------
-# #------------ Synchrony index between species as -------------------
-# #----- average pairwise distance between median onset date of species
-# #-------------------------------------------------------------------------------
-# # you need to merge with census here, because else distance is calculated to all other species in full phenology dataset
-# census_overview <- census[,(names(census) %in% c("species_full","basal_area_site"))]
-# distance_events_LT <- merge(onset_LT, census_overview, by = "species_full", all.x = TRUE)
-# distance_events_LT <- distance_events_LT[!(is.na(distance_events_LT$basal_area_site)),]
-# distance_events_LT$median_rad <- rad(distance_events_LT$median_degree)
-# distance_events_LT <- distance_events_LT[!(is.na(distance_events_LT$median_rad)),]
-# a <- as.matrix(dist(distance_events_LT$median_rad), labels = TRUE)
-# rownames(a) <- distance_events_LT[['species_full']]
-# colnames(a) <- rownames(a)
-# b <- deg(a)
-# c <- ifelse(b > 180, 360-b, b)
-# d <- as.data.frame(rowMeans(c))
-# d$species_full <- rownames(d)
-# colnames(d)[1] <- "mean_distance_onset_leaf_turnover_weeks"
-# d <- d %>%
-#   mutate(mean_distance_onset_leaf_turnover_weeks = mean_distance_onset_leaf_turnover_weeks /360 *52)
-# #---------- now with a mimimum of 5 events
-# onset_LT_minfreq <- transition_dates_LT %>%
-#   group_by(species_full) %>%
-#   filter(length(week_start) >= 5) %>%    # only species with more than 5 events
-#   summarise(median_degree = median.circular(circular(degree, units = "degrees")))
-# distance_events_minfreq_LT <- merge(onset_LT_minfreq, census_overview, by = "species_full", all.x = TRUE)
-# distance_events_minfreq_LT <- distance_events_minfreq_LT[!(is.na(distance_events_minfreq_LT$basal_area_site)),]
-# distance_events_minfreq_LT$median_rad <- rad(distance_events_minfreq_LT$median_degree)
-# distance_events_minfreq_LT <- distance_events_minfreq_LT[!(is.na(distance_events_minfreq_LT$median_rad)),]
-# a_minfreq <- as.matrix(dist(distance_events_minfreq_LT$median_rad), labels = TRUE)
-# rownames(a_minfreq) <- distance_events_minfreq_LT[['species_full']]
-# colnames(a_minfreq) <- rownames(a_minfreq)
-# b_minfreq <- deg(a_minfreq)
-# c_minfreq <- ifelse(b_minfreq > 180, 360-b_minfreq, b_minfreq)
-# d_minfreq <- as.data.frame(rowMeans(c_minfreq))
-# d_minfreq$species_full <- rownames(d_minfreq)
-# colnames(d_minfreq)[1] <- "mean_distance_onset_minfreq_leaf_turnover_weeks"
-# d_minfreq <- d_minfreq %>%
-#   mutate(mean_distance_onset_minfreq_leaf_turnover_weeks = mean_distance_onset_minfreq_leaf_turnover_weeks /360 *52)
-# #-----------
-# onset_LT <- merge(onset_LT, d, by = "species_full", all.x = TRUE)
-# onset_LT <- merge(onset_LT, d_minfreq, by = "species_full", all.x = TRUE)
-# remove columns you don't need
-onset_LT = onset_LT[,!(names(onset_LT) %in% c("mean_degree","sd_rad","sd_degree","nr_events_onset","mean_rescaled","median_degree","median_rescaled","median_rad"))]
-
-#-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
 #------------ Synchrony index within individuals across years ------------------
@@ -417,18 +297,11 @@ onset_LT = onset_LT[,!(names(onset_LT) %in% c("mean_degree","sd_rad","sd_degree"
 #-------------------------------------------------------------------------------
 onset_ind_LD <- transition_dates_LD %>%
   group_by(id, species_full) %>%
-  filter(length(week_start) >= 5) %>%    # only species with more than 4 events
-  summarise(
-    mean_degree = mean.circular(
-      circular(degree, units = "degrees")
-    ),
-    sd_rad = sd.circular(
-      circular(degree, units = "degrees") # eventhough units in degree, sd calculated in radians
-    ),                                    # https://stats.stackexchange.com/questions/185361/how-do-i-interpret-the-standard-deviation-of-a-directional-dataset
-    nr_events_onset = length(week_start)
-  )
-# sd: rad back to degrees
-onset_ind_LD$sd_degree <- deg(onset_ind_LD$sd_rad)
+  filter(length(week_start) >= 3) %>%    # only species with more than 4 events
+  dplyr::summarise(mean_degree = mean.circular(circular(degree, units = "degrees")),
+    sd_rad = sd.circular(circular(degree, units = "degrees")), # eventhough units in degree, sd calculated in radians
+    nr_events_onset = length(week_start)) %>%
+  mutate(sd_degree = deg(sd_rad))
 # mean: rescaling between 0 and 360 degrees
 onset_ind_LD$mean_rescaled <- ifelse(onset_ind_LD$mean_degree < 0, onset_ind_LD$mean_degree +360, onset_ind_LD$mean_degree)
 # rescaling degrees to weeks
@@ -438,24 +311,17 @@ onset_ind_LD <- onset_ind_LD %>%
 
 synchrony_ind_LD <- onset_ind_LD %>%
   group_by(species_full) %>%
-  summarise(mean_synchrony_individuals_onset_leaf_dormancy_weeks = mean(onset_sd_weeks,na.rm=TRUE),
-            sd_synchrony_individuals_onset_leaf_dormancy_weeks = sd(onset_sd_weeks,na.rm=TRUE),
-            mean_nr_events_within_individuals_leaf_dormancy = mean(nr_events_onset))
+  dplyr::summarise(mean_synchrony_individuals_onset_leaf_dormancy_weeks = mean(onset_sd_weeks,na.rm=TRUE),
+                   sd_synchrony_individuals_onset_leaf_dormancy_weeks = sd(onset_sd_weeks,na.rm=TRUE),
+                   mean_nr_events_within_individuals_leaf_dormancy = mean(nr_events_onset))
 #-------------------------------------------------------------------------------
 onset_ind_LT <- transition_dates_LT %>%
   group_by(id, species_full) %>%
-  filter(length(week_start) >= 5) %>%    # only species with more than 4 events
-  summarise(
-    mean_degree = mean.circular(
-      circular(degree, units = "degrees")
-    ),
-    sd_rad = sd.circular(
-      circular(degree, units = "degrees") # eventhough units in degree, sd calculated in radians
-    ),                                    # https://stats.stackexchange.com/questions/185361/how-do-i-interpret-the-standard-deviation-of-a-directional-dataset
-    nr_events_onset = length(week_start)
-  )
-# sd: rad back to degrees
-onset_ind_LT$sd_degree <- deg(onset_ind_LT$sd_rad)
+  filter(length(week_start) >= 3) %>%    # only species with more than 4 events
+  dplyr::summarise(mean_degree = mean.circular(circular(degree, units = "degrees")),
+                   sd_rad = sd.circular(circular(degree, units = "degrees")), # eventhough units in degree, sd calculated in radians
+                   nr_events_onset = length(week_start)) %>%
+  mutate(sd_degree = deg(sd_rad))
 # mean: rescaling between 0 and 360 degrees
 onset_ind_LT$mean_rescaled <- ifelse(onset_ind_LT$mean_degree < 0, onset_ind_LT$mean_degree +360, onset_ind_LT$mean_degree)
 # rescaling degrees to weeks
@@ -465,11 +331,76 @@ onset_ind_LT <- onset_ind_LT %>%
 
 synchrony_ind_LT <- onset_ind_LT %>%
   group_by(species_full) %>%
-  summarise(mean_synchrony_individuals_onset_leaf_turnover_weeks = mean(onset_sd_weeks,na.rm=TRUE),
-            sd_synchrony_individuals_onset_leaf_turnover_weeks = sd(onset_sd_weeks,na.rm=TRUE),
-            mean_nr_events_within_individuals_leaf_turnover = mean(nr_events_onset))
+  dplyr::summarise(mean_synchrony_individuals_onset_leaf_turnover_weeks = mean(onset_sd_weeks,na.rm=TRUE),
+                   sd_synchrony_individuals_onset_leaf_turnover_weeks = sd(onset_sd_weeks,na.rm=TRUE),
+                   mean_nr_events_within_individuals_leaf_turnover = mean(nr_events_onset))
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# Sychrony at the individual level
+# will be writen out as seperate file
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+onset_ind_LD <- onset_ind_LD %>%
+  select(species_full,
+         id,
+         onset_sd_weeks,
+         nr_events_onset) %>%
+  mutate(phenophase = "leaf_dormancy")
+
+onset_ind_LT <- onset_ind_LT %>%
+  select(species_full,
+         id,
+         onset_sd_weeks,
+         nr_events_onset) %>%
+  mutate(phenophase = "leaf_turnover")
+
+onset_ind <- rbind(onset_ind_LD, onset_ind_LT)
+#-------------------------------------------------------------------------------
+rm(onset_ind_LD, onset_ind_LT)
 #-------------------------------------------------------------------------------
 
+
+
+#----------------------------------------------------------------------
+#-------- read in trait data from Steven Janssens ---------------------
+#-------- get species-specific basal area at plot and site level ------
+#----------------------------------------------------------------------
+traits <- read.csv("data/Dataset_traits_African_trees.csv",
+                   header = TRUE,
+                   sep = ",",
+                   stringsAsFactors = FALSE)
+traits <- traits %>%
+  dplyr::rename("mating_system" = Mating_system,
+                "ecology" = Ecology,
+                "height_m_literature" = Height_lit_m,
+                "dbh_max_cm_literature" = Dmax_lit_cm)
+
+# redefine deciousness of some species (because classified as 'evergreen or deciduous'; 'sometimes deciduous')
+# redefine based on the archive phenology data
+#----------------------------------------------------------------------
+# clear patterns:
+traits$deciduousness <- ifelse(traits$species_full %in% "Pericopsis elata", "deciduous*",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Trichilia welwitschii", "evergreen*",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Copaifera mildbraedii", "deciduous*",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Tridesmostemon omphalocarpoides", "evergreen*",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Omphalocarpum lecomteanum", "evergreen*",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Fernandoa adolfi-friderici", "deciduous*",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Tabernaemontana crassa", "evergreen*",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Trichilia tessmannii", "deciduous*",traits$deciduousness)
+# not so sure, limited data:
+traits$deciduousness <- ifelse(traits$species_full %in% "Trichilia gilletii", "evergreen* (?)",traits$deciduousness)
+# not so sure, unclear phenological data:
+traits$deciduousness <- ifelse(traits$species_full %in% "Radlkofera calodendron", "evergreen* (?)",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Gilletiodendron mildbraedii", "evergreen* (?)",traits$deciduousness)
+## two stars, in literature found as evergreen or (sometimes) deciduous
+## selected a class based on the actual data
+traits$deciduousness <- ifelse(traits$species_full %in% "Celtis mildbraedii", "evergreen**",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Combretum lokele", "deciduous**",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Homalium africanum", "evergreen**",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Quassia silvestris", "evergreen**",traits$deciduousness)
+# not so sure, unclear phenological data
+traits$deciduousness <- ifelse(traits$species_full %in% "Homalium longistylum", "evergreen** (?)",traits$deciduousness)
+traits$deciduousness <- ifelse(traits$species_full %in% "Irvingia gabonensis", "deciduous** (?)",traits$deciduousness)
 
 
 
@@ -478,8 +409,7 @@ synchrony_ind_LT <- onset_ind_LT %>%
 # merge everything
 #--------------------------------------------------------------------
 #--------------------------------------------------------------------
-
-final <- merge(out, census, by = "species_full", all.x = TRUE)
+final <- merge(output_stats, census, by = "species_full", all.x = TRUE)
 final <- merge(final, traits, by = "species_full", all.x = TRUE)
 final <- merge(final, event_duration_LD, by = "species_full", all.x = TRUE)
 final <- merge(final, event_duration_LT, by = "species_full", all.x = TRUE)
@@ -490,38 +420,10 @@ final <- merge(final, synchrony_ind_LT, by = "species_full", all.x = TRUE)
 
 
 # # to get some statistics on full database (total species, individuals, siteyear etc.)
-# metadata <- read.csv("data/phenology_archives_species_long_format_20190626.csv",
-#                      header = TRUE, sep = ",")
-# metadata$species_full <- paste(metadata$genus_Meise, metadata$species_Meise)
-# metadata = metadata[,(names(metadata) %in% c("species_full",
-#                                               "genus_Meise",
-#                                               "family_Meise"))]
-# metadata <- metadata[!duplicated(metadata), ]
-#
-# final <- final[ !final$species_full %in% c("Unknown Unknown"), ] # remove unknown species
-# final <- merge(final, metadata, by = "species_full", all.x = TRUE)
-#
-# # count species identified to full species names and those only to genus level
-# test <- final %>%
-#   filter(!grepl("sp\\.",species_full))
-# test <- final %>%
-#   filter(grepl("sp\\.",species_full))
-# # number of genus and family covered
-# unique(final$genus_Meise)
-# unique(final$family_Meise)
-# # total individuals and siteyears
-# sum(final$nr_indiv)
-# sum(final$site_years)
-
-# remove rows (species) not included in the Yangambi mixed forest census
-final <- final[!(is.na(final$basal_area_site)),]
-# remove those only at genus level
-final <- final %>%
-  filter(!grepl("sp\\.",species_full))
 # sum(final$nr_indiv)
 # sum(final$site_years)
 # sum(final$basal_area_percentage)
-# metadata <- read.csv("data/phenology_archives_species_long_format_20190626.csv",
+# metadata <- read.csv("data/phenology_archives_species_long_format_20200324.csv",
 #                      header = TRUE, sep = ",")
 # metadata$species_full <- paste(metadata$genus_Meise, metadata$species_Meise)
 # metadata = metadata[,(names(metadata) %in% c("species_full",
@@ -529,35 +431,24 @@ final <- final %>%
 #                                               "family_Meise"))]
 # metadata <- metadata[!duplicated(metadata), ]
 # final <- merge(final, metadata, by = "species_full", all.x = TRUE)
-# unique(final$genus_Meise)
-# unique(final$family_Meise)
-
-
-#--------------------------------------------------------------------
-# Sychrony at the individual level
-onset_ind_LD = onset_ind_LD[,(names(onset_ind_LD) %in% c("id","species_full","onset_sd_weeks","nr_events_onset"))]
-onset_ind_LD$phenophase <- "leaf_dormancy"
-onset_ind_LT = onset_ind_LT[,(names(onset_ind_LT) %in% c("id","species_full","onset_sd_weeks","nr_events_onset"))]
-onset_ind_LT$phenophase <- "leaf_turnover"
-onset_ind <- rbind(onset_ind_LD, onset_ind_LT)
-onset_ind <- merge(onset_ind, census, by = "species_full", all.x = TRUE)
-onset_ind <- merge(onset_ind, traits, by = "species_full", all.x = TRUE)
-# remove rows (species) not included in the Yangambi mixed forest census
-onset_ind <- onset_ind[!(is.na(onset_ind$basal_area_site)),]
-
-
+# length(unique(final$genus_Meise)) # unknown included still
+# length(unique(final$family_Meise)) # unknown included still
+#
+#
+# onset_ind <- merge(onset_ind, census, by = "species_full", all.x = TRUE)
+# onset_ind <- merge(onset_ind, traits, by = "species_full", all.x = TRUE)
 #--------------------------------------------------------------------
 #--------------------------------------------------------------------
 # write to file
 #--------------------------------------------------------------------
 #--------------------------------------------------------------------
-write.table(final, "data/species_meta_data.csv",
+write.table(final, "data/species_meta_data_phase2.csv",
           quote = FALSE,
           col.names = TRUE,
           row.names = FALSE,
           sep = ",")
 
-write.table(onset_ind, "data/synchrony_individuals.csv",
+write.table(onset_ind, "data/synchrony_individuals_phase2.csv",
             quote = FALSE,
             col.names = TRUE,
             row.names = FALSE,
@@ -565,26 +456,5 @@ write.table(onset_ind, "data/synchrony_individuals.csv",
 #--------------------------------------------------------------------
 
 
-
-# # sum the basal area of the observed species
-# # if >30 good coverage
-# # message(sum(final$BA, na.rm = TRUE))
-#
-# hist1 <- ggplot(final, aes(site_years)) +
-#   geom_histogram(bins = 15) +
-#   labs(x = "Site Years",
-#        y = "Frequency") +
-#   theme_minimal() +
-#   theme(text = element_text(size=20))
-#
-# hist2 <- ggplot(final, aes(nr_indiv)) +
-#   geom_histogram(bins = 15) +
-#   labs(x = "Individuals per species",
-#        y = "Frequency") +
-#   theme_minimal() +
-#   theme(text = element_text(size=20))
-#
-# # ggsave("site_year_histogram.png", hist1)
-# # ggsave("individuals_histogram.png", hist2)
 
 

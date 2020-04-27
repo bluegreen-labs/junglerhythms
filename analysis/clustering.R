@@ -16,22 +16,41 @@ library(dtwclust)
 #--------   Phenology data - species correction Meise   ---------------
 #----------------------------------------------------------------------
 df <- readRDS("data/jungle_rhythms_weekly_annotations.rds")
-# df <- df[which(df$value != 0),]
 df$join_id <- paste0("R",df$image,"-",df$image_row)
 
-metadata <- read.csv("data/phenology_archives_species_long_format_20190626.csv",
+metadata <- read.csv("data/phenology_archives_species_long_format_20200324.csv",
                      header = TRUE, sep = ",")
 metadata$join_id <- paste(metadata$image,metadata$row, sep = "-")
-
-# test merge the two tables based upon the unique join ID
+# merge the two tables based upon the unique join ID
 data <- merge(df, metadata, by = c("join_id"), all.x = TRUE)
 data$species_full <- paste(data$genus_Meise, data$species_Meise)
 
 # remove column id.x and rename id.y to id (--> in id.y, empty ids are renamed to EK1, EK2, etc...)
-data = data[,!(names(data) %in% "id.x")]
+data$id <- as.character(data$id.y)
+data = data[,!(names(data) %in% c("id.x","id.y"))]
+
+# remove rows with NA's in year -> individuals with 'no_data' in the archive
+data <- data[!(is.na(data$year)),]
+
+# sum events for each id, each year, across phenophases
+# years with zero observations across phenophases are possibly not observed
+empty_years <- data %>%
+  group_by(species_full,join_id,year) %>%
+  dplyr::summarise(check_empty_years = sum(value))
+data <- merge(data, empty_years, by = c("join_id","species_full","year"), all.x = TRUE)
 data <- data %>%
-  rename("id" = id.y)
-data$id <- as.character(data$id)
+  filter(check_empty_years > 0)
+#----------------------------------------------------------------------
+# only select parameters you need, more clear structure to work with
+data <- data %>%
+  select(species_full,
+         id,
+         phenophase,
+         year,
+         week,
+         value)
+#----------------------------------------------------------------------
+rm(df,metadata, empty_years)
 #----------------------------------------------------------------------
 
 # #----------------------------------------------------------------------

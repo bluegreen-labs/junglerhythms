@@ -27,6 +27,11 @@ two_year_gaps <- function(
     data_subset <- data %>%
       filter(species_full %in% species_name[j]) %>%
       filter(phenophase %in% pheno)
+
+# data_subset <- data2 %>%
+#   filter(species_full %in% "Afzelia bipindensis") %>%
+#   filter(phenophase == "leaf_dormancy") %>%
+#   filter(id %in% "2702")
     # convert date
     data_subset$date <- as.Date(paste(data_subset$year,
                                       round((data_subset$week*7.6)-7),sep="-"), "%Y-%j")
@@ -55,6 +60,8 @@ two_year_gaps <- function(
       data_ind_grow$phenophase <- unique(na.omit(data_ind_grow$phenophase))
       data_ind_grow$id <- unique(na.omit(data_ind_grow$id))
       data_ind_grow$year <- format.Date(data_ind_grow$date, "%Y")
+      data_ind_grow$week <-  ifelse(is.na(data_ind_grow$week), c(1:48), data_ind_grow$week)
+
       # get list of years in grown dataset
       full_range_years <- as.numeric(unique(data_ind_grow$year))
 

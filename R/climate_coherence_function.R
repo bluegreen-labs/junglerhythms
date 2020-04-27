@@ -8,6 +8,29 @@
 #' @return phase difference between climate and phenology time series, coherence values and significance
 
 
+
+
+
+###################################################################################################
+# check the phase diff calculation
+# phase_diff_precip_test <- ifelse(phase_radians_precip > 0, phase_radians_precip/ (2*pi/cycl_phen),
+#                                  (phase_radians_precip+2*pi)/ (2*pi/cycl_phen))
+###################################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 spans_lookup_monthly <- list(observations = c(24, 36, 48, 60, 72, 84, 96, 108, 120, 132, 144, 156, 168, 180, 192, 204, 216, 228, 240),
                              # spans_smooth = list(NULL, NULL, NULL, NULL, # smoothed spectrum of data -> smoothed periodogram bandwith to approx. 0.05
                              #                     NULL, NULL, NULL,
@@ -70,10 +93,12 @@ climate_coherence <- function(
              year <= last_year) %>%
       dplyr::arrange(date)
     # climate time series
-    climate_insol_ts <- ts(data = climate_range$insol_JR, start = first_year, frequency = 12)
-    climate_tmax_ts <- ts(data = climate_range$tmax_JR, start = first_year, frequency = 12)
     climate_precip_ts <- ts(data = climate_range$precip, start = first_year, frequency = 12)
     climate_precip_neg_ts <- ts(data = climate_range$precip*(-1), start = first_year, frequency = 12)
+    climate_insol_ts <- ts(data = climate_range$insol_JR, start = first_year, frequency = 12)
+    climate_insol_neg_ts <- ts(data = climate_range$insol_JR*(-1), start = first_year, frequency = 12)
+    climate_tmax_ts <- ts(data = climate_range$tmax_JR, start = first_year, frequency = 12)
+    climate_tmax_neg_ts <- ts(data = climate_range$tmax_JR*(-1), start = first_year, frequency = 12)
 
     ##########################
     # coherence analysis
@@ -89,6 +114,11 @@ climate_coherence <- function(
     phase_radians_precip <- spec_cross_fun(ts_cross_precip)$phase[which.max(spec_cross_fun(ts_cross_precip)$spec[,1])]
     phase_degree_precip <- (phase_radians_precip * 180) / (pi) # transform to degrees
     phase_diff_precip <- phase_degree_precip/360*cycl_phen # transform to months
+
+    phase_diff_precip_test <- ifelse(phase_radians_precip > 0, phase_radians_precip/ (2*pi/cycl_phen),
+                                (phase_radians_precip+2*pi)/ (2*pi/cycl_phen))
+
+
     # the coherence at the dominant frequency
     coh_precip <- spec_cross_fun(ts_cross_precip)$coh[which.max(spec_cross_fun(ts_cross_precip)$spec[,1])]
     # significance
@@ -121,38 +151,111 @@ climate_coherence <- function(
 
     #---- precip negative -----------------------------------------------------------------------------------
     ts_cross_precip_neg <- ts.intersect(data_ts, climate_precip_neg_ts)
-    # the dominant frequency of the climate variable: spec[,1] is from the climate timeseries
     freq_phen_neg <- spec_cross_fun(ts_cross_precip_neg)$freq[which.max(spec_cross_fun(ts_cross_precip_neg)$spec[,1])]/12
-    # dominant cycle in months
     cycl_phen_neg <- 1/freq_phen_neg
-    # the phase difference (in radians) at the dominant frequency
     phase_radians_precip_neg <- spec_cross_fun(ts_cross_precip_neg)$phase[which.max(spec_cross_fun(ts_cross_precip_neg)$spec[,1])]
-    phase_degree_precip_neg <- (phase_radians_precip_neg * 180) / (pi) # transform to degrees
-    phase_diff_precip_neg <- phase_degree_precip_neg/360*cycl_phen_neg # transform to months
-    # the coherence at the dominant frequency
+    phase_degree_precip_neg <- (phase_radians_precip_neg * 180) / (pi)
+    phase_diff_precip_neg <- phase_degree_precip_neg/360*cycl_phen_neg
     coh_precip_neg <- spec_cross_fun(ts_cross_precip_neg)$coh[which.max(spec_cross_fun(ts_cross_precip_neg)$spec[,1])]
     # significance
     sr_neg <- spec_cross_fun(ts_cross_precip_neg)
     f_neg = qf(.95, 2, sr_neg$df-2)
     L_neg = (sr_neg$df * sr_neg$n.used)/(sr_neg$orig.n * 2)
-    C_neg = f_neg/(L_neg-1+f_neg) # coherence large then this is significant (p < 0.05)
+    C_neg = f_neg/(L_neg-1+f_neg)
     signif_neg <- ifelse(coh_precip_neg > C_neg, TRUE, FALSE)
 
 
-    coherence_output_species <- data.frame(species = species_name[j],
-      phenophase = pheno,
-      cycl_phen = cycl_phen,
-      phase_diff_precip = phase_diff_precip,
-      coh_precip,
-      signif = signif,
-      # cycl_clim = cycl_clim,
-      # phase_diff_precip_inv = phase_diff_precip_inv,
-      # coh_precip_inv,
-      # signif_inv = signif_inv,
-      cycl_phen_neg = cycl_phen_neg,
-      phase_diff_precip_neg = phase_diff_precip_neg,
-      coh_precip_neg,
-      signif_neg = signif_neg
+    #---- sun hours -----------------------------------------------------------------------------------
+    ts_cross_sun <- ts.intersect(data_ts, climate_insol_ts)
+    freq_phen_sun <- spec_cross_fun(ts_cross_sun)$freq[which.max(spec_cross_fun(ts_cross_sun)$spec[,1])]/12
+    cycl_phen_sun <- 1/freq_phen_sun
+    phase_radians_sun <- spec_cross_fun(ts_cross_sun)$phase[which.max(spec_cross_fun(ts_cross_sun)$spec[,1])]
+    phase_degree_sun <- (phase_radians_sun * 180) / (pi)
+    phase_diff_sun <- phase_degree_sun/360*cycl_phen_sun
+    coh_sun <- spec_cross_fun(ts_cross_sun)$coh[which.max(spec_cross_fun(ts_cross_sun)$spec[,1])]
+    # significance
+    sr_sun <- spec_cross_fun(ts_cross_sun)
+    f_sun = qf(.95, 2, sr_sun$df-2)
+    L_sun = (sr_sun$df * sr_sun$n.used)/(sr_sun$orig.n * 2)
+    C_sun = f_sun/(L_sun-1+f_sun)
+    signif_sun <- ifelse(coh_sun > C_sun, TRUE, FALSE)
+
+    #---- sun hours - neg -----------------------------------------------------------------------------------
+    ts_cross_sun_neg <- ts.intersect(data_ts, climate_insol_neg_ts)
+    freq_phen_sun_neg <- spec_cross_fun(ts_cross_sun_neg)$freq[which.max(spec_cross_fun(ts_cross_sun_neg)$spec[,1])]/12
+    cycl_phen_sun_neg <- 1/freq_phen_sun_neg
+    phase_radians_sun_neg <- spec_cross_fun(ts_cross_sun_neg)$phase[which.max(spec_cross_fun(ts_cross_sun_neg)$spec[,1])]
+    phase_degree_sun_neg <- (phase_radians_sun_neg * 180) / (pi)
+    phase_diff_sun_neg <- phase_degree_sun_neg/360*cycl_phen_sun_neg
+    coh_sun_neg <- spec_cross_fun(ts_cross_sun_neg)$coh[which.max(spec_cross_fun(ts_cross_sun_neg)$spec[,1])]
+    # significance
+    sr_sun_neg <- spec_cross_fun(ts_cross_sun_neg)
+    f_sun_neg = qf(.95, 2, sr_sun_neg$df-2)
+    L_sun_neg = (sr_sun_neg$df * sr_sun_neg$n.used)/(sr_sun_neg$orig.n * 2)
+    C_sun_neg = f_sun_neg/(L_sun_neg-1+f_sun_neg)
+    signif_sun_neg <- ifelse(coh_sun_neg > C_sun_neg, TRUE, FALSE)
+
+    #---- temp max -----------------------------------------------------------------------------------
+    ts_cross_temp <- ts.intersect(data_ts, climate_tmax_ts)
+    freq_phen_temp <- spec_cross_fun(ts_cross_temp)$freq[which.max(spec_cross_fun(ts_cross_temp)$spec[,1])]/12
+    cycl_phen_temp <- 1/freq_phen_temp
+    phase_radians_temp <- spec_cross_fun(ts_cross_temp)$phase[which.max(spec_cross_fun(ts_cross_temp)$spec[,1])]
+    phase_degree_temp <- (phase_radians_temp * 180) / (pi)
+    phase_diff_temp <- phase_degree_temp/360*cycl_phen_temp
+    coh_temp <- spec_cross_fun(ts_cross_temp)$coh[which.max(spec_cross_fun(ts_cross_temp)$spec[,1])]
+    # significance
+    sr_temp <- spec_cross_fun(ts_cross_temp)
+    f_temp = qf(.95, 2, sr_temp$df-2)
+    L_temp = (sr_temp$df * sr_temp$n.used)/(sr_temp$orig.n * 2)
+    C_temp = f_temp/(L_temp-1+f_temp)
+    signif_temp <- ifelse(coh_temp > C_temp, TRUE, FALSE)
+
+    #---- temp max -----------------------------------------------------------------------------------
+    ts_cross_temp_neg <- ts.intersect(data_ts, climate_tmax_neg_ts)
+    freq_phen_temp_neg <- spec_cross_fun(ts_cross_temp_neg)$freq[which.max(spec_cross_fun(ts_cross_temp_neg)$spec[,1])]/12
+    cycl_phen_temp_neg <- 1/freq_phen_temp_neg
+    phase_radians_temp_neg <- spec_cross_fun(ts_cross_temp_neg)$phase[which.max(spec_cross_fun(ts_cross_temp_neg)$spec[,1])]
+    phase_degree_temp_neg <- (phase_radians_temp_neg * 180) / (pi)
+    phase_diff_temp_neg <- phase_degree_temp_neg/360*cycl_phen_temp_neg
+    coh_temp_neg <- spec_cross_fun(ts_cross_temp_neg)$coh[which.max(spec_cross_fun(ts_cross_temp_neg)$spec[,1])]
+    # significance
+    sr_temp_neg <- spec_cross_fun(ts_cross_temp_neg)
+    f_temp_neg = qf(.95, 2, sr_temp_neg$df-2)
+    L_temp_neg = (sr_temp_neg$df * sr_temp_neg$n.used)/(sr_temp_neg$orig.n * 2)
+    C_temp_neg = f_temp_neg/(L_temp_neg-1+f_temp_neg)
+    signif_temp_neg <- ifelse(coh_temp_neg > C_temp_neg, TRUE, FALSE)
+
+    #---- output -----------------------------------------------------------------------------------
+        coherence_output_species <- data.frame(species_full = species_name[j],
+                                           # precip
+                                           phenophase = pheno,
+                                           cycl_phen = cycl_phen,
+                                           phase_diff_precip = phase_diff_precip,
+                                           phase_diff_precip_test,
+                                           coh_precip = coh_precip,
+                                           signif = signif,
+                                           # precip neg
+                                           phase_diff_precip_neg = phase_diff_precip_neg,
+                                           coh_precip_neg = coh_precip_neg,
+                                           signif_neg = signif_neg,
+                                           # sun
+                                           phase_diff_sun = phase_diff_sun,
+                                           coh_sun = coh_sun,
+                                           signif_sun = signif_sun,
+                                           # sun neg
+                                           phase_diff_sun_neg = phase_diff_sun_neg,
+                                           coh_sun_neg = coh_sun_neg,
+                                           signif_sun_neg = signif_sun_neg,
+                                           # temp
+                                           phase_diff_temp = phase_diff_temp,
+                                           coh_temp = coh_temp,
+                                           signif_temp = signif_temp,
+                                           # temp neg
+                                           phase_diff_temp_neg = phase_diff_temp_neg,
+                                           coh_temp_neg = coh_temp_neg,
+                                           signif_temp_neg = signif_temp_neg
+
+
     )
     coherence_output <- rbind(coherence_output, coherence_output_species)
 

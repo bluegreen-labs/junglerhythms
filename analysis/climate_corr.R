@@ -20,7 +20,7 @@ source("R/climate_ccf_function.R")
 #----------------------------------------------------------------------
 df <- readRDS("data/jungle_rhythms_weekly_annotations.rds")
 df$join_id <- paste0("R",df$image,"-",df$image_row)
-metadata <- read.csv("data/phenology_archives_species_long_format_20190626.csv",
+metadata <- read.csv("data/phenology_archives_species_long_format_20200324.csv",
                      header = TRUE, sep = ",")
 metadata$join_id <- paste(metadata$image,metadata$row, sep = "-")
 
@@ -36,6 +36,28 @@ data = data[,!(names(data) %in% c("id.x","id.y"))]
 
 # remove rows with NA's in year -> individuals with 'no_data' in the archive
 data <- data[!(is.na(data$year)),]
+
+# sum events for each id, each year, across phenophases
+# years with zero observations across phenophases are possibly not observed
+empty_years <- data %>%
+  group_by(species_full,join_id,year) %>%
+  dplyr::summarise(check_empty_years = sum(value))
+data <- merge(data, empty_years, by = c("join_id","species_full","year"), all.x = TRUE)
+data <- data %>%
+  filter(check_empty_years > 0)
+#----------------------------------------------------------------------
+# only select parameters you need, more clear structure to work with
+data <- data %>%
+  select(species_full,
+         id,
+         phenophase,
+         year,
+         week,
+         value)
+#----------------------------------------------------------------------
+rm(df,metadata, empty_years)
+#----------------------------------------------------------------------
+
 
 #----------------------------------------------------------------------------------------------------------------------
 #--- Climate data -----------------------------------------------------------------------------------------------------
@@ -56,7 +78,7 @@ climate <- climate %>%
 #----------------------------------------------------------------------------------------------------------------------
 #--- get selected species and clean time series -----------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------------
-overview <- read.csv("data/species_meta_data.csv",
+overview <- read.csv("data/species_meta_data_phase2.csv",
                      header = TRUE,
                      sep = ",",
                      stringsAsFactors = FALSE)
@@ -64,8 +86,8 @@ overview <- read.csv("data/species_meta_data.csv",
 overview <- overview %>%
   dplyr::select(species_full,
                 deciduousness,
-                site_years_with_leaf_dormancy, # in summary figure, only species with events are included
-                site_years_with_leaf_turnover,
+                # site_years_with_leaf_dormancy, # in summary figure, only species with events are included
+                # site_years_with_leaf_turnover,
                 total_nr_events_leaf_dormancy, # species with too few events (< 5) not included for cross correlation analysis
                 total_nr_events_leaf_turnover)
 
@@ -92,7 +114,38 @@ timelines_sp_consec_dorm <- consecutive_timeline_sp(data = timelines_id_dorm,
 timelines_sp_consec_dorm <- merge(overview, timelines_sp_consec_dorm, by = "species_full", all.x = TRUE)
 #----------------------------------------------------------------------------------------------------------------------
 
+test_event_count <- function(
+  data = data,
+  species_name = "Afzelia bipindensis"){
+  el_output <- data.frame()
 
+  for (j in 1:length(species_name)){
+    data_subset <- data %>%
+      filter(species_full %in% species_name[j])
+    # sort dataframe according to date
+    data_subset <- data_subset %>%
+      dplyr::arrange(date)
+    # get first differences
+    diff_values <- diff(data_subset$scaled_value)
+    # get matching info
+    start <- data_subset[which(diff_values == 1) + 1,]
+    a <- length(start$scaled_value)
+    el_sp <- data.frame(species_full = species_name[j],
+                        nr_events = length(start$scaled_value))
+    el_output <- rbind(el_output,el_sp)
+  }
+  return(el_output)
+}
+
+dorm_events <- test_event_count(data = timelines_sp_consec_dorm,
+                         species_name = unique(timelines_sp_consec_dorm$species_full))
+dorm_events <- dorm_events %>%
+  dplyr::rename(nr_dorm_events_consec = nr_events)
+
+turn_events <- test_event_count(data = timelines_sp_consec_turn,
+                              species_name = unique(timelines_sp_consec_turn$species_full))
+turn_events <- turn_events %>%
+  dplyr::rename(nr_turn_events_consec = nr_events)
 
 #----------------------------------------------------------------------------------------------------------------------
 #--- cross correlations climate - phenology timeseries ----------------------------------------------------------------
@@ -144,73 +197,86 @@ output <- merge(output, crosscorr6, by = "species_full", all.x = TRUE)
 #             row.names = FALSE,
 #             sep = ",")
 
+
+
 output <- merge(overview, output, by = "species_full", all.x = TRUE)
+output <- merge(output, dorm_events, by = "species_full", all.x = TRUE)
+output <- merge(output, turn_events, by = "species_full", all.x = TRUE)
 
-
+test <- output$total_nr_events_leaf_dormancy - output$nr_dorm_events_consec
+test2 <- output$total_nr_events_leaf_turnover - output$nr_turn_events_consec
 #----------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------
 # corr summary figure
 # only species that have events of dormancy or turnover
 #----------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------
+
+test <- df_dorm %>%
+  dplyr::select(species_full,
+                total_nr_events_leaf_dormancy,
+                nr_dorm_events_consec,
+                precip_phase,
+                insol_phase)
+
 # dormancy
 df_dorm <- output %>%
-  filter(site_years_with_leaf_dormancy > 0)
+  filter(nr_dorm_events_consec > 0)
 
-df_dorm$precip_phase <- ifelse(df_dorm$total_nr_events_leaf_dormancy <5, "few-events",
+df_dorm$precip_phase <- ifelse(df_dorm$nr_dorm_events_consec <5, "few-events",
                                ifelse(df_dorm$corr_leaf_dormancy_precip_timing == "0" & df_dorm$corr_leaf_dormancy_precip < 0, "no-lag-neg",
                                       ifelse(df_dorm$corr_leaf_dormancy_precip_timing == "0" & df_dorm$corr_leaf_dormancy_precip > 0, "no-lag-pos",
                                              ifelse(df_dorm$corr_leaf_dormancy_precip_timing %in% c("-1","-2","-3") & df_dorm$corr_leaf_dormancy_precip < 0, "lag-neg",
                                                     ifelse(df_dorm$corr_leaf_dormancy_precip_timing %in% c("-1","-2","-3") & df_dorm$corr_leaf_dormancy_precip > 0, "lag-pos",
                                                            NA)))))
-df_dorm$precip_phase <- ifelse(is.na(df_dorm$precip_phase) & df_dorm$total_nr_events_leaf_dormancy >= 5, "h-no-corr", df_dorm$precip_phase)
+df_dorm$precip_phase <- ifelse(is.na(df_dorm$precip_phase) & df_dorm$nr_dorm_events_consec >= 5, "h-no-corr", df_dorm$precip_phase)
 
 
-df_dorm$insol_phase <- ifelse(df_dorm$total_nr_events_leaf_dormancy <5, "few-events",
+df_dorm$insol_phase <- ifelse(df_dorm$nr_dorm_events_consec <5, "few-events",
                               ifelse(df_dorm$corr_leaf_dormancy_sun_timing == "0" & df_dorm$corr_leaf_dormancy_sun < 0, "no-lag-neg",
                                      ifelse(df_dorm$corr_leaf_dormancy_sun_timing == "0" & df_dorm$corr_leaf_dormancy_sun > 0, "no-lag-pos",
                                             ifelse(df_dorm$corr_leaf_dormancy_sun_timing %in% c("-1","-2","-3") & df_dorm$corr_leaf_dormancy_sun < 0, "lag-neg",
                                                    ifelse(df_dorm$corr_leaf_dormancy_sun_timing %in% c("-1","-2","-3") & df_dorm$corr_leaf_dormancy_sun > 0, "lag-pos",
                                                           NA)))))
-df_dorm$insol_phase <- ifelse(is.na(df_dorm$insol_phase) & df_dorm$total_nr_events_leaf_dormancy >= 5, "h-no-corr", df_dorm$insol_phase)
+df_dorm$insol_phase <- ifelse(is.na(df_dorm$insol_phase) & df_dorm$nr_dorm_events_consec >= 5, "h-no-corr", df_dorm$insol_phase)
 
-df_dorm$tmax_phase <- ifelse(df_dorm$total_nr_events_leaf_dormancy <5, "few-events",
+df_dorm$tmax_phase <- ifelse(df_dorm$nr_dorm_events_consec <5, "few-events",
                              ifelse(df_dorm$corr_leaf_dormancy_temp_timing == "0" & df_dorm$corr_leaf_dormancy_temp < 0, "no-lag-neg",
                                     ifelse(df_dorm$corr_leaf_dormancy_temp_timing == "0" & df_dorm$corr_leaf_dormancy_temp > 0, "no-lag-pos",
                                            ifelse(df_dorm$corr_leaf_dormancy_temp_timing %in% c("-1","-2","-3") & df_dorm$corr_leaf_dormancy_temp < 0, "lag-neg",
                                                   ifelse(df_dorm$corr_leaf_dormancy_temp_timing %in% c("-1","-2","-3") & df_dorm$corr_leaf_dormancy_temp > 0, "lag-pos",
                                                          NA)))))
-df_dorm$tmax_phase <- ifelse(is.na(df_dorm$tmax_phase) & df_dorm$total_nr_events_leaf_dormancy >= 5, "h-no-corr", df_dorm$tmax_phase)
+df_dorm$tmax_phase <- ifelse(is.na(df_dorm$tmax_phase) & df_dorm$nr_dorm_events_consec >= 5, "h-no-corr", df_dorm$tmax_phase)
 
 
 # turnover
 df_turn <- output %>%
-  filter(site_years_with_leaf_turnover > 0)
+  filter(nr_turn_events_consec > 0)
 
-df_turn$precip_phase <- ifelse(df_turn$total_nr_events_leaf_turnover <5, "few-events",
+df_turn$precip_phase <- ifelse(df_turn$nr_turn_events_consec <5, "few-events",
                                ifelse(df_turn$corr_leaf_turnover_precip_timing == "0" & df_turn$corr_leaf_turnover_precip < 0, "no-lag-neg",
                                       ifelse(df_turn$corr_leaf_turnover_precip_timing == "0" & df_turn$corr_leaf_turnover_precip > 0, "no-lag-pos",
                                              ifelse(df_turn$corr_leaf_turnover_precip_timing %in% c("-1","-2","-3") & df_turn$corr_leaf_turnover_precip < 0, "lag-neg",
                                                     ifelse(df_turn$corr_leaf_turnover_precip_timing %in% c("-1","-2","-3") & df_turn$corr_leaf_turnover_precip > 0, "lag-pos",
                                                            NA)))))
-df_turn$precip_phase <- ifelse(is.na(df_turn$precip_phase) & df_turn$total_nr_events_leaf_turnover >= 5, "h-no-corr", df_turn$precip_phase)
+df_turn$precip_phase <- ifelse(is.na(df_turn$precip_phase) & df_turn$nr_turn_events_consec >= 5, "h-no-corr", df_turn$precip_phase)
 
 
-df_turn$insol_phase <- ifelse(df_turn$total_nr_events_leaf_turnover <5, "few-events",
+df_turn$insol_phase <- ifelse(df_turn$nr_turn_events_consec <5, "few-events",
                               ifelse(df_turn$corr_leaf_turnover_sun_timing == "0" & df_turn$corr_leaf_turnover_sun < 0, "no-lag-neg",
                                      ifelse(df_turn$corr_leaf_turnover_sun_timing == "0" & df_turn$corr_leaf_turnover_sun > 0, "no-lag-pos",
                                             ifelse(df_turn$corr_leaf_turnover_sun_timing %in% c("-1","-2","-3") & df_turn$corr_leaf_turnover_sun < 0, "lag-neg",
                                                    ifelse(df_turn$corr_leaf_turnover_sun_timing %in% c("-1","-2","-3") & df_turn$corr_leaf_turnover_sun > 0, "lag-pos",
                                                           NA)))))
-df_turn$insol_phase <- ifelse(is.na(df_turn$insol_phase) & df_turn$total_nr_events_leaf_turnover >= 5, "h-no-corr", df_turn$insol_phase)
+df_turn$insol_phase <- ifelse(is.na(df_turn$insol_phase) & df_turn$nr_turn_events_consec >= 5, "h-no-corr", df_turn$insol_phase)
 
-df_turn$tmax_phase <- ifelse(df_turn$total_nr_events_leaf_turnover <5, "few-events",
+df_turn$tmax_phase <- ifelse(df_turn$nr_turn_events_consec <5, "few-events",
                              ifelse(df_turn$corr_leaf_turnover_temp_timing == "0" & df_turn$corr_leaf_turnover_temp < 0, "no-lag-neg",
                                     ifelse(df_turn$corr_leaf_turnover_temp_timing == "0" & df_turn$corr_leaf_turnover_temp > 0, "no-lag-pos",
                                            ifelse(df_turn$corr_leaf_turnover_temp_timing %in% c("-1","-2","-3") & df_turn$corr_leaf_turnover_temp < 0, "lag-neg",
                                                   ifelse(df_turn$corr_leaf_turnover_temp_timing %in% c("-1","-2","-3") & df_turn$corr_leaf_turnover_temp > 0, "lag-pos",
                                                          NA)))))
-df_turn$tmax_phase <- ifelse(is.na(df_turn$tmax_phase) & df_turn$total_nr_events_leaf_turnover >= 5, "h-no-corr", df_turn$tmax_phase)
+df_turn$tmax_phase <- ifelse(is.na(df_turn$tmax_phase) & df_turn$nr_turn_events_consec >= 5, "h-no-corr", df_turn$tmax_phase)
 
 ## time lag of dormancy and turnover together for insol and tmax
 # test <- df_dorm %>%
@@ -303,7 +369,7 @@ p_ed <- ggplot(ed_summary,
         axis.title.x = element_blank(),
         axis.title.y = element_text(vjust = 3),
         legend.position = "none",
-        plot.margin = unit(c(0.5,0,0,0.5),"cm")
+        plot.margin = unit(c(0.5,0,-0.1,0.5),"cm")
   )
 
 
@@ -540,16 +606,16 @@ p_dt <- ggplot(dt_summary,
 # p_dt$heights <-p_ed$heights
 
 
-p_all <- grid.arrange(arrangeGrob(p_ed, p_et, heights = c(1,0.65),
+p_all <- grid.arrange(arrangeGrob(p_ed, p_et, heights = c(1,0.7),
                                   left = textGrob("Evergreen", gp=gpar(fontsize=12), rot = 90, hjust = 0.7)), #, hjust = 0.05, vjust = 2
                       arrangeGrob(p_dd, p_dt, heights = c(0.5,1),
                                   left = textGrob("Deciduous", gp=gpar(fontsize=12), rot = 90, hjust = 0.02)),
                       ncol = 1,
-                      heights = c(0.85,1))
+                      heights = c(0.87,1))
 
-pdf("~/Desktop/figure3_corr_phase2.pdf",6,4) # 5,10)
-plot(p_all)
-dev.off()
+# pdf("~/Desktop/figure3_corr_phase2.pdf",6,4) # 5,10)
+# plot(p_all)
+# dev.off()
 
 
 
