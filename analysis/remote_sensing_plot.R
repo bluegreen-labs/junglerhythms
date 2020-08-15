@@ -53,15 +53,15 @@ VI$value[QA$value > 1] <- NA
 
 # create mean values by DOY
 VI_s <- VI %>%
-  mutate(value = value * as.numeric(scale),
+  dplyr::mutate(value = value * as.numeric(scale),
          doy = as.numeric(format(as.Date(calendar_date), "%j")),
          site = toupper(site)) %>%
   group_by(site, doy) %>%
-  summarise(EVI = mean(value, na.rm = TRUE),
+  dplyr::summarise(EVI = mean(value, na.rm = TRUE),
             EVI_sd = sd(value, na.rm = TRUE))
 VI_conf <- VI_s %>%
   group_by(doy) %>%
-  summarise(EVImax = max(EVI, na.rm = TRUE) + max(EVI_sd),
+  dplyr::summarise(EVImax = max(EVI, na.rm = TRUE) + max(EVI_sd),
             EVImin = min(EVI, na.rm = TRUE) - max(EVI_sd),
             EVImean = mean(EVI, na.rm = TRUE))
 
@@ -71,7 +71,7 @@ p_modis <- ggplot(VI_s) +
   annotate("rect", xmin = 152.5, xmax = 213.5, ymin = 0.25, ymax = 0.77, alpha = .1) + # jun - jul
   annotate("rect", xmin = 335.5, xmax = 365, ymin = 0.25, ymax = 0.77, alpha = .1) + # dec
   # geom_point(aes(doy, EVI, shape = site), col = "grey40") +
-  geom_ribbon(data = VI_conf, aes(x = doy, ymin = EVImin ,ymax = EVImax), fill="grey60", alpha="0.5") +
+  geom_ribbon(data = VI_conf, aes(x = doy, ymin = EVImin ,ymax = EVImax), fill="grey60", alpha=0.5) +
   geom_point(data = VI_conf, aes(doy, EVImean), col = "grey30") +
   geom_smooth(aes(doy, EVI), span = 0.3, se = FALSE, col = "grey30", size = 1.2) +
   #geom_line(aes(doy, EVI + EVI_sd)) +
@@ -79,7 +79,7 @@ p_modis <- ggplot(VI_s) +
   labs(#title = "MOD13Q1",
        #subtitle = "mean ...",
        x = "",
-       y = "EVI - MOD13Q1") +
+       y = "EVI") + # - MOD13Q1
   scale_x_continuous(limits = c(0,365),
                      breaks = seq(0,365,30.5),
                      labels = month.abb) +
