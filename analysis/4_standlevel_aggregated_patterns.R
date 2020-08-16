@@ -9,11 +9,17 @@ library(stats)
 library(Hmisc)
 library(scales)
 library(DescTools)
+library(showtext)
+font_add_google(
+  "Lato",
+  regular.wt = 300,
+  bold.wt = 700)
 #----- source required files  -----------------------------------------
 source("analysis/remote_sensing_plot.R")
 source("R/event_length.R")
 source("R/timeline_gap_fill.R")
 source("R/standlevel_phen.R")
+source("R/standlevel_phen_plotlevel.R")
 #----------------------------------------------------------------------
 
 # Suppress summarise info
@@ -65,10 +71,10 @@ census$basal_area = pi*(census$C1DBH4/2000)^2
 
 # only use mixed plots
 # get sum basal area across all species at plotlevel and at site level
-# census_plot <- census %>%
-#   filter(grepl("MIX",Plot)) %>%
-#   group_by(Plot, species_full) %>%
-#   dplyr::summarise(basal_area_plot = sum(basal_area))
+census_plot <- census %>%
+  filter(grepl("MIX",Plot)) %>%
+  group_by(Plot, species_full) %>%
+  dplyr::summarise(basal_area_plot = sum(basal_area))
 census_site <- census %>%
   filter(grepl("MIX",Plot)) %>%
   group_by(species_full) %>%
@@ -76,9 +82,9 @@ census_site <- census %>%
 
 # get total basal area, for weighted means later on
 total_basal_area_site <- sum(census_site$basal_area_site)
-# total_basal_area_plot <- census_plot %>%
-#   group_by(Plot) %>%
-#   dplyr::summarise(total_basal_area_plot = sum(basal_area_plot))
+total_basal_area_plot <- census_plot %>%
+  group_by(Plot) %>%
+  dplyr::summarise(total_basal_area_plot = sum(basal_area_plot))
 #----------------------------------------------------------------------
 
 
@@ -98,30 +104,40 @@ standlevel_full <- standlevel_phen(data = data,
                                    species_list_turn = all_species_list)
 
 #----------------------------------------------------------------------
+# use function standlevel_phen_plotlevel
+# weekly min/max for the different plots gives the range
+# to get stand-level weighted means of phenological pattern
+# of plot-level phenological patterns
+#----------------------------------------------------------------------
+
+standlevel_full_plots <- standlevel_phen_plotlevel(data = data,
+                                                   species_list_dorm = all_species_list,
+                                                   species_list_turn = all_species_list)
+
+standlevel_range <- standlevel_full_plots %>%
+  group_by(week) %>%
+  dplyr::summarise(turn_min = min(ss_turn),
+                   turn_max = max(ss_turn),
+                   dorm_min = min(ss_dorm),
+                   dorm_max = max(ss_dorm))
+#----------------------------------------------------------------------
+
+
+#----------------------------------------------------------------------
 #----------------------------------------------------------------------
 #----------------------------------------------------------------------
 # manuscript - figure 4
 #----------------------------------------------------------------------
 #----------------------------------------------------------------------
 p_combined_all <- ggplot() +
-  annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 1.6, alpha = .1) + # jan - febr
-  annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 1.6, alpha = .1) + # jun - jul
-  annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 1.6, alpha = .1) + # dec
-  annotate("text", x = 37.3, y = 1.15, label = "129 species\n91.2% BA", col = "grey30", hjust = 0) +
-  # # senescence
-  # geom_smooth(data = standlevel_full,
-  #             aes(week, ss_senescence, colour = "line4"), span = 0.2, se = FALSE, size = 1.2, linetype = "twodash",
-  #             show.legend = TRUE) +
-  # turnover
-  geom_smooth(data = standlevel_full,
-              aes(week, ss_turn, colour = "line2"), span = 0.2, se = FALSE, size = 1.2,
-              show.legend = TRUE) +
-  geom_point(data = standlevel_full,
-             aes(week, ss_turn),
-             col="#d8b365",
-             shape = 1,
-             stroke = 1.3) +
+  annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 2.15, alpha = .1) + # jan - febr
+  annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 2.15, alpha = .1) + # jun - jul
+  annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 2.15, alpha = .1) + # dec
+  annotate("text", x = 37.3, y = 1.55, label = "129 species\n91.2% BA", family = "Lato", color = "#22211d", hjust = 0) +
+
   # dormancy
+  geom_ribbon(data = standlevel_range,
+              aes(x = week, ymin = dorm_min, ymax = dorm_max), fill="#8c510a", alpha=0.3) +
   geom_smooth(data = standlevel_full,
               aes(week, ss_dorm, colour = "line1"), span = 0.2, se = FALSE, size = 1.2,
               show.legend = TRUE) +
@@ -129,27 +145,29 @@ p_combined_all <- ggplot() +
              aes(week, ss_dorm),
              col="#8c510a",
              size=2) +
-  # # flushing
-  # geom_smooth(data = standlevel_full,
-  #             aes(week, ss_flush, colour = "line3"), span = 0.2, se = FALSE, size = 1.2,
-  #             show.legend = TRUE) +
-  # geom_point(data = standlevel_full,
-  #            aes(week, ss_flush),
-  #            col="#018571",
-  #            size=2) +
+  # turnover
+  geom_ribbon(data = standlevel_range,
+              aes(x = week, ymin = turn_min, ymax = turn_max), fill="#018571", alpha=0.3) +
+  geom_smooth(data = standlevel_full,
+              aes(week, ss_turn, colour = "line2"), span = 0.2, se = FALSE, size = 1.2,
+              show.legend = TRUE) +
+  geom_point(data = standlevel_full,
+             aes(week, ss_turn),
+             col="#018571",
+             shape = 1,
+             stroke = 1.3) +
 
-  # scale_colour_manual(values = c("line1" = "#8c510a", "line2" = "#d8b365", "line3" = "#018571", "line4" = "grey30"),
-  #                     labels = c(" dormacy   "," turnover   ", " flushing   "," senescence   ")) +
-  scale_colour_manual(values = c("line1" = "#8c510a", "line2" = "#d8b365"),
+scale_colour_manual(values = c("line1" = "#8c510a", "line2" = "#018571"),
                     labels = c(" dormacy   "," turnover   ")) +
   scale_x_continuous(limits = c(1,49),
                      breaks = seq(1,48,4),
                      labels = month.abb) +
-  scale_y_continuous(limits = c(0,1.6)) +
-  labs(y = "% of canopy in state of phenophase",
+  scale_y_continuous(limits = c(0,2.15)) +
+  labs(y = "% of canopy in phenophase",
        x = "") +
   theme_minimal() +
-  theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
+  theme(text = element_text(family = "Lato", color = "#22211d"),
+        panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
         panel.grid.minor.x =  element_blank(),
         panel.grid.minor.y = element_blank(),
         panel.background = element_blank(),
@@ -166,17 +184,16 @@ p_combined_all <- ggplot() +
         legend.text = element_text(size = 11),
         plot.margin = unit(c(0,0,0,0.5),"cm")
   )
-# p_combined_all
 
 p_precip <- ggplot(climate) +
   annotate("rect", xmin = 0.5, xmax = 2.5, ymin = 0, ymax = 330, alpha = .1) + # jan - febr
   annotate("rect", xmin = 5.5, xmax = 7.5, ymin = 0, ymax = 330, alpha = .1) + # jun - jul
   annotate("rect", xmin = 11.5, xmax = 12.5, ymin = 0, ymax = 330, alpha = .1) + # dec
 
-  annotate("text", x = 1.5, y = 310, label = "LD", col = "grey50") +
-  annotate("text", x = 4, y = 310, label = "SW", col = "grey50") +
-  annotate("text", x = 6.5, y = 310, label = "SD", col = "grey50") +
-  annotate("text", x = 9.5, y = 310, label = "LW", col = "grey50") +
+  annotate("text", x = 1.5, y = 310, label = "LD", family = "Lato", col = "grey50") +
+  annotate("text", x = 4, y = 310, label = "SW", family = "Lato", col = "grey50") +
+  annotate("text", x = 6.5, y = 310, label = "SD", family = "Lato", col = "grey50") +
+  annotate("text", x = 9.5, y = 310, label = "LW", family = "Lato", col = "grey50") +
 
   geom_col(aes(x = Month,
                y = prec_JR),
@@ -192,7 +209,8 @@ p_precip <- ggplot(climate) +
   labs(y = "precip. (mm)",
        x = "") +
   theme_minimal() +
-  theme(panel.grid.major.x = element_blank(), #element_line(colour = "grey89", size = 0.3),
+  theme(text = element_text(family = "Lato", color = "#22211d"),
+        panel.grid.major.x = element_blank(), #element_line(colour = "grey89", size = 0.3),
         panel.grid.minor.x =  element_blank(),
         panel.grid.minor.y = element_blank(),
         panel.background = element_blank(),
@@ -226,7 +244,8 @@ p_sun <- ggplot(climate) +
   labs(y = "sun (h)",
        x = "") +
   theme_minimal() +
-  theme(panel.grid.major.x = element_blank(), # element_line(colour = "grey89", size = 0.3),
+  theme(text = element_text(family = "Lato", color = "#22211d"),
+        panel.grid.major.x = element_blank(), # element_line(colour = "grey89", size = 0.3),
         panel.grid.minor.x =  element_blank(),
         panel.grid.minor.y = element_blank(),
         panel.background = element_blank(),
@@ -259,10 +278,11 @@ p_tmax <- ggplot(climate) +
                      labels = month.abb) +
   scale_y_continuous(limits = c(28,31.2),
                      breaks = seq(28,31.2,1)) +
-  labs(y = "tmax (°C)",
+  labs(y = expression('t'[max]*' (°C)'),#"tmax (°C)",
        x = "") +
   theme_minimal() +
-  theme(panel.grid.major.x = element_blank(), # element_line(colour = "grey89", size = 0.3),
+  theme(text = element_text(family = "Lato", color = "#22211d"),
+        panel.grid.major.x = element_blank(), # element_line(colour = "grey89", size = 0.3),
         panel.grid.minor.x =  element_blank(),
         panel.grid.minor.y = element_blank(),
         panel.background = element_blank(),
@@ -292,7 +312,7 @@ p_precip$widths <-p_combined_all$widths
 p_sun$widths <-p_combined_all$widths
 p_tmax$widths <-p_combined_all$widths
 
-p_all <- grid.arrange(p_combined_all, p_modis, p_tmax, p_sun, p_precip, heights = c(4,4,1,1,4))
+p_all <- grid.arrange(p_combined_all, p_modis, p_tmax, p_sun, p_precip, heights = c(4,4,1.2,1.2,4))#c(4,4,1,1,4))
 
 
 #-----------------------------------------------------------------------

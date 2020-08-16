@@ -2,6 +2,11 @@ library(tidyverse)
 library(ggplot2)
 #library(MODISTools)
 library(ggthemes)
+library(showtext)
+font_add_google(
+  "Lato",
+  regular.wt = 300,
+  bold.wt = 700)
 
 # load sites
 sites <- read.table("data-raw/yangambi_sites.csv",
@@ -71,7 +76,7 @@ p_modis <- ggplot(VI_s) +
   annotate("rect", xmin = 152.5, xmax = 213.5, ymin = 0.25, ymax = 0.77, alpha = .1) + # jun - jul
   annotate("rect", xmin = 335.5, xmax = 365, ymin = 0.25, ymax = 0.77, alpha = .1) + # dec
   # geom_point(aes(doy, EVI, shape = site), col = "grey40") +
-  geom_ribbon(data = VI_conf, aes(x = doy, ymin = EVImin ,ymax = EVImax), fill="grey60", alpha=0.5) +
+  geom_ribbon(data = VI_conf, aes(x = doy, ymin = EVImin, ymax = EVImax), fill="grey60", alpha=0.5) +
   geom_point(data = VI_conf, aes(doy, EVImean), col = "grey30") +
   geom_smooth(aes(doy, EVI), span = 0.3, se = FALSE, col = "grey30", size = 1.2) +
   #geom_line(aes(doy, EVI + EVI_sd)) +
@@ -87,7 +92,8 @@ p_modis <- ggplot(VI_s) +
   #                    breaks = c(0.4,0.5,0.6),
   #                    labels = scales::number_format(accuracy = 0.1)) +
   theme_minimal() +
-  theme(panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
+  theme(text = element_text(family = "Lato", color = "#22211d"),
+        panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
         panel.grid.minor.x =  element_blank(),
         panel.grid.minor.y = element_blank(),
         panel.background = element_blank(),
@@ -99,7 +105,7 @@ p_modis <- ggplot(VI_s) +
         axis.title.x=element_blank(),
         axis.title.y = element_text(vjust = 3),
         legend.position = "none",
-        plot.margin=unit(c(0,0,0.5,0.5),"cm")
+        plot.margin=unit(c(0,0,0,0.5),"cm")
   )
 
 # print(p_modis)
