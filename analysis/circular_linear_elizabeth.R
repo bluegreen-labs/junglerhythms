@@ -12,38 +12,9 @@ source("R/timeline_gap_fill.R")
 #-------------------------------------------------------------------------------#
 
 #----------------------------------------------------------------------
-#--------   Phenology data - species correction Meise   ---------------
+#--------   Phenology data --------------------------------------------
 #----------------------------------------------------------------------
-df <- readRDS("data/jungle_rhythms_weekly_annotations.rds")
-df$join_id <- paste0("R",df$image,"-",df$image_row)
-
-metadata <- read.csv("data/phenology_archives_species_long_format_20200324.csv",
-                     header = TRUE, sep = ",")
-metadata$join_id <- paste(metadata$image,metadata$row, sep = "-")
-
-# test merge the two tables based upon the unique join ID
-data <- merge(df, metadata, by = c("join_id"), all.x = TRUE)
-data$species_full <- paste(data$genus_Meise, data$species_Meise)
-
-# remove column id.x and rename id.y to id (--> in id.y, empty ids are renamed to EK1, EK2, etc...)
-data$id <- as.character(data$id.y)
-data = data[,!(names(data) %in% c("id.x","id.y"))]
-# data$id <- as.character(data$id)
-# data$species_full <- as.character(data$species_full)
-
-# remove rows with NA's in year -> individuals with 'no_data' in the archive
-data <- data[!(is.na(data$year)),]
-
-# sum events for each id, each year, across phenophases
-# years with zero observations across phenophases are possibly not observed
-empty_years <- data %>%
-  group_by(species_full,join_id,year) %>%
-  dplyr::summarise(check_empty_years = sum(value))
-data <- merge(data, empty_years, by = c("join_id","species_full","year"), all.x = TRUE)
-data <- data %>%
-  filter(check_empty_years > 0)
-#----------------------------------------------------------------------
-rm(df,metadata, empty_years)
+data <- readRDS("data/jungle_rhythms_data_cleaned.rds")
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------------------------------------------------------
@@ -61,49 +32,95 @@ species_list <- c("Scorodophloeus zenkeri",
                   "Pericopsis elata")
 
 # for selected species and phenophase: get extended timelines at ID level with 2 year-gaps filled with zero
-timelines_id_dorm <- two_year_gaps(data = data,
-                              species_name = species_list,
-                              pheno = "leaf_dormancy")
-timelines_id_turn <- two_year_gaps(data = data,
-                                   species_name = species_list,
-                                   pheno = "leaf_turnover")
+timelines_id_dorm <- missing_year_gaps(data = data,
+                                       species_name = species_list,
+                                       pheno = "leaf_dormancy",
+                                       gapfill_missingyears = 0)
+timelines_id_turn <- missing_year_gaps(data = data,
+                                       species_name = species_list,
+                                       pheno = "leaf_turnover",
+                                       gapfill_missingyears = 0)
 timelines_id <- rbind(timelines_id_dorm, timelines_id_turn)
 #----------------------------------------------------------------------
 rm(timelines_id_dorm, timelines_id_turn)
 #----------------------------------------------------------------------
 
-#----------------------------------------------------------------------
-# specieslist based on selection made in advance
-sp_evergreen <- c("Scorodophloeus zenkeri",
-                  "Strombosia pustulata",
-                  "Synsepalum subcordatum",
-                  "Dacryodes osika",
-                  "Quassia silvestris")
-sp_deciduous <- c("Petersianthus macrocarpus",
-                  "Vitex ferruginea",
-                  "Erythrophleum suaveolens",
-                  "Pterocarpus soyauxii",
-                  "Pericopsis elata")
+# #----------------------------------------------------------------------
+# # specieslist based on selection made in advance
+# sp_evergreen <- c("Scorodophloeus zenkeri",
+#                   "Strombosia pustulata",
+#                   "Synsepalum subcordatum",
+#                   "Dacryodes osika",
+#                   "Quassia silvestris")
+# sp_deciduous <- c("Petersianthus macrocarpus",
+#                   "Vitex ferruginea",
+#                   "Erythrophleum suaveolens",
+#                   "Pterocarpus soyauxii",
+#                   "Pericopsis elata")
+#
+# query_evergreen <- paste(sp_evergreen, collapse = "|")
+# query_deciduous <- paste(sp_deciduous, collapse = "|")
+#
+# p_deciduous <- circular_linear_plot(timelines_id,
+#                                     species_name = query_deciduous,
+#                                     # leg_pos = c(1,0.1),
+#                                     leg_gradient = c(0,0.3,1),
+#                                     title_name = "(b) Deciduous")
+# # pdf("~/Desktop/figure1b_deciduous.pdf",8.85,12.1)
+# # plot(p_deciduous)
+# # dev.off()
+#
+#
+# p_evergreen <- circular_linear_plot(timelines_id,
+#                                     species_name = query_evergreen,
+#                                     title_name = "(a) Evergreen")
+# pdf("~/Desktop/figure1a_evergreen.pdf",8.85,12.1)
+# plot(p_evergreen)
+# dev.off()
 
-query_evergreen <- paste(sp_evergreen, collapse = "|")
-query_deciduous <- paste(sp_deciduous, collapse = "|")
-
-p_deciduous <- circular_linear_plot(timelines_id,
-                                    species_name = query_deciduous,
-                                    # leg_pos = c(1,0.1),
-                                    leg_gradient = c(0,0.3,1),
-                                    title_name = "(b) Deciduous")
-pdf("~/Desktop/figure1b_deciduous.pdf",8.85,12.1)
-plot(p_deciduous)
-dev.off()
 
 
-p_evergreen <- circular_linear_plot(timelines_id,
-                                    species_name = query_evergreen,
-                                    title_name = "(a) Evergreen")
-pdf("~/Desktop/figure1a_evergreen.pdf",8.85,12.1)
-plot(p_evergreen)
-dev.off()
+sp_all <- c("Dacryodes osika",
+            "Quassia silvestris",
+            "Scorodophloeus zenkeri",
+            "Strombosia pustulata",
+            "Synsepalum subcordatum",
+
+            "Erythrophleum suaveolens",
+            "Pericopsis elata",
+            "Petersianthus macrocarpus",
+            "Pterocarpus soyauxii",
+            "Vitex ferruginea")
+
+dummy <- c("a","b","c","d","e",
+           "f","g","h","i","j")
+sp_title <- as.data.frame(cbind(sp_all,  dummy))
+sp_title <- sp_title %>%
+  dplyr::rename(species_full = sp_all)
+# facet labels
+sp_title$dummy <- factor(sp_title$dummy,
+                         levels = c("a","b","c","d","e",
+                                    "f","g","h","i","j"),
+                         labels = c("D. osika",
+                                    "Q. silvestris",
+                                    "S. zenkeri",
+                                    "S. pustulata",
+                                    "S. subcordatum",
+
+                                    "E. suaveolens",
+                                    "P. elata",
+                                    "P. macrocarpus",
+                                    "P. soyauxii",
+                                    "V. ferruginea"))
+
+timelines_id <- merge(timelines_id, sp_title, by = "species_full", all.x = TRUE)
+sp_all <- paste(sp_all, collapse = "|")
+p_all <- circular_plot(timelines_id,
+                       species_name = sp_all,
+                       title_name = "(a) evergreen                  (b) deciduous")
+
+
+
 
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------

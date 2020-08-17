@@ -46,4 +46,24 @@ luki <- merge(luki, ygb_sp, by = c("species_full"), all.x = TRUE)
 #             row.names = FALSE,
 #             sep = ",")
 
+#----------------------------------------------------------------------
+#--------   Phenology data - Luki -------------------------------------
+# actual species names used in the rds file
+#----------------------------------------------------------------------
+df <- readRDS("data/luki_weekly_annotations.rds")
+metadata <- read.csv("data/luki_species_corrections.csv",
+                     header = TRUE, sep = ",")
+df <- df %>%
+  rename(luki_original = species_full)
+df <- merge(df, metadata, by = c("luki_original"), all.x = TRUE)
+
+species_list <- as.data.frame(unique(df$luki_original))
+colnames(species_list)[1] <- "luki_original"
+species_list <- merge(species_list, metadata, by = c("luki_original"), all.x = TRUE)
+
+# write.table(species_list, "data/luki_species_corrections_v2.csv",
+#             quote = FALSE,
+#             col.names = TRUE,
+#             row.names = FALSE,
+#             sep = ",")
 

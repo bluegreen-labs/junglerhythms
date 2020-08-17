@@ -35,6 +35,7 @@ climate_ccf <- function(
 
     # convert date
     data_subset$date_monthly <- format(data_subset$date, "%Y-%m")
+    data_subset$year <- format(data_subset$date, "%Y")
 
     # average by year_month
     data_sp_monthly <- data_subset %>%
@@ -74,8 +75,8 @@ climate_ccf <- function(
 
     ci <- 0.95
     # cross-correlation + confidence interval
-    if(max(data_sp_monthly$monthly_value) > 0 & nr_events >= 5){
-      corr.clim <- ccf(climate_ts, data_sp_monthly$monthly_value, lag = 6, pl = FALSE)
+    if(max(data_sp_monthly$monthly_value, na.rm = TRUE) > 0 & nr_events >= 5){
+      corr.clim <- ccf(climate_ts, data_sp_monthly$monthly_value, lag = 6, pl = FALSE, na.action = na.pass)
       # plot(corr.clim, main = paste(species_name[j], pheno, climate.variable, sep = "-"))
       ci_value <- qnorm((1 + ci)/2)/sqrt(corr.clim$n.used)
       ccf_output_clim[j,1] <- species_name[j]
@@ -90,33 +91,44 @@ climate_ccf <- function(
 
   }
 
-  if(climate.variable == "precip"){
-    ccf_output_clim$corr <- ifelse(abs(ccf_output_clim[,8]) > ccf_output_clim$ci, ccf_output_clim[,8], # 0
-                                   ifelse(abs(ccf_output_clim[,7]) > ccf_output_clim$ci, ccf_output_clim[,7], # t-1
-                                          ifelse(abs(ccf_output_clim[,6]) > ccf_output_clim$ci, ccf_output_clim[,6], # t-2
-                                                 ifelse(abs(ccf_output_clim[,5]) > ccf_output_clim$ci, ccf_output_clim[,5], # t-3
-                                                        NA))))
-    ccf_output_clim$corr.timing <- ifelse(abs(ccf_output_clim[,8]) > ccf_output_clim$ci, "0", # 0
-                                          ifelse(abs(ccf_output_clim[,7]) > ccf_output_clim$ci, "-1", # t-1
-                                                 ifelse(abs(ccf_output_clim[,6]) > ccf_output_clim$ci, "-2", # t-2
-                                                        ifelse(abs(ccf_output_clim[,5]) > ccf_output_clim$ci, "-3", # t-3
-                                                               NA))))
-  } else if(climate.variable %in% c("sun", "temp")){
-    ccf_output_clim$corr <- ifelse(abs(ccf_output_clim[,8]) > ccf_output_clim$ci, ccf_output_clim[,8], # 0
-                                   ifelse(abs(ccf_output_clim[,7]) > ccf_output_clim$ci, ccf_output_clim[,7], # t-1
-                                          ifelse(abs(ccf_output_clim[,6]) > ccf_output_clim$ci, ccf_output_clim[,6], # t-2
-                                                 ifelse(abs(ccf_output_clim[,5]) > ccf_output_clim$ci, ccf_output_clim[,5], # t-3
-                                                        ifelse(abs(ccf_output_clim[,4]) > ccf_output_clim$ci, ccf_output_clim[,4], # t-4
-                                                               ifelse(abs(ccf_output_clim[,3]) > ccf_output_clim$ci, ccf_output_clim[,3], # t-5
-                                                                      NA))))))
-    ccf_output_clim$corr.timing <- ifelse(abs(ccf_output_clim[,8]) > ccf_output_clim$ci, "0", # 0
-                                          ifelse(abs(ccf_output_clim[,7]) > ccf_output_clim$ci, "-1", # t-1
-                                                 ifelse(abs(ccf_output_clim[,6]) > ccf_output_clim$ci, "-2", # t-2
-                                                        ifelse(abs(ccf_output_clim[,5]) > ccf_output_clim$ci, "-3", # t-3
-                                                               ifelse(abs(ccf_output_clim[,4]) > ccf_output_clim$ci, "-4", # t-4
-                                                                      ifelse(abs(ccf_output_clim[,3]) > ccf_output_clim$ci, "-5", # t-5
-                                                                             NA))))))
-  }
+  # if(climate.variable == "precip"){
+  #   ccf_output_clim$corr <- ifelse(abs(ccf_output_clim[,8]) > ccf_output_clim$ci, ccf_output_clim[,8], # 0
+  #                                  ifelse(abs(ccf_output_clim[,7]) > ccf_output_clim$ci, ccf_output_clim[,7], # t-1
+  #                                         ifelse(abs(ccf_output_clim[,6]) > ccf_output_clim$ci, ccf_output_clim[,6], # t-2
+  #                                                ifelse(abs(ccf_output_clim[,5]) > ccf_output_clim$ci, ccf_output_clim[,5], # t-3
+  #                                                       NA))))
+  #   ccf_output_clim$corr.timing <- ifelse(abs(ccf_output_clim[,8]) > ccf_output_clim$ci, "0", # 0
+  #                                         ifelse(abs(ccf_output_clim[,7]) > ccf_output_clim$ci, "-1", # t-1
+  #                                                ifelse(abs(ccf_output_clim[,6]) > ccf_output_clim$ci, "-2", # t-2
+  #                                                       ifelse(abs(ccf_output_clim[,5]) > ccf_output_clim$ci, "-3", # t-3
+  #                                                              NA))))
+  # } else if(climate.variable %in% c("sun", "temp")){
+  #   ccf_output_clim$corr <- ifelse(abs(ccf_output_clim[,8]) > ccf_output_clim$ci, ccf_output_clim[,8], # 0
+  #                                  ifelse(abs(ccf_output_clim[,7]) > ccf_output_clim$ci, ccf_output_clim[,7], # t-1
+  #                                         ifelse(abs(ccf_output_clim[,6]) > ccf_output_clim$ci, ccf_output_clim[,6], # t-2
+  #                                                ifelse(abs(ccf_output_clim[,5]) > ccf_output_clim$ci, ccf_output_clim[,5], # t-3
+  #                                                       ifelse(abs(ccf_output_clim[,4]) > ccf_output_clim$ci, ccf_output_clim[,4], # t-4
+  #                                                              ifelse(abs(ccf_output_clim[,3]) > ccf_output_clim$ci, ccf_output_clim[,3], # t-5
+  #                                                                     NA))))))
+  #   ccf_output_clim$corr.timing <- ifelse(abs(ccf_output_clim[,8]) > ccf_output_clim$ci, "0", # 0
+  #                                         ifelse(abs(ccf_output_clim[,7]) > ccf_output_clim$ci, "-1", # t-1
+  #                                                ifelse(abs(ccf_output_clim[,6]) > ccf_output_clim$ci, "-2", # t-2
+  #                                                       ifelse(abs(ccf_output_clim[,5]) > ccf_output_clim$ci, "-3", # t-3
+  #                                                              ifelse(abs(ccf_output_clim[,4]) > ccf_output_clim$ci, "-4", # t-4
+  #                                                                     ifelse(abs(ccf_output_clim[,3]) > ccf_output_clim$ci, "-5", # t-5
+  #                                                                            NA))))))
+  # }
+
+  ccf_output_clim$corr <- ifelse(abs(ccf_output_clim[,8]) > ccf_output_clim$ci, ccf_output_clim[,8], # 0
+                                 ifelse(abs(ccf_output_clim[,7]) > ccf_output_clim$ci, ccf_output_clim[,7], # t-1
+                                        ifelse(abs(ccf_output_clim[,6]) > ccf_output_clim$ci, ccf_output_clim[,6], # t-2
+                                               ifelse(abs(ccf_output_clim[,5]) > ccf_output_clim$ci, ccf_output_clim[,5], # t-3
+                                                      NA))))
+  ccf_output_clim$corr.timing <- ifelse(abs(ccf_output_clim[,8]) > ccf_output_clim$ci, "0", # 0
+                                        ifelse(abs(ccf_output_clim[,7]) > ccf_output_clim$ci, "-1", # t-1
+                                               ifelse(abs(ccf_output_clim[,6]) > ccf_output_clim$ci, "-2", # t-2
+                                                      ifelse(abs(ccf_output_clim[,5]) > ccf_output_clim$ci, "-3", # t-3
+                                                             NA))))
 
 
 

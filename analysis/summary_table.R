@@ -462,7 +462,7 @@ colnames(table2_turnover) <- c("dec_label",
                                "DSI intra-annual",
                                "corr precip",
                                "corr sun",
-                               "corr temp")
+                               "corr tmax")
 
 write.table(table2_turnover, "data/SI_table2_turnover.csv",
             quote = FALSE,

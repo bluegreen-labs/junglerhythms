@@ -15,10 +15,11 @@
 #' @return datasets with filled gapyears
 
 
-two_year_gaps <- function(
+missing_year_gaps <- function(
   data = data,
   species_name = "Afzelia bipindensis",
-  pheno = "leaf_turnover"){
+  pheno = "leaf_turnover",
+  gapfill_missingyears = 2){
 
   timelines_output <- data.frame()
 
@@ -80,7 +81,7 @@ two_year_gaps <- function(
         data_ind_grow <- merge(data_ind_grow, missing_years, by = "year", all.x = TRUE)
 
         # if only 2 consecutive years of missing data -> fill with zeros. If longer, keep NA
-        data_ind_grow$value <- ifelse(is.na(data_ind_grow$value) & data_ind_grow$lgh_consec_years < 3 , 0, data_ind_grow$value)
+        data_ind_grow$value <- ifelse(is.na(data_ind_grow$value) & data_ind_grow$lgh_consec_years <= gapfill_missingyears , 0, data_ind_grow$value) #< 3
       } else {
         data_ind_grow$missing_years_consec <- "NA"
         data_ind_grow$lgh_consec_years <- "NA"

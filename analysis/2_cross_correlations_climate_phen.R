@@ -1,6 +1,6 @@
-#----- reset your R session. ---------------------------------------------------#
+#----- reset your R session. -----------------------------------------
 rm(list=ls())
-#----- load required libraries -------------------------------------------------#
+#----- load required libraries ---------------------------------------
 library(tidyverse)
 library(plyr)
 library(ggplot2)
@@ -13,11 +13,15 @@ font_add_google(
   "Lato",
   regular.wt = 300,
   bold.wt = 700)
-#----- source required functions -----------------------------------------------#
+#----- source required functions --------------------------------------
 source("R/timeline_gap_fill.R")
 source("R/consec_years.R")
 source("R/climate_ccf_function.R")
-#-------------------------------------------------------------------------------#
+#----------------------------------------------------------------------
+# Suppress summarise info
+# because `summarise()` ungrouping output (override with `.groups` argument)
+# comes up a lot in the consol, which is annoying
+options(dplyr.summarise.inform = FALSE)
 
 
 #----------------------------------------------------------------------
@@ -27,9 +31,9 @@ data <- readRDS("data/jungle_rhythms_data_cleaned.rds")
 #----------------------------------------------------------------------
 
 
-#----------------------------------------------------------------------------------------------------------------------
-#--- Climate data -----------------------------------------------------------------------------------------------------
-#----------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------
+#--- Climate data -----------------------------------------------------
+#----------------------------------------------------------------------
 climate <- read.csv("data/yangambi_km5_monthly_kasongo.csv")
 climate$date <- paste(climate$year,climate$month,"15",sep = "-")
 climate$date <- as.Date(climate$date, "%Y-%m-%d")
@@ -43,9 +47,9 @@ climate <- climate %>%
   dplyr::arrange(date)
 
 
-#----------------------------------------------------------------------------------------------------------------------
-#--- get selected species and clean time series -----------------------------------------------------------------------
-#----------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------
+#--- get selected species and clean time series -----------------------
+#----------------------------------------------------------------------
 overview <- read.csv("data/species_meta_data_phase2.csv",
                      header = TRUE,
                      sep = ",",
@@ -60,7 +64,7 @@ overview <- overview %>%
 
 species_list <- overview$species_full
 
-#--- leaf turnover ----------------------------------------------------------------------------------------------------
+#--- leaf turnover ---------------------------------------------------
 # for selected species and phenophase: get extended timelines at ID level with 2 year-gaps filled with zero
 timelines_id_turn <- missing_year_gaps(data = data,
                                        species_name = species_list,
@@ -81,7 +85,7 @@ timelines_sp_turn$scaled_value <- ifelse(timelines_sp_turn$mean_value > 0, 1,
                                          ifelse(timelines_sp_turn$mean_value == 0, 0, NA))
 timelines_sp_turn <- merge(overview, timelines_sp_turn, by = "species_full", all.x = TRUE)
 timelines_sp_turn$phenophase <- "leaf_turnover"
-#--- leaf dormancy ----------------------------------------------------------------------------------------------------
+#--- leaf dormancy ----------------------------------------------------
 timelines_id_dorm <- missing_year_gaps(data = data,
                                        species_name = species_list,
                                        pheno = "leaf_dormancy",
@@ -98,7 +102,8 @@ timelines_sp_dorm$scaled_value <- ifelse(timelines_sp_dorm$mean_value > 0, 1,
                                          ifelse(timelines_sp_dorm$mean_value == 0, 0, NA))
 timelines_sp_dorm <- merge(overview, timelines_sp_dorm, by = "species_full", all.x = TRUE)
 timelines_sp_dorm$phenophase <- "leaf_dormancy"
-#----------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------
+
 
 # event_count <- function(
 #   data = data,
@@ -133,10 +138,11 @@ timelines_sp_dorm$phenophase <- "leaf_dormancy"
 # turn_events <- turn_events %>%
 #   dplyr::rename(nr_turn_events_consec = nr_events)
 
-#----------------------------------------------------------------------------------------------------------------------
-#--- cross correlations climate - phenology timeseries ----------------------------------------------------------------
-#--- phenology timeseries with too few events (< 5) are not analysed within the function (set to NA) ------------------
-#----------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------
+#--- cross correlations climate - phenology timeseries ----------------
+#--- phenology timeseries with too few events (< 5) are ---------------
+#---not analysed within the function (set to NA) ----------------------
+#----------------------------------------------------------------------
 # leaf turnover
 crosscorr <- climate_ccf(data = timelines_sp_turn,
                          climate = climate,

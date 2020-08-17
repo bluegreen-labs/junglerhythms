@@ -85,14 +85,15 @@ overview <- read.csv("data/species_meta_data_phase2.csv",
 species_list <- overview$species_full
 
 # for selected species and phenophase: get extended timelines at ID level with 2 year-gaps filled with zero
-timelines_id <- two_year_gaps(data = data,
-                            species_name = species_list,
-                            pheno = pheno_investigated)
+timelines_id <- missing_year_gaps(data = data,
+                                  species_name = species_list,
+                                  pheno = pheno_investigated,
+                                  gapfill_missingyears = 0)
 # for fourier, no gaps in timelines allowed
 # get longest consecutive timeline; at species level
 timelines_sp_consec <- consecutive_timeline_sp(data = timelines_id,
-                             species_name = species_list,
-                             pheno = pheno_investigated)
+                                               species_name = species_list,
+                                               pheno = pheno_investigated)
 
 #----------------------------------------------------------------------------------------------------------------------
 #--- fourier at the species level -------------------------------------------------------------------------------------
@@ -121,49 +122,49 @@ fourier_sp$cyclicity <- ifelse(fourier_sp$sig_95 == FALSE, NA,
 fourier_sp$cycle_dom_months <- ifelse(is.na(fourier_sp$cyclicity), NA, fourier_sp$cycle_dom_months)
 
 
-#----------------------------------------------------------------------------------------------------------------------
-#--- COHERENCE TEST with climate data at the species level ------------------------------------------------------------
-#----------------------------------------------------------------------------------------------------------------------
-# read climate data
-climate <- read.csv("data/yangambi_km5_monthly_kasongo.csv")
-climate$date <- paste(climate$year,climate$month,"15",sep = "-")
-climate$date <- as.Date(climate$date, "%Y-%m-%d")
-climate$date_monthly <- format(as.Date(climate$date), "%Y-%m")
-
-climate.avg <- read.csv("data/ClimData_monthly_avg.csv",header = TRUE,sep = ",")
-climate.avg = climate.avg[,(names(climate.avg) %in% c("Month","insol_JR","tmax_JR"))]
-colnames(climate.avg)[1] <- "month"
-climate <- merge(climate, climate.avg, by = "month", all.x = TRUE)
-climate <- climate %>%
-  dplyr::arrange(date)
-
-# coherence analysis
-coherence <- climate_coherence(data = timelines_sp_consec,
-                               climate = climate,
-                               species_name = species_list,
-                               pheno = pheno_investigated)
-# precip
-coherence$phase_diff_precip <- ifelse(coherence$signif == TRUE, coherence$phase_diff_precip, NA)
-coherence$coh_precip <- ifelse(coherence$signif == TRUE, coherence$coh_precip, NA)
-coherence$phase_diff_precip_neg <- ifelse(coherence$signif == TRUE, coherence$phase_diff_precip_neg, NA)
-coherence$coh_precip_neg <- ifelse(coherence$signif == TRUE, coherence$coh_precip_neg, NA)
-# sun
-coherence$phase_diff_sun <- ifelse(coherence$signif == TRUE, coherence$phase_diff_sun, NA)
-coherence$coh_sun <- ifelse(coherence$signif == TRUE, coherence$coh_sun, NA)
-coherence$phase_diff_sun_neg <- ifelse(coherence$signif == TRUE, coherence$phase_diff_sun_neg, NA)
-coherence$coh_sun_neg <- ifelse(coherence$signif == TRUE, coherence$coh_sun_neg, NA)
-# temp
-coherence$phase_diff_temp <- ifelse(coherence$signif == TRUE, coherence$phase_diff_temp, NA)
-coherence$coh_temp <- ifelse(coherence$signif == TRUE, coherence$coh_temp, NA)
-coherence$phase_diff_temp_neg <- ifelse(coherence$signif == TRUE, coherence$phase_diff_temp_neg, NA)
-coherence$coh_temp_neg <- ifelse(coherence$signif == TRUE, coherence$coh_temp_neg, NA)
-
-
-#----------------------------------------------------------------------------------------------------------------------
-#--- merge coherence and fourier ------------------------- ------------------------------------------------------------
-#----------------------------------------------------------------------------------------------------------------------
-fourier_stats <- merge(fourier_sp, coherence, by = c("species_full","phenophase"), all.x = TRUE)
-
+# #----------------------------------------------------------------------------------------------------------------------
+# #--- COHERENCE TEST with climate data at the species level ------------------------------------------------------------
+# #----------------------------------------------------------------------------------------------------------------------
+# # read climate data
+# climate <- read.csv("data/yangambi_km5_monthly_kasongo.csv")
+# climate$date <- paste(climate$year,climate$month,"15",sep = "-")
+# climate$date <- as.Date(climate$date, "%Y-%m-%d")
+# climate$date_monthly <- format(as.Date(climate$date), "%Y-%m")
+#
+# climate.avg <- read.csv("data/ClimData_monthly_avg.csv",header = TRUE,sep = ",")
+# climate.avg = climate.avg[,(names(climate.avg) %in% c("Month","insol_JR","tmax_JR"))]
+# colnames(climate.avg)[1] <- "month"
+# climate <- merge(climate, climate.avg, by = "month", all.x = TRUE)
+# climate <- climate %>%
+#   dplyr::arrange(date)
+#
+# # coherence analysis
+# coherence <- climate_coherence(data = timelines_sp_consec,
+#                                climate = climate,
+#                                species_name = species_list,
+#                                pheno = pheno_investigated)
+# # precip
+# coherence$phase_diff_precip <- ifelse(coherence$signif == TRUE, coherence$phase_diff_precip, NA)
+# coherence$coh_precip <- ifelse(coherence$signif == TRUE, coherence$coh_precip, NA)
+# coherence$phase_diff_precip_neg <- ifelse(coherence$signif == TRUE, coherence$phase_diff_precip_neg, NA)
+# coherence$coh_precip_neg <- ifelse(coherence$signif == TRUE, coherence$coh_precip_neg, NA)
+# # sun
+# coherence$phase_diff_sun <- ifelse(coherence$signif == TRUE, coherence$phase_diff_sun, NA)
+# coherence$coh_sun <- ifelse(coherence$signif == TRUE, coherence$coh_sun, NA)
+# coherence$phase_diff_sun_neg <- ifelse(coherence$signif == TRUE, coherence$phase_diff_sun_neg, NA)
+# coherence$coh_sun_neg <- ifelse(coherence$signif == TRUE, coherence$coh_sun_neg, NA)
+# # temp
+# coherence$phase_diff_temp <- ifelse(coherence$signif == TRUE, coherence$phase_diff_temp, NA)
+# coherence$coh_temp <- ifelse(coherence$signif == TRUE, coherence$coh_temp, NA)
+# coherence$phase_diff_temp_neg <- ifelse(coherence$signif == TRUE, coherence$phase_diff_temp_neg, NA)
+# coherence$coh_temp_neg <- ifelse(coherence$signif == TRUE, coherence$coh_temp_neg, NA)
+#
+#
+# #----------------------------------------------------------------------------------------------------------------------
+# #--- merge coherence and fourier ------------------------- ------------------------------------------------------------
+# #----------------------------------------------------------------------------------------------------------------------
+# fourier_stats <- merge(fourier_sp, coherence, by = c("species_full","phenophase"), all.x = TRUE)
+fourier_stats <- fourier_sp
 #--------------------------------------------------------------------
 #--------------------------------------------------------------------
 # write to file
