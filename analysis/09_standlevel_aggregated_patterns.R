@@ -139,7 +139,7 @@ p_combined_all <- ggplot() +
   geom_ribbon(data = standlevel_range,
               aes(x = week, ymin = dorm_min, ymax = dorm_max), fill="#8c510a", alpha=0.3) +
   geom_smooth(data = standlevel_full,
-              aes(week, ss_dorm, colour = "line1"), span = 0.2, se = FALSE, size = 1.2,
+              aes(week, ss_dorm, colour = "line1"), span = 0.15, se = FALSE, size = 1.2,
               show.legend = TRUE) +
   geom_point(data = standlevel_full,
              aes(week, ss_dorm),
@@ -149,7 +149,7 @@ p_combined_all <- ggplot() +
   geom_ribbon(data = standlevel_range,
               aes(x = week, ymin = turn_min, ymax = turn_max), fill="#018571", alpha=0.3) +
   geom_smooth(data = standlevel_full,
-              aes(week, ss_turn, colour = "line2"), span = 0.2, se = FALSE, size = 1.2,
+              aes(week, ss_turn, colour = "line2"), span = 0.15, se = FALSE, size = 1.2,
               show.legend = TRUE) +
   geom_point(data = standlevel_full,
              aes(week, ss_turn),
@@ -184,6 +184,7 @@ scale_colour_manual(values = c("line1" = "#8c510a", "line2" = "#018571"),
         legend.text = element_text(size = 11),
         plot.margin = unit(c(0,0,0,0.5),"cm")
   )
+p_combined_all
 
 p_precip <- ggplot(climate) +
   annotate("rect", xmin = 0.5, xmax = 2.5, ymin = 0, ymax = 330, alpha = .1) + # jan - febr
@@ -202,7 +203,7 @@ p_precip <- ggplot(climate) +
   geom_linerange(aes(x = Month, ymin = prec_JR_10, ymax = prec_JR_90),
                  col = "grey40") +
   scale_x_continuous(limits = c(0.5,12.5),
-                     breaks = seq(1,12,1),
+                     breaks = seq(0.5,11.5,1),#seq(1,12,1),
                      labels = month.abb) +
   scale_y_continuous(limits = c(0,330),
                      breaks = seq(0,300,50)) +
@@ -210,7 +211,7 @@ p_precip <- ggplot(climate) +
        x = "") +
   theme_minimal() +
   theme(text = element_text(family = "Lato", color = "#22211d"),
-        panel.grid.major.x = element_blank(), #element_line(colour = "grey89", size = 0.3),
+        panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
         panel.grid.minor.x =  element_blank(),
         panel.grid.minor.y = element_blank(),
         panel.background = element_blank(),
@@ -218,7 +219,7 @@ p_precip <- ggplot(climate) +
         strip.text = element_text(hjust = 0),
         axis.line.x = element_blank(),
         # axis.text.x=element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1,vjust = 0.5,size = 10), # vjust to center the label
+        axis.text.x = element_text(angle = 90, hjust = 1,vjust = 2,size = 10), # vjust to center the label
         axis.title.y = element_text(vjust = 3),
         legend.position = "none",
         plot.margin = unit(c(0,0,0,0.5),"cm")
@@ -237,22 +238,20 @@ p_sun <- ggplot(climate) +
                  y = insol_JR),
              col = "grey30") +
   scale_x_continuous(limits = c(0.5,12.5),
-                     breaks = seq(1,12,1),
-                     labels = month.abb) +
+                     breaks = seq(0.5,11.5,1)) +
   scale_y_continuous(limits = c(120,230),
                      breaks = seq(120,230,40)) +
   labs(y = "sun (h)",
        x = "") +
   theme_minimal() +
   theme(text = element_text(family = "Lato", color = "#22211d"),
-        panel.grid.major.x = element_blank(), # element_line(colour = "grey89", size = 0.3),
+        panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
         panel.grid.minor.x =  element_blank(),
         panel.grid.minor.y = element_blank(),
         panel.background = element_blank(),
         plot.background = element_rect(fill = 'white', colour = 'white'),
         strip.text = element_text(hjust = 0),
         axis.line.x = element_blank(),
-        # axis.text.x = element_text(angle = 90, hjust = 1),
         axis.text.x=element_blank(),
         axis.title.x=element_blank(),
         axis.title.y = element_text(vjust = 3),
@@ -274,22 +273,20 @@ p_tmax <- ggplot(climate) +
                  y = tmax_JR),
              col = "grey30") +
   scale_x_continuous(limits = c(0.5,12.5),
-                     breaks = seq(1,12,1),
-                     labels = month.abb) +
+                     breaks = seq(0.5,11.5,1)) +
   scale_y_continuous(limits = c(28,31.2),
                      breaks = seq(28,31.2,1)) +
   labs(y = expression('t'[max]*' (°C)'),#"tmax (°C)",
        x = "") +
   theme_minimal() +
   theme(text = element_text(family = "Lato", color = "#22211d"),
-        panel.grid.major.x = element_blank(), # element_line(colour = "grey89", size = 0.3),
-        panel.grid.minor.x =  element_blank(),
+        panel.grid.major.x = element_line(colour = "grey89", size = 0.3),
+        panel.grid.minor.x = element_blank(),
         panel.grid.minor.y = element_blank(),
         panel.background = element_blank(),
         plot.background = element_rect(fill = 'white', colour = 'white'),
         strip.text = element_text(hjust = 0),
         axis.line.x = element_blank(),
-        # axis.text.x = element_text(angle = 90, hjust = 1),
         axis.text.x=element_blank(),
         axis.title.x=element_blank(),
         axis.title.y = element_text(vjust = 3),
@@ -315,90 +312,90 @@ p_tmax$widths <-p_combined_all$widths
 p_all <- grid.arrange(p_combined_all, p_modis, p_tmax, p_sun, p_precip, heights = c(4,4,1.2,1.2,4))#c(4,4,1,1,4))
 
 
-#-----------------------------------------------------------------------
-#-----------------------------------------------------------------------
-#-----------------------------------------------------------------------
-#-----------------------------------------------------------------------
-#-----------------------------------------------------------------------
-# correlations between standlevel events and climate
-#-----------------------------------------------------------------------
-#-----------------------------------------------------------------------
-#-----------------------------------------------------------------------
-#-----------------------------------------------------------------------
-#-----------------------------------------------------------------------
-#-----------------------------------------------------------------------
-
-combined <- standlevel_full
-# combined <- standlevel_ann
-# combined <- standlevel_corr
-
-combined$Month <- ifelse(combined$week %in% c(1,2,3,4),1,
-                         ifelse(combined$week %in% c(5,6,7,8),2,
-                                ifelse(combined$week %in% c(9,10,11,12),3,
-                                       ifelse(combined$week %in% c(13,14,15,16),4,
-                                              ifelse(combined$week %in% c(17,18,19,20),5,
-                                                     ifelse(combined$week %in% c(21,22,23,24),6,
-                                                            ifelse(combined$week %in% c(25,26,27,28),7,
-                                                                   ifelse(combined$week %in% c(29,30,31,32),8,
-                                                                          ifelse(combined$week %in% c(33,34,35,36),9,
-                                                                                 ifelse(combined$week %in% c(37,38,39,40),10,
-                                                                                        ifelse(combined$week %in% c(41,42,43,44),11,
-                                                                                               ifelse(combined$week %in% c(45,46,47,48),12,
-                                                                                                      NA))))))))))))
-
-combined_month <- combined %>%
-  group_by(Month) %>%
-  summarise(dormancy_stand = mean(ss),
-            turnover_stand = mean(ss_turn),
-            senescence_stand = mean(ss_senescence),
-            flushing_stand = mean(ss_flush))
-
-climate.corr <- merge(climate, combined_month, by = c("Month"), all.x = TRUE)
-
-
-
-# turnover
-cor.test(climate.corr$insol_JR, climate.corr$turnover_stand, method = 'pearson')
-cor.test(climate.corr$prec_JR, climate.corr$turnover_stand, method = 'pearson')
-cor.test(climate.corr$tmax_JR, climate.corr$turnover_stand, method = 'pearson')
-
-
-# dormancy
-cor.test(climate.corr$insol_JR, climate.corr$dormancy_stand, method = 'pearson')
-cor.test(climate.corr$prec_JR, climate.corr$dormancy_stand, method = 'pearson')
-cor.test(climate.corr$tmax_JR, climate.corr$dormancy_stand, method = 'pearson')
-
-# flushin
-cor.test(climate.corr$insol_JR, climate.corr$flushing_stand, method = 'pearson')
-cor.test(climate.corr$prec_JR, climate.corr$flushing_stand, method = 'pearson')
-cor.test(climate.corr$tmax_JR, climate.corr$flushing_stand, method = 'pearson')
-
-# senescence
-cor.test(climate.corr$insol_JR, climate.corr$senescence_stand, method = 'pearson')
-cor.test(climate.corr$prec_JR, climate.corr$senescence_stand, method = 'pearson')
-cor.test(climate.corr$tmax_JR, climate.corr$senescence_stand, method = 'pearson')
-
-# climate inter - correlations
-cor.test(climate.corr$insol_JR, climate.corr$prec_JR, method = 'pearson')
-cor.test(climate.corr$insol_all, climate.corr$prec_all, method = 'pearson')
-
-# MODIS
-VI_s$date <- as.Date(VI_s$doy, origin="2010-12-31")
-VI_s$Month <- format(as.Date(VI_s$date), "%m")
-modis <- VI_s %>%
-  group_by(Month)%>%
-  dplyr::summarise(EVIm = mean(EVI))
-modis$Month <- as.numeric(modis$Month)
-
-climate.corr <- merge(climate.corr, modis, by = c("Month"), all.x = TRUE)
-
-cor.test(climate.corr$EVIm, climate.corr$prec_all, method = 'pearson')
-cor.test(climate.corr$EVIm, climate.corr$insol_all, method = 'pearson')
-cor.test(climate.corr$EVIm, climate.corr$PAR_Ygb_Hauser, method = 'pearson')
-cor.test(climate.corr$EVIm, climate.corr$tmax_JR, method = 'pearson')
-
-cor.test(climate.corr$EVIm, climate.corr$dormancy_stand, method = 'pearson')
-cor.test(climate.corr$EVIm, climate.corr$turnover_stand, method = 'pearson')
-cor.test(climate.corr$EVIm, climate.corr$senescence_stand, method = 'pearson')
-cor.test(climate.corr$EVIm, climate.corr$flushing_stand, method = 'pearson')
-
+# #-----------------------------------------------------------------------
+# #-----------------------------------------------------------------------
+# #-----------------------------------------------------------------------
+# #-----------------------------------------------------------------------
+# #-----------------------------------------------------------------------
+# # correlations between standlevel events and climate
+# #-----------------------------------------------------------------------
+# #-----------------------------------------------------------------------
+# #-----------------------------------------------------------------------
+# #-----------------------------------------------------------------------
+# #-----------------------------------------------------------------------
+# #-----------------------------------------------------------------------
+#
+# combined <- standlevel_full
+# # combined <- standlevel_ann
+# # combined <- standlevel_corr
+#
+# combined$Month <- ifelse(combined$week %in% c(1,2,3,4),1,
+#                          ifelse(combined$week %in% c(5,6,7,8),2,
+#                                 ifelse(combined$week %in% c(9,10,11,12),3,
+#                                        ifelse(combined$week %in% c(13,14,15,16),4,
+#                                               ifelse(combined$week %in% c(17,18,19,20),5,
+#                                                      ifelse(combined$week %in% c(21,22,23,24),6,
+#                                                             ifelse(combined$week %in% c(25,26,27,28),7,
+#                                                                    ifelse(combined$week %in% c(29,30,31,32),8,
+#                                                                           ifelse(combined$week %in% c(33,34,35,36),9,
+#                                                                                  ifelse(combined$week %in% c(37,38,39,40),10,
+#                                                                                         ifelse(combined$week %in% c(41,42,43,44),11,
+#                                                                                                ifelse(combined$week %in% c(45,46,47,48),12,
+#                                                                                                       NA))))))))))))
+#
+# combined_month <- combined %>%
+#   group_by(Month) %>%
+#   summarise(dormancy_stand = mean(ss),
+#             turnover_stand = mean(ss_turn),
+#             senescence_stand = mean(ss_senescence),
+#             flushing_stand = mean(ss_flush))
+#
+# climate.corr <- merge(climate, combined_month, by = c("Month"), all.x = TRUE)
+#
+#
+#
+# # turnover
+# cor.test(climate.corr$insol_JR, climate.corr$turnover_stand, method = 'pearson')
+# cor.test(climate.corr$prec_JR, climate.corr$turnover_stand, method = 'pearson')
+# cor.test(climate.corr$tmax_JR, climate.corr$turnover_stand, method = 'pearson')
+#
+#
+# # dormancy
+# cor.test(climate.corr$insol_JR, climate.corr$dormancy_stand, method = 'pearson')
+# cor.test(climate.corr$prec_JR, climate.corr$dormancy_stand, method = 'pearson')
+# cor.test(climate.corr$tmax_JR, climate.corr$dormancy_stand, method = 'pearson')
+#
+# # flushin
+# cor.test(climate.corr$insol_JR, climate.corr$flushing_stand, method = 'pearson')
+# cor.test(climate.corr$prec_JR, climate.corr$flushing_stand, method = 'pearson')
+# cor.test(climate.corr$tmax_JR, climate.corr$flushing_stand, method = 'pearson')
+#
+# # senescence
+# cor.test(climate.corr$insol_JR, climate.corr$senescence_stand, method = 'pearson')
+# cor.test(climate.corr$prec_JR, climate.corr$senescence_stand, method = 'pearson')
+# cor.test(climate.corr$tmax_JR, climate.corr$senescence_stand, method = 'pearson')
+#
+# # climate inter - correlations
+# cor.test(climate.corr$insol_JR, climate.corr$prec_JR, method = 'pearson')
+# cor.test(climate.corr$insol_all, climate.corr$prec_all, method = 'pearson')
+#
+# # MODIS
+# VI_s$date <- as.Date(VI_s$doy, origin="2010-12-31")
+# VI_s$Month <- format(as.Date(VI_s$date), "%m")
+# modis <- VI_s %>%
+#   group_by(Month)%>%
+#   dplyr::summarise(EVIm = mean(EVI))
+# modis$Month <- as.numeric(modis$Month)
+#
+# climate.corr <- merge(climate.corr, modis, by = c("Month"), all.x = TRUE)
+#
+# cor.test(climate.corr$EVIm, climate.corr$prec_all, method = 'pearson')
+# cor.test(climate.corr$EVIm, climate.corr$insol_all, method = 'pearson')
+# cor.test(climate.corr$EVIm, climate.corr$PAR_Ygb_Hauser, method = 'pearson')
+# cor.test(climate.corr$EVIm, climate.corr$tmax_JR, method = 'pearson')
+#
+# cor.test(climate.corr$EVIm, climate.corr$dormancy_stand, method = 'pearson')
+# cor.test(climate.corr$EVIm, climate.corr$turnover_stand, method = 'pearson')
+# cor.test(climate.corr$EVIm, climate.corr$senescence_stand, method = 'pearson')
+# cor.test(climate.corr$EVIm, climate.corr$flushing_stand, method = 'pearson')
+#
