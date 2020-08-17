@@ -22,11 +22,6 @@ source("R/timeline_gap_fill.R")
 # because `summarise()` ungrouping output (override with `.groups` argument)
 # comes up a lot in the consol, which is annoying
 options(dplyr.summarise.inform = FALSE)
-#----- settings  ------------------------------------------------------
-# minimum_events = 1    # species will only be included in this analysis
-# when they have a minimum set of events
-#----------------------------------------------------------------------
-
 
 #----------------------------------------------------------------------
 #--------   Phenology data --------------------------------------------
@@ -68,18 +63,12 @@ rm(timelines_dorm, timelines_turn)
 #----------------------------------------------------------------------
 data_timeline <- merge(data_timeline, overview, by = "species_full", all.x = TRUE)
 
-# dec_timeline <- data_timeline %>%
-#   filter(grepl("deciduous",deciduousness))
-# dec_sp <- unique(dec_timeline$species_full)
-# ever_timeline <- data_timeline %>%
-#   filter(grepl("evergreen",deciduousness))
-# ever_sp <- unique(ever_timeline$species_full)
+
 #--------------------------------------------------------------------------
 #--------------------------------------------------------------------------
-#--------- This is onset of event
-#---------- turnover --------------------------------------
+# calculate median data + CI of onset phenophases
 # function event_length() gives start and end timing of each event
-# can only do 1 phenophase at a time
+# this function only analyses 1 phenophase at a time
 #--------------------------------------------------------------------------
 #--------------------------------------------------------------------------
 #--------------------------------------------------------------------------
@@ -112,8 +101,6 @@ onset <- transition_dates %>%
       circular(degree_start, units = "degrees"))$mu.ci[2],
     nr_events = length(week_start))
 
-# onset <- onset %>%
-#   filter(species_full == "Monodora myristica")
 
 #--------------------------------------------------------------------------
 #- rescaling and segmenting CIs for figure
@@ -165,7 +152,7 @@ onset_deciduous_dorm <- onset %>%
          deciduousness = "deciduous")
 onset <- rbind(onset_evergreen_turn, onset_evergreen_dorm, onset_deciduous_turn, onset_deciduous_dorm)
 #------------------------------------------------------------------------
-# + to plot over the 0-360 line, segment CI when necessary: lower - 360 and 0 - upper
+# to plot over the 0-360 line, segment CI when necessary: lower - 360 and 0 - upper
 onset_CItwosegments <- onset %>%
   filter(median_rescaled < lower_rescaled | median_rescaled > upper_rescaled)
 onset_CItwosegments$seg1_xend <- 360  # end of segment 1 --> lower:360
@@ -174,7 +161,12 @@ onset_CItwosegments$seg2_x <- 0       # beginning of segment 2 --> 0:upper
 onset_CIonesegments <- onset %>%
   filter(median_rescaled >= lower_rescaled & median_rescaled <= upper_rescaled)
 
-##################################
+
+#----------------------------------------------------------------------
+#----------------------------------------------------------------------
+# manuscript - figure 2
+#----------------------------------------------------------------------
+#----------------------------------------------------------------------
 dec_labels <- c("1evergreen" = "evergreen", "deciduous" = "deciduous")
 pheno_labels <- c("leaf_turnover" = "turnover", "leaf_dormancy" = "dormancy")
 
@@ -213,8 +205,7 @@ p1 <- ggplot() +
   scale_x_continuous(limits = c(0,360),
                      breaks = seq(0,359,30),
                      labels = month.abb) +
-  scale_y_continuous(limits = c(-0.25,1)) +  #staring y-axis at '-20' so that points are squeezed in the center
-  # minor_breaks = seq(1, 48, 1), breaks = seq(1, 48, 1)) +
+  scale_y_continuous(limits = c(-0.25,1)) +  #staring y-axis at '-0.25' so that points are squeezed in the center
   coord_polar() +
   labs(x="",
        y="",
@@ -223,7 +214,7 @@ p1 <- ggplot() +
         panel.grid.major.x = element_line(colour = "grey75",
                                           size = 0.3),
         panel.grid.minor.x = element_blank(),
-        panel.grid.major.y = element_blank(),# element_line(colour = "grey90", size = 0.5),
+        panel.grid.major.y = element_blank(),
         panel.grid.minor.y = element_blank(),
         panel.background = element_blank(),
         axis.ticks.y = element_blank(),
@@ -239,265 +230,3 @@ p1 <- ggplot() +
              labeller = labeller(deciduousness = dec_labels, phenophase = pheno_labels))
 
 p1
-# #---------------------------------------------------------------------------------------------------------------
-# #------------------------------------------------------------------------
-# # FIGURE DECIDUOUS
-# #------------------------------------------------------------------------
-# dec_dorm_CIone <- onset_dec_CIonesegments %>%
-#   filter(phase %in% c("dormancy","flushing"))
-# dec_dorm_CItwo <- onset_dec_CItwosegments %>%
-#   filter(phase %in% c("dormancy","flushing"))
-# dec_dorm <- onset_dec_allphases %>%
-#   filter(phase %in% c("dormancy","flushing"))
-#
-# p_dec_dorm <- ggplot() +
-#   annotate("rect", xmin = 330, xmax = 360, ymin = min(dec_dorm$y_value)-10, ymax = max(dec_dorm$y_value) , alpha = .2) + #Dec
-#   annotate("rect", xmin = 0, xmax = 60, ymin = min(dec_dorm$y_value)-10, ymax = max(dec_dorm$y_value) , alpha = .2) + # jan - feb
-#   annotate("rect", xmin = 150, xmax = 210, ymin = min(dec_dorm$y_value)-10, ymax = max(dec_dorm$y_value) , alpha = .2) + # jun-jul
-#
-#   geom_segment(data = dec_dorm_CIone,
-#                aes(x = lower_rescaled,
-#                    xend = upper_rescaled,
-#                    y = y_value,
-#                    yend = y_value),
-#                color = "grey60") +
-#   geom_segment(data = dec_dorm_CItwo,
-#                aes(x = lower_rescaled,
-#                    xend = seg1_xend,
-#                    y = y_value,
-#                    yend = y_value),
-#                color = "grey60") +
-#   geom_segment(data = dec_dorm_CItwo,
-#                aes(x = seg2_x,
-#                    xend = upper_rescaled,
-#                    y = y_value,
-#                    yend = y_value),
-#                color = "grey60") +
-#   geom_point(data = dec_dorm,
-#              aes(x = median_rescaled, y = y_value, shape = phase)) +
-#   scale_shape_manual(values = c(19,4,1),
-#                      name = "onset of:",
-#                      labels = c("dormancy", "flushing","turnover")) +
-#
-#   scale_x_continuous(limits = c(0,360),
-#                      breaks = seq(0,359,30),
-#                      labels = month.abb) +
-#   scale_y_continuous(limits = c(min(dec_dorm$y_value)-10,max(dec_dorm$y_value))) +  #staring y-axis at '-20' so that points are squeezed in the center
-#   # minor_breaks = seq(1, 48, 1), breaks = seq(1, 48, 1)) +
-#   coord_polar() +
-#   labs(x="",
-#        y="",
-#        title = paste("(b) deciduous - dorm")) +
-#   theme(panel.grid.major.x = element_line(colour = "grey75",
-#                                           size = 0.3),
-#         panel.grid.minor.x = element_blank(),
-#         panel.grid.major.y = element_blank(),# element_line(colour = "grey90", size = 0.5),
-#         panel.grid.minor.y = element_blank(),
-#         panel.background = element_blank(),
-#         axis.ticks.y = element_blank(),
-#         axis.text.y = element_blank(),
-#         axis.text.x = element_text(size = 11),
-#         strip.text = element_text(face = "italic", size = 13),
-#         strip.background = element_rect(fill="white"),
-#         plot.title = element_text(size = 13),
-#         legend.position = "none",
-#         legend.title = element_blank(),
-#         legend.text = element_text(size = 11),
-#         legend.key = element_rect(fill = "white"),
-#         plot.margin=unit(c(0,0,0,0),"cm"))
-# p_dec_dorm
-# #------------------------------------------------------------------------
-# dec_turn_CIone <- onset_dec_CIonesegments %>%
-#   filter(phase == "turnover")
-# dec_turn_CItwo <- onset_dec_CItwosegments %>%
-#   filter(phase == "turnover")
-# dec_turn <- onset_dec_allphases %>%
-#   filter(phase == "turnover")
-#
-# p_dec_turn <- ggplot() +
-#   annotate("rect", xmin = 330, xmax = 360, ymin = min(dec_turn$y_value)-10, ymax = max(dec_turn$y_value) , alpha = .2) + #Dec
-#   annotate("rect", xmin = 0, xmax = 60, ymin = min(dec_turn$y_value)-10, ymax = max(dec_turn$y_value) , alpha = .2) + # jan - feb
-#   annotate("rect", xmin = 150, xmax = 210, ymin = min(dec_turn$y_value)-10, ymax = max(dec_turn$y_value) , alpha = .2) + # jun-jul
-#
-#   geom_segment(data = dec_turn_CIone,
-#                aes(x = lower_rescaled,
-#                    xend = upper_rescaled,
-#                    y = y_value,
-#                    yend = y_value),
-#                color = "grey60") +
-#   geom_segment(data = dec_turn_CItwo,
-#                aes(x = lower_rescaled,
-#                    xend = seg1_xend,
-#                    y = y_value,
-#                    yend = y_value),
-#                color = "grey60") +
-#   geom_segment(data = dec_turn_CItwo,
-#                aes(x = seg2_x,
-#                    xend = upper_rescaled,
-#                    y = y_value,
-#                    yend = y_value),
-#                color = "grey60") +
-#   geom_point(data = dec_turn,
-#              aes(x = median_rescaled, y = y_value, shape = phase)) +
-#   scale_shape_manual(values = 1) +
-#
-#   scale_x_continuous(limits = c(0,360),
-#                      breaks = seq(0,359,30),
-#                      labels = month.abb) +
-#   scale_y_continuous(limits = c(min(dec_turn$y_value)-10,max(dec_turn$y_value))) +  #staring y-axis at '-20' so that points are squeezed in the center
-#   # minor_breaks = seq(1, 48, 1), breaks = seq(1, 48, 1)) +
-#   coord_polar() +
-#   labs(x="",
-#        y="",
-#        title = paste("(b) deciduous - turn")) +
-#   theme(panel.grid.major.x = element_line(colour = "grey75",
-#                                           size = 0.3),
-#         panel.grid.minor.x = element_blank(),
-#         panel.grid.major.y = element_blank(),# element_line(colour = "grey90", size = 0.5),
-#         panel.grid.minor.y = element_blank(),
-#         panel.background = element_blank(),
-#         axis.ticks.y = element_blank(),
-#         axis.text.y = element_blank(),
-#         axis.text.x = element_text(size = 11),
-#         strip.text = element_text(face = "italic", size = 13),
-#         strip.background = element_rect(fill="white"),
-#         plot.title = element_text(size = 13),
-#         legend.position = "none",
-#         legend.title = element_blank(),
-#         legend.text = element_text(size = 11),
-#         legend.key = element_rect(fill = "white"),
-#         plot.margin=unit(c(0,0,0,0),"cm"))
-# p_dec_turn
-# #---------------
-#------------------------------------------------------------------------
-# FIGURE EVERGREEN
-#------------------------------------------------------------------------
-ever_dorm_CIone <- onset_ever_CIonesegments %>%
-  filter(phase %in% c("dormancy","flushing"))
-ever_dorm_CItwo <- onset_ever_CItwosegments %>%
-  filter(phase %in% c("dormancy","flushing"))
-ever_dorm <- onset_ever_allphases %>%
-  filter(phase %in% c("dormancy","flushing"))
-
-p_ever_dorm <- ggplot() +
-  annotate("rect", xmin = 330, xmax = 360, ymin = min(ever_dorm$y_value)-10, ymax = max(ever_dorm$y_value) , alpha = .2) + #ever
-  annotate("rect", xmin = 0, xmax = 60, ymin = min(ever_dorm$y_value)-10, ymax = max(ever_dorm$y_value) , alpha = .2) + # jan - feb
-  annotate("rect", xmin = 150, xmax = 210, ymin = min(ever_dorm$y_value)-10, ymax = max(ever_dorm$y_value) , alpha = .2) + # jun-jul
-
-  geom_segment(data = ever_dorm_CIone,
-               aes(x = lower_rescaled,
-                   xend = upper_rescaled,
-                   y = y_value,
-                   yend = y_value),
-               color = "grey60") +
-  geom_segment(data = ever_dorm_CItwo,
-               aes(x = lower_rescaled,
-                   xend = seg1_xend,
-                   y = y_value,
-                   yend = y_value),
-               color = "grey60") +
-  geom_segment(data = ever_dorm_CItwo,
-               aes(x = seg2_x,
-                   xend = upper_rescaled,
-                   y = y_value,
-                   yend = y_value),
-               color = "grey60") +
-  geom_point(data = ever_dorm,
-             aes(x = median_rescaled, y = y_value, shape = phase)) +
-  scale_shape_manual(values = c(19,4,1),
-                     name = "onset of:",
-                     labels = c("dormancy", "flushing","turnover")) +
-
-  scale_x_continuous(limits = c(0,360),
-                     breaks = seq(0,359,30),
-                     labels = month.abb) +
-  scale_y_continuous(limits = c(min(ever_dorm$y_value)-10,max(ever_dorm$y_value))) +  #staring y-axis at '-20' so that points are squeezed in the center
-  # minor_breaks = seq(1, 48, 1), breaks = seq(1, 48, 1)) +
-  coord_polar() +
-  labs(x="",
-       y="",
-       title = paste("(b) evergreen - dorm")) +
-  theme(panel.grid.major.x = element_line(colour = "grey75",
-                                          size = 0.3),
-        panel.grid.minor.x = element_blank(),
-        panel.grid.major.y = element_blank(),# element_line(colour = "grey90", size = 0.5),
-        panel.grid.minor.y = element_blank(),
-        panel.background = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.text.y = element_blank(),
-        axis.text.x = element_text(size = 11),
-        strip.text = element_text(face = "italic", size = 13),
-        strip.background = element_rect(fill="white"),
-        plot.title = element_text(size = 13),
-        legend.position = "none",
-        legend.title = element_blank(),
-        legend.text = element_text(size = 11),
-        legend.key = element_rect(fill = "white"),
-        plot.margin=unit(c(0,0,0,0),"cm"))
-p_ever_dorm
-#------------------------------------------------------------------------
-ever_turn_CIone <- onset_ever_CIonesegments %>%
-  filter(phase == "turnover")
-ever_turn_CItwo <- onset_ever_CItwosegments %>%
-  filter(phase == "turnover")
-ever_turn <- onset_ever_allphases %>%
-  filter(phase == "turnover")
-
-p_ever_turn <- ggplot() +
-  annotate("rect", xmin = 330, xmax = 360, ymin = min(ever_turn$y_value)-10, ymax = max(ever_turn$y_value) , alpha = .2) + #ever
-  annotate("rect", xmin = 0, xmax = 60, ymin = min(ever_turn$y_value)-10, ymax = max(ever_turn$y_value) , alpha = .2) + # jan - feb
-  annotate("rect", xmin = 150, xmax = 210, ymin = min(ever_turn$y_value)-10, ymax = max(ever_turn$y_value) , alpha = .2) + # jun-jul
-
-  geom_segment(data = ever_turn_CIone,
-               aes(x = lower_rescaled,
-                   xend = upper_rescaled,
-                   y = y_value,
-                   yend = y_value),
-               color = "grey60") +
-  geom_segment(data = ever_turn_CItwo,
-               aes(x = lower_rescaled,
-                   xend = seg1_xend,
-                   y = y_value,
-                   yend = y_value),
-               color = "grey60") +
-  geom_segment(data = ever_turn_CItwo,
-               aes(x = seg2_x,
-                   xend = upper_rescaled,
-                   y = y_value,
-                   yend = y_value),
-               color = "grey60") +
-  geom_point(data = ever_turn,
-             aes(x = median_rescaled, y = y_value, shape = phase)) +
-  scale_shape_manual(values = 1) +
-
-  scale_x_continuous(limits = c(0,360),
-                     breaks = seq(0,359,30),
-                     labels = month.abb) +
-  scale_y_continuous(limits = c(min(ever_turn$y_value)-10,max(ever_turn$y_value))) +  #staring y-axis at '-20' so that points are squeezed in the center
-  # minor_breaks = seq(1, 48, 1), breaks = seq(1, 48, 1)) +
-  coord_polar() +
-  labs(x="",
-       y="",
-       title = paste("(b) evergreen - turn")) +
-  theme(panel.grid.major.x = element_line(colour = "grey75",
-                                          size = 0.3),
-        panel.grid.minor.x = element_blank(),
-        panel.grid.major.y = element_blank(),# element_line(colour = "grey90", size = 0.5),
-        panel.grid.minor.y = element_blank(),
-        panel.background = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.text.y = element_blank(),
-        axis.text.x = element_text(size = 11),
-        strip.text = element_text(face = "italic", size = 13),
-        strip.background = element_rect(fill="white"),
-        plot.title = element_text(size = 13),
-        legend.position = "none",
-        legend.title = element_blank(),
-        legend.text = element_text(size = 11),
-        legend.key = element_rect(fill = "white"),
-        plot.margin=unit(c(0,0,0,0),"cm"))
-p_ever_turn
-#---------------
-
-p_all <- grid.arrange(p_ever_dorm, p_ever_turn, p_dec_dorm, p_dec_turn, heights = c(1,1))
-
