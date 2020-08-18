@@ -16,7 +16,7 @@ font_add_google(
   regular.wt = 300,
   bold.wt = 700)
 #----- source required files  -----------------------------------------
-source("analysis/remote_sensing_plot.R")
+source("analysis/08_remote_sensing_plot.R")
 source("R/event_length.R")
 source("R/timeline_gap_fill.R")
 source("R/standlevel_phen.R")
@@ -40,7 +40,7 @@ minimum_siteyears = 10
 #----------------------------------------------------------------------
 #--------   Phenology data --------------------------------------------
 #----------------------------------------------------------------------
-data <- readRDS("data/jungle_rhythms_data_cleaned.rds")
+data <- readRDS("data/jungle_rhythms_data_manuscript_leaf_repro.rds")
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
@@ -489,4 +489,80 @@ p_modis1$widths <-p2$widths
 
 
 p_fig5 <- grid.arrange(p2, p_modis1, heights = c(3,1))
+
+# #-----------------------------------------------------------------------
+# #-----------------------------------------------------------------------
+# #-----------------------------------------------------------------------
+# #-----------------------------------------------------------------------
+# #-----------------------------------------------------------------------
+# # correlations between standlevel events and climate
+# #-----------------------------------------------------------------------
+# #-----------------------------------------------------------------------
+# #-----------------------------------------------------------------------
+# #-----------------------------------------------------------------------
+# #-----------------------------------------------------------------------
+# #-----------------------------------------------------------------------
+#
+# head(standlevel_subsets)
+#
+# combined <- standlevel_full
+# # combined <- standlevel_ann
+# # combined <- standlevel_corr
+#
+# standlevel_subsets$Month <- ifelse(standlevel_subsets$week %in% c(1,2,3,4),1,
+#                          ifelse(standlevel_subsets$week %in% c(5,6,7,8),2,
+#                                 ifelse(standlevel_subsets$week %in% c(9,10,11,12),3,
+#                                        ifelse(standlevel_subsets$week %in% c(13,14,15,16),4,
+#                                               ifelse(standlevel_subsets$week %in% c(17,18,19,20),5,
+#                                                      ifelse(standlevel_subsets$week %in% c(21,22,23,24),6,
+#                                                             ifelse(standlevel_subsets$week %in% c(25,26,27,28),7,
+#                                                                    ifelse(standlevel_subsets$week %in% c(29,30,31,32),8,
+#                                                                           ifelse(standlevel_subsets$week %in% c(33,34,35,36),9,
+#                                                                                  ifelse(standlevel_subsets$week %in% c(37,38,39,40),10,
+#                                                                                         ifelse(standlevel_subsets$week %in% c(41,42,43,44),11,
+#                                                                                                ifelse(standlevel_subsets$week %in% c(45,46,47,48),12,
+#                                                                                                       NA))))))))))))
+#
+# standlevel_subsets_month <- standlevel_subsets %>%
+#   group_by(Month, cycl,groups) %>%
+#   summarise(dormancy_stand = mean(ss_dorm, na.rm = T),
+#             turnover_stand = mean(ss_turn))
+#
+# climate.corr <- merge(climate, standlevel_subsets_month, by = c("Month"), all.x = TRUE)
+#
+# climate.corr <- climate.corr %>%
+#   filter(cycl == "no",
+#          groups == "no_class")
+#
+# # # turnover
+# # cor.test(climate.corr$insol_JR, climate.corr$turnover_stand, method = 'pearson')
+# # cor.test(climate.corr$prec_JR, climate.corr$turnover_stand, method = 'pearson')
+# # cor.test(climate.corr$tmax_JR, climate.corr$turnover_stand, method = 'pearson')
+# #
+# #
+# # # dormancy
+# # cor.test(climate.corr$insol_JR, climate.corr$dormancy_stand, method = 'pearson')
+# # cor.test(climate.corr$prec_JR, climate.corr$dormancy_stand, method = 'pearson')
+# # cor.test(climate.corr$tmax_JR, climate.corr$dormancy_stand, method = 'pearson')
+#
+# # # MODIS
+# # VI_s$date <- as.Date(VI_s$doy, origin="2010-12-31")
+# # VI_s$Month <- format(as.Date(VI_s$date), "%m")
+# # modis <- VI_s %>%
+# #   group_by(Month)%>%
+# #   dplyr::summarise(EVIm = mean(EVI))
+# # modis$Month <- as.numeric(modis$Month)
+#
+# climate.corr <- merge(climate.corr, modis, by = c("Month"), all.x = TRUE)
+#
+# # cor.test(climate.corr$EVIm, climate.corr$prec_all, method = 'pearson')
+# # cor.test(climate.corr$EVIm, climate.corr$insol_all, method = 'pearson')
+# # cor.test(climate.corr$EVIm, climate.corr$PAR_Ygb_Hauser, method = 'pearson')
+# # cor.test(climate.corr$EVIm, climate.corr$tmax_JR, method = 'pearson')
+#
+# cor.test(climate.corr$EVIm, climate.corr$dormancy_stand, method = 'pearson')
+# cor.test(climate.corr$EVIm, climate.corr$turnover_stand, method = 'pearson')
+
+
+
 
