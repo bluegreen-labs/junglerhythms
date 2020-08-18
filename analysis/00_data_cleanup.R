@@ -54,9 +54,49 @@ rm(df,metadata, empty_years)
 #----------------------------------------------------------------------
 
 
-#----------------------------------------------------------------------
-#----------------------------------------------------------------------
+# # ----------------------------------------------------------------------
+# # ----------------------------------------------------------------------
 # # Save as rds
 # saveRDS(data, file = "data/jungle_rhythms_data_cleaned.rds")
+# # ----------------------------------------------------------------------
+# # ----------------------------------------------------------------------
+
 #----------------------------------------------------------------------
+#-------- census data  ------------------------------------------------
+#-------- for manuscripts on leaf phenology and reproductive phenology
+#-------- only work with species in 2012 Yangambi census
 #----------------------------------------------------------------------
+census <- read.csv("data/YGB_ForestPlotsNET_corrected_indet.csv",
+                   header = TRUE,
+                   sep = ",",
+                   stringsAsFactors = FALSE)
+census <- census %>%
+  dplyr::rename("species_full" = Species)
+census$species_full <- ifelse(census$species_full == "Unknown", NA, census$species_full)
+
+# remove individuals without C1DBH4, these are new recruits from census2
+# only use mixed plots
+# remove those only at genus level
+census_sp <- census %>%
+  filter(!is.na(C1DBH4),
+         grepl("MIX",Plot),
+         !grepl("sp\\.",species_full))
+# species lists census vs phenology datasets
+census_species <- unique(census_sp$species_full)
+phen_species <- unique(data$species_full)
+species_list <- intersect(census_species, phen_species)
+#----------------------------------------------------------------------
+rm(census_species, phen_species, census_sp)
+#----------------------------------------------------------------------
+# cleaned dataset only for these species
+data_sp <- data %>%
+  filter(species_full %in% species_list)
+
+# #----------------------------------------------------------------------
+# #----------------------------------------------------------------------
+# # Save as rds
+# saveRDS(data_sp, file = "data/jungle_rhythms_data_manuscript_leaf_repro.rds")
+# #----------------------------------------------------------------------
+# #----------------------------------------------------------------------
+
+
