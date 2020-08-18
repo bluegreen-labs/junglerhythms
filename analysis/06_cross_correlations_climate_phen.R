@@ -65,7 +65,7 @@ overview <- overview %>%
 species_list <- overview$species_full
 
 #--- leaf turnover ---------------------------------------------------
-# for selected species and phenophase: get extended timelines at ID level with 2 year-gaps filled with zero
+# for selected species and phenophase: get extended timelines at ID level with 0 year-gaps filled
 timelines_id_turn <- missing_year_gaps(data = data,
                                        species_name = species_list,
                                        pheno = "leaf_turnover",
