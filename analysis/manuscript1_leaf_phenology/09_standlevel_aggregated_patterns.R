@@ -15,7 +15,7 @@ font_add_google(
   regular.wt = 300,
   bold.wt = 700)
 #----- source required files  -----------------------------------------
-source("analysis/08_remote_sensing_plot.R")
+source("analysis/manuscript1_leaf_phenology/08_remote_sensing_plot.R")
 source("R/event_length.R")
 source("R/standlevel_phen.R")
 source("R/standlevel_phen_plotlevel.R")
