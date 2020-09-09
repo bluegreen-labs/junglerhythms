@@ -3,6 +3,9 @@ rm(list=ls())
 # graphics.off()
 #----- load required packages --------------------------------------------------#
 library(tidyverse)
+#----- source required functions --------------------------------------
+source("R/timeline_gap_fill.R")
+#----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
 #--------   Phenology data - species correction Meise   ---------------
@@ -88,14 +91,34 @@ species_list <- intersect(census_species, phen_species)
 #----------------------------------------------------------------------
 rm(census_species, phen_species, census_sp)
 #----------------------------------------------------------------------
-# cleaned dataset only for these species
-data_sp <- data %>%
-  filter(species_full %in% species_list)
+# # cleaned dataset only for these species
+# data_sp <- data %>%
+#   filter(species_full %in% species_list)
+
+#----------------------------------------------------------------------
+#-- for this species list at ID level: --------------------------------
+#-- get full range timelines ------------------------------------------
+#----------------------------------------------------------------------
+timelines_dorm <- missing_years(data = data,
+                                species_name = species_list,
+                                pheno = "leaf_dormancy",
+                                gapfill_missingyears = 0)
+timelines_turn <- missing_years(data = data,
+                                species_name = species_list,
+                                pheno = "leaf_turnover",
+                                gapfill_missingyears = 0)
+data_timeline <- rbind(timelines_dorm, timelines_turn)
+data_timeline <- data_timeline %>%
+  dplyr::select(-missing_years_consec,
+                -lgh_consec_years)
+#----------------------------------------------------------------------
+rm(timelines_dorm, timelines_turn)
+#----------------------------------------------------------------------
 
 # #----------------------------------------------------------------------
 # #----------------------------------------------------------------------
 # # Save as rds
-# saveRDS(data_sp, file = "data/jungle_rhythms_data_manuscript_leaf_repro.rds")
+# saveRDS(data_timeline, file = "data/jungle_rhythms_data_manuscript_leaf_repro.rds")
 # #----------------------------------------------------------------------
 # #----------------------------------------------------------------------
 

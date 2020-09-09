@@ -2,14 +2,14 @@
 #'
 #' This sub-routine will take vectors from a data frame
 #' for a single individual and phenophase and returns the timing of
-#' phenophases and the length of the .
+#' phenophases and the length of the phenophase
 #'
 #' df already needs to be a continuous timeline
 #' call function a ID level
 #'
-#' @param year year vector
-#' @param week week vector
-#' @param value vector with observations
+#' @param data junglerhythms data file
+#' @param species_name list of species
+#' @param pheno only one phenophase
 #' @export
 #' @return timing of when an event (value) switches between no event (0)
 #' and a observation of an event (1)

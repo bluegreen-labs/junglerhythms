@@ -1,4 +1,12 @@
-#' Calculates summary statistics at species-level
+#' Calculates summary statistics / characteristics at species-level
+#' including number of individuals, start/end year, number of observed events,
+#' total nr of observation years across individuals
+#'
+#' @param data junglerhythms data file
+#' @param species_name list of species
+#' @param pheno only one phenophase
+#' @export
+#' @return dataframe
 
 overview_stats <- function(
   data = data,

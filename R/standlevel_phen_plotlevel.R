@@ -1,10 +1,23 @@
+#' plot-level annual phenological signal
+#' species-specific annual signals are weighted by their basal area at the plot level
+#'
+#' @param data junglerhythms data file
+#' @param census_plot yangambi census data at plot level
+#' @param total_basal_area_plot
+#' @param species_name list of species
+#' @param pheno only one phenophase
+#' @param minimum_siteyears species not included if fewer observation-years overall (across all individuals)
+#' @export
+#' @return dataframe
+
+
 standlevel_phen_plotlevel <- function(
   data = data,
-  # census_plot = census_plot,
-  # total_basal_area_plot = total_basal_area_plot,
+  census_plot = census_plot,
+  total_basal_area_plot = total_basal_area_plot,
   species_list_dorm = dorm_sp1,
-  species_list_turn = turn_sp1
-  # minimum_siteyears = minimum_siteyears
+  species_list_turn = turn_sp1,
+  minimum_siteyears = minimum_siteyears
 ){
 
 
@@ -18,16 +31,10 @@ standlevel_phen_plotlevel <- function(
   #------------ Leaf turnover  -------------------------------------------
   #-----------------------------------------------------------------------
   if(!is_empty(species_list_turn)){
-    # gap filling no longer used, but output format still used ########################
-    # years without data filled with NA
-    # here only species selected are filtered
-    timelines_turn <- missing_year_gaps(data = data,
-                                        species_name = species_list_turn,
-                                        pheno = "leaf_turnover",
-                                        gapfill_missingyears = 0)
-    # NAs removed again, so doesn't make sense
-    timelines_turn <- timelines_turn %>%
-      filter(!is.na(value))
+    timelines_turn <- data %>%
+      filter(phenophase == "leaf_turnover",
+             species_full %in% species_list_turn,
+             !is.na(value))
     # for each species, get summaries of each week (makes full year per species)
     data_LT <- timelines_turn %>%
       group_by(species_full, week) %>%
@@ -61,13 +68,10 @@ standlevel_phen_plotlevel <- function(
   #------------ Leaf dormancy  -------------------------------------------
   #-----------------------------------------------------------------------
   if(!is_empty(species_list_dorm)){
-    timelines_dorm <- missing_year_gaps(data = data,
-                                        species_name = species_list_dorm,
-                                        pheno = "leaf_dormancy",
-                                        gapfill_missingyears = 0)
-
-    timelines_dorm <- timelines_dorm %>%
-      filter(!is.na(value))
+    timelines_dorm <- data %>%
+      filter(phenophase == "leaf_dormancy",
+             species_full %in% species_list_dorm,
+             !is.na(value))
 
     data_LD <- timelines_dorm %>%
       group_by(species_full, week) %>%

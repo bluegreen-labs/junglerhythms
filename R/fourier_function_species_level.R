@@ -1,31 +1,39 @@
 #' Peak detection and cyclicity using fourier transform
 #'
 #' @param data junglerhythms data file
-#' @param species_name end coordinate fo a line
+#' @param species_name list of species
+#' @param pheno only one phenophase
+#' @param perio_plot TRUE/FALSE plot periodogram
 #' @export
 #' @return timing and stats for peaks
 
+
+# following Bush et al. 2017
+# Bush, E. R., Abernethy, K. A., Jeffery, K., Tutin, C., White, L., Dimoto, E., ...,
+# Bunnefeld, N. (2017). Fourier analysis to detect phenological cycles using tropical
+# field data and simulations. Methods in Ecology and Evolution, 8, 530-540.
+# -> user-specified widths of the Daniell kernel smoother
+# -> spectral estimate is smoothed to the specified band-width
+# -> this depends on the lenght of the time-series
+# -> for various ts lenghts (with observation frequenties of 48 per year) the span is provided
 spans_lookup <- list(observations = c(96,144, 192, 240, 288, 336, 384, 432, 480, 528,576,624,672,720,768,816,864,912,960, 1008),
-                     # spans_smooth = list(NULL, NULL, NULL, NULL, # smoothed spectrum of data -> smoothed periodogram bandwith to approx. 0.05
-                     #                     NULL, NULL, NULL, NULL,
-                     #                     3,3,3,3,
-                     #                     3,3,3,
-                     #                     c(3,3), c(3,3), c(3,3), c(3,3), c(3,3)),
-                     spans_smooth=list(NULL, NULL, NULL, NULL, # smoothed spectrum of data -> smoothed periodogram bandwith to approx. 0.1
-                                       3,3,3,3,
-                                       c(3,3), c(3,3), c(3,3),
-                                       c(3,5), c(3,5), c(3,5),
-                                       c(5,5), c(5,5), c(5,5),
-                                       c(5,7), c(5,7), c(5,7)),
-                     spans_super_smooth = list(c(5,7), c(7,9), c(11,11), c(13,13), # super-smoothed spectrum of data -> smoothed periodogram bandwith to approx. 1
+                     # smoothed spectrum of data -> smoothed periodogram bandwith to approx. 0.1
+                     spans_smooth = list(NULL, NULL, NULL, NULL,
+                                         3,3,3,3,
+                                         c(3,3), c(3,3), c(3,3),
+                                         c(3,5), c(3,5), c(3,5),
+                                         c(5,5), c(5,5), c(5,5),
+                                         c(5,7), c(5,7), c(5,7)),
+                     # super-smoothed spectrum of data -> smoothed periodogram bandwith to approx. 1
+                     spans_super_smooth = list(c(5,7), c(7,9), c(11,11), c(13,13),
                                                c(15,17), c(19,19), c(19,21), c(23,23),
                                                c(25,27), c(27,29), c(29,31),
                                                c(33,33), c(35,37), c(37,39),
                                                c(39,41), c(45,45), c(45,47),
                                                c(49,51), c(49,51), c(49,51)))
 
-# spectrum function for normal smoother periodogram
-spec_fun <- function(x) spectrum(x,#spans = spans_lookup$spans_smooth[[which.min(abs(spans_lookup$observations - length(x)))]],
+# spectrum function for general smoother periodogram, to identify dominant peaks
+spec_fun <- function(x) spectrum(x, spans = spans_lookup$spans_smooth[[which.min(abs(spans_lookup$observations - length(x)))]],
                                  plot = F, demean = T, detrend = T)
 
 # spectrum function for null hypothesis spectrum (super-smoothed spectrum of data -> smoothed periodogram bandwith to approx. 1)
@@ -33,9 +41,6 @@ spec_null_fun <- function(x) spectrum(x, spans = spans_lookup$spans_super_smooth
                                       plot = F, demean = T, detrend = T)
 
 
-#----------------------------------------------------------------------------------------------------------------------
-#----------------------------------------------------------------------------------------------------------------------
-#----------------------------------------------------------------------------------------------------------------------
 
 peak_detection <- function(
   data = data,
@@ -162,9 +167,7 @@ peak_detection <- function(
       png(plot_name, width = 925, height = 700)
       grid.arrange(timeline_plot, periodogram, widths = c(1,1))
       dev.off()
-    } #else {
-    #   grid.arrange(raw_plots, Periodograms, widths = c(1,1))
-    # }
+    }
 
   }
 
