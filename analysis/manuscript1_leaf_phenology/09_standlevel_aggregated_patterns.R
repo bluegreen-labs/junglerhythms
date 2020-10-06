@@ -309,6 +309,8 @@ p_tmax$widths <-p_combined_all$widths
 
 p_all <- grid.arrange(p_combined_all, p_modis, p_tmax, p_sun, p_precip, heights = c(4,4,1.2,1.2,4))#c(4,4,1,1,4))
 
+ggsave("manuscript/leaf_phenology/figures/fig4.png", p_all,
+       device = "png", width = 4.5, height = 8.5)
 
 # #-----------------------------------------------------------------------
 # #-----------------------------------------------------------------------

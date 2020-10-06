@@ -143,6 +143,43 @@ output <- merge(output, crosscorr_temp, by = c("species_full","phenophase"), all
 #             maximum temperature
 #----------------------------------------------------------------------
 
+# set.seed(1)
+# test <- output %>%
+#   filter(phenophase == "leaf_turnover") %>%
+#   select(!phenophase)
+# test$corr_precip_timing <- as.numeric(test$corr_precip_timing)
+# test$corr_sun_timing <- as.numeric(test$corr_sun_timing)
+# test$corr_temp_timing <- as.numeric(test$corr_temp_timing)
+# # test$species_full <- ifelse(is.na(test$corr_precip) & is.na(test$corr_sun) & is.na(test$corr_temp), NA, test$species_full)
+# # test <- test %>%
+# #   filter(!is.na(species_full))
+#
+#
+# test$corr_precip <- ifelse(is.na(test$corr_precip), 0, test$corr_precip)
+# test$corr_sun <- ifelse(is.na(test$corr_sun), 0, test$corr_sun)
+# test$corr_temp <- ifelse(is.na(test$corr_temp), 0, test$corr_temp)
+# test$corr_precip_timing <- ifelse(is.na(test$corr_precip_timing), 10, test$corr_precip_timing)
+# test$corr_sun_timing <- ifelse(is.na(test$corr_sun_timing), 10, test$corr_sun_timing)
+# test$corr_temp_timing <- ifelse(is.na(test$corr_temp_timing), 10, test$corr_temp_timing)
+#
+# rownames(test) <- test$species_full
+# test <- test %>%
+#   select(!species_full)
+# # test <- na.omit(test)
+# # Determine number of clusters
+# wss <- (nrow(test)-1)*sum(apply(test,2,var))
+# for (i in 2:15) wss[i] <- sum(kmeans(test,
+#                                      centers=i)$withinss)
+# plot(1:15, wss, type="b", xlab="Number of Clusters",
+#      ylab="Within groups sum of squares")
+#
+#
+# fit <- kmeans(test, 3)
+# # get cluster means
+# aggregate(test, by=list(fit$cluster), FUN=mean)
+# # append cluster assignment
+# test <- data.frame(test, fit$cluster)
+
 # is.na didn't work in the big ifelse statement
 output$corr_precip <- ifelse(is.na(output$corr_precip), 0, output$corr_precip)
 output$corr_sun <- ifelse(is.na(output$corr_sun), 0, output$corr_sun)
@@ -178,8 +215,6 @@ output$corr_temp <- ifelse(output$corr_temp == 0, NA, output$corr_temp)
 #             sep = ",")
 
 output <- merge(overview, output, by = c("species_full","phenophase"), all.x = TRUE)
-
-
 
 
 #----------------------------------------------------------------------------------
@@ -482,6 +517,8 @@ p2 <- grid.arrange(arrangeGrob(p1,
                                                  vjust = -57)))
 
 
+ggsave("manuscript/leaf_phenology/figures/fig3.png", p2,
+       device = "png", width = 6.5, height = 5.3)
 
 # # stationarity and autocorr precip
 # adf.test(climate$precip) # p value lower then 0.05 = stationary

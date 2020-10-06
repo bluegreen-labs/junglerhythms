@@ -222,3 +222,6 @@ p_onset <- ggplot() +
              labeller = labeller(deciduousness = dec_labels, phenophase = pheno_labels))
 
 p_onset
+
+ggsave("manuscript/leaf_phenology/figures/fig2.png", p_onset,
+       device = "png", width = 8, height = 8)

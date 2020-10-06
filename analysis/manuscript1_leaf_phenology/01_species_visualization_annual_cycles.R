@@ -60,6 +60,7 @@ p_all <- circular_plot(data = data,
                        species_name = species_list,
                        title_name = "(a) evergreen                  (b) deciduous")
 
+ggsave("manuscript/leaf_phenology/figures/fig1.png", p_all, device = "png", width = 6, height = 12)
 
 
 
