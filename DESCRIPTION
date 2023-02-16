@@ -1,20 +1,34 @@
 Package: junglerhythms
 Type: Package
-Title: process and screen raw Zooniverse's Jungle Rhythms data
+Title: Process and screen raw Zooniverse's Jungle Rhythms data
 Version: 0.1.1
-Author: Koen Hufkens
-Maintainer: Koen Hufkens <koen.hufkens@gmail.com>
+Authors@R: c(person(
+               family = "Hufkens",
+               given = "Koen",
+               email = "koen.hufkens@gmail.com",
+               role = c("aut", "cre"),
+               comment = c(ORCID = "0000-0002-5070-8109")),
+             person(
+               family = "Kearsley",
+               given = "Elizabeth",
+               role = c("ctb"),
+               comment = c(ORCID = "")),
+            person(given = "BlueGreen Labs",
+              role = c("cph", "fnd"))
+           )
 Description: 
-	Gathers all the code necessary to process all the classification results
-	as contributed by citizen scientists on the Zooniverse Jungle Rhythms project.
+	This package gathers all the code necessary to process the classification results
+	as contributed by citizen scientists on the Zooniverse JungleRhythms project.
 Depends:
-    R (>= 3.4)
+    R (>= 4.2)
 Imports:
     MODISTools,
     jsonlite,
     raster,
     tidyverse,
     ggplot2,
+    gridExtra,
+    viridis,
     ggthemes
 License: AGPLv3
 Encoding: UTF-8

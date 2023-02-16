@@ -5,11 +5,6 @@
 #' @export
 #' @return ggplot object
 
-library(tidyverse)
-library(viridis)
-library(gridExtra)
-library(ggplot2)
-
 circular_linear_plot <- function(
   data,
   species_name = "Millettia laurentii",
@@ -19,6 +14,11 @@ circular_linear_plot <- function(
   leg_gradient = c(0,0.2,1),
   title_name = "(a) evergreen"
 ){
+
+  library(tidyverse)
+  library(viridis)
+  library(gridExtra)
+  library(ggplot2)
 
   #------------------------------------------------------------------------
   # data for circular plots
@@ -259,8 +259,6 @@ circular_linear_plot <- function(
   return(grid.arrange(p_lin, p_circ, widths = c(2,1.5)))
 }
 
-
-
 circular_plot <- function(
   data,
   species_name = "Millettia laurentii",
@@ -345,8 +343,6 @@ circular_plot <- function(
 
   plot(p_circ)
 }
-
-
 
 # p_deciduous <- circular_linear_plot(data,
 #                                     species_name = "Erythrophleum suaveolens",
