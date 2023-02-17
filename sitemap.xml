@@ -19,6 +19,15 @@
     <loc>/reference/bounding_box.html</loc>
   </url>
   <url>
+    <loc>/reference/circular_linear_plot.html</loc>
+  </url>
+  <url>
+    <loc>/reference/climate_ccf.html</loc>
+  </url>
+  <url>
+    <loc>/reference/consecutive_timeline_sp.html</loc>
+  </url>
+  <url>
     <loc>/reference/dist_point_to_line.html</loc>
   </url>
   <url>
@@ -49,6 +58,15 @@
     <loc>/reference/line_sections.html</loc>
   </url>
   <url>
+    <loc>/reference/luki_circular_linear_plot.html</loc>
+  </url>
+  <url>
+    <loc>/reference/missing_years.html</loc>
+  </url>
+  <url>
+    <loc>/reference/overview_stats.html</loc>
+  </url>
+  <url>
     <loc>/reference/panel_plot.html</loc>
   </url>
   <url>
@@ -62,6 +80,15 @@
   </url>
   <url>
     <loc>/reference/row_locations.html</loc>
+  </url>
+  <url>
+    <loc>/reference/spans_lookup.html</loc>
+  </url>
+  <url>
+    <loc>/reference/standlevel_phen.html</loc>
+  </url>
+  <url>
+    <loc>/reference/standlevel_phen_plotlevel.html</loc>
   </url>
   <url>
     <loc>/reference/summarize_annotations.html</loc>
