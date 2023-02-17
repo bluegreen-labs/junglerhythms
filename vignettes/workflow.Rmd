@@ -13,6 +13,10 @@ vignette: >
 
 The Jungle Rhythms workflow relies on manual template. In particular, it addresses the issue of outlining locations in a table which contain data, and reducing the complexity of the transcription. 
 
+```{r label="original", echo=FALSE, fig.cap="Orignal sheet with summary data"}
+knitr::include_graphics("https://raw.githubusercontent.com/khufkens/junglerhythms/master/vignettes/images/sheet.jpg")
+```
+
 ```{r label="template", echo=FALSE, fig.cap="Manual template outlines"}
 knitr::include_graphics("https://raw.githubusercontent.com/khufkens/junglerhythms/master/vignettes/images/outline.png")
 ```

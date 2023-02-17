@@ -4,8 +4,6 @@ This repository provides the basis for the Jungle Rhythms project's context, pre
 
 > Hufkens K. and Kearsley (2023). The Jungle Rhythms workflow: recovering historical tropical tree phenology data - a citizen science project https://doi.org/10.5281/zenodo.XYZ
 
-REFERENCE
-
 ## Introduction
 
 Jungle Rhythms transcribed old observations of tree life cycle events (flowering, leaf shedding, fruit dispersion), which are key to understanding a tree's functioning. The African rainforest, the second largest on Earth, covers ~630 million ha and stores up to 66 Pg of carbon. The forest is presently a persistent carbon sink, offsetting large amounts of human CO2 emissions. Drought events in tropical rainforests have the potential to alter forest structure. However, due to data scarcity, little is known on how droughts affect the structure and function of African rainforests. The Jungle Rhythms data provides us with key information on how sensitive tree species are to drought, and how this sensitivity might alter the structure and function of the forest as drought regimes change.
@@ -14,7 +12,7 @@ Jungle Rhythms transcribed old observations of tree life cycle events (flowering
 
 From 1937-1958 scientists stationed at the Yangambi research station in the Democratic Republic of the Congo made an effort to observe more than 2,000 trees on a weekly basis, writing down key life cycle events, e.g. fruit development, flowering and leaf shedding. All of these weekly observations were jotted down in little notebooks and finally summarized in large hand-drawn tables. In an effort to recover the key parts of this knowledge, which currently only exists on paper, and preserve the original copy, Jungle Rhythms will transcribe the summary tables. 
 
-![]("https://raw.githubusercontent.com/khufkens/junglerhythms/master/vignettes/images/sheet.jpg")
+![](articles/images/sheet.jpg)
 
 In addition, these unique data will tell us how tropical forests respond to changing patterns in temperature and rain. As such, the data will allow us to predict the future state of the forest using historical data. A good summary of the scope and value of the data is given by a write up on research activities of among others [the Jungle Rhythms project in The Guardian](https://www.theguardian.com/environment/2017/sep/22/long-lost-congo-notebooks-shed-light-how-trees-react-to-climate-change).
 
