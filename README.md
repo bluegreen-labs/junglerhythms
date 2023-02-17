@@ -2,7 +2,7 @@
 
 This repository provides the basis for the Jungle Rhythms project's context, pre- and post-processing. However, this repository can also serve as a template for other data recovery project. You can cite the code in this repository like this:
 
-> Hufkens K. and Kearsley (2023). The Jungle Rhythms workflow: recovering historical tropical tree phenology data - a citizen science project https://doi.org/10.5281/zenodo.XYZ
+> Hufkens K. and Kearsley (2023). The Jungle Rhythms workflow: recovering historical tropical tree phenology data - a citizen science project https://doi.org/10.5281/zenodo.7650294
 
 ## Introduction
 
