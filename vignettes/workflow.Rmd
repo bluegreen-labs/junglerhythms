@@ -19,7 +19,7 @@ knitr::include_graphics(here::here("vignettes/images/outline.png"))
 As such the workflow will generate data which only presents one unit of interest (a year) at a time for annotation, limiting the chance of propagating errors in incomplete or corrupted series. At the same time this makes the task easier to complete in informal settings, on a cellphone or a tablet rather than a computer.
 
 ```{r label="singleYear", echo=FALSE, fig.cap="A single year, cut out for processing"}
-knitr::include_graphics(here::here("vignettes/images/single_year.png"))
+knitr::include_graphics(here::here("vignettes/images/single_year.jpg"))
 ```
 
 ## Zooniverse project setup
