@@ -1,8 +1,11 @@
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7650295.svg)](https://doi.org/10.5281/zenodo.7650295)
+
 # The Jungle Rhythms workflow
 
 This repository provides the basis for the Jungle Rhythms project's context, pre- and post-processing. However, this repository can also serve as a template for other data recovery project. You can cite the code in this repository like this:
 
-> Hufkens K. and Kearsley (2023). The Jungle Rhythms workflow: recovering historical tropical tree phenology data - a citizen science project https://doi.org/10.5281/zenodo.XYZ
+> Hufkens K. and Kearsley E. (2023). The Jungle Rhythms workflow: recovering historical tropical tree phenology data - a citizen science project https://doi.org/10.5281/zenodo.7650294
 
 ## Introduction
 
@@ -36,4 +39,4 @@ For general information we refer to the vignettes on the [documenation site](htt
 
 # Acknowledgements
 
-This project was started as a personal by Koen Hufkens and BlueGreen Labs, but over the years has been supported by the National Science Foundation’s Macro-system Biology Program (awards EF-1065029 and EF-1702697), the Belgian Science Policy office COBECORE project (BELSPO; grant BR/175/A3/COBECORE) and the Marie Skłodowska-Curie Action (H2020 grant 797668).
+This project was started as a personal by Koen Hufkens and [BlueGreen Labs](https://bluegreenlabs.org), but over the years has been supported by the National Science Foundation’s Macro-system Biology Program (awards EF-1065029 and EF-1702697), the Belgian Science Policy office COBECORE project (BELSPO; grant BR/175/A3/COBECORE) and the Marie Skłodowska-Curie Action (H2020 grant 797668).
