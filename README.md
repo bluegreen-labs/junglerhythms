@@ -30,7 +30,7 @@ devtools::install_github("bluegreen-labs/junglerhythms")
 library("junglerhythms")
 ```
 
-For general information we refer to the vignettes on the [documenation site](https://bluegreen-labs.github.io/junglerhythms/).
+For general information we refer to the vignettes on the [documenation site](https://khufkens.github.io/junglerhythms/articles/).
 
 # Acknowledgements
 

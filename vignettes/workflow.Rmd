@@ -11,7 +11,16 @@ vignette: >
 
 ## Pre-processing
 
-The Jungle Rhythms workflow relies on manual template. In particular, it addresses the issue of outlining locations in a table which contain data, and reducing the complexity of the transcription. As such the workflow will generate data which only presents one unit of interest (a year) at a time for annotation, limiting the chance of propagating errors in incomplete or corrupted series. At the same time this makes the task easier to complete in informal settings, on a cellphone or a tablet rather than a computer.
+The Jungle Rhythms workflow relies on manual template. In particular, it addresses the issue of outlining locations in a table which contain data, and reducing the complexity of the transcription. 
+
+```{r label="template", echo=FALSE, fig.cap="Manual template outlines"}
+knitr::include_graphics("./images/outline.png")
+```
+As such the workflow will generate data which only presents one unit of interest (a year) at a time for annotation, limiting the chance of propagating errors in incomplete or corrupted series. At the same time this makes the task easier to complete in informal settings, on a cellphone or a tablet rather than a computer.
+
+```{r label="singleYear", echo=FALSE, fig.cap="A single year, cut out for processing"}
+knitr::include_graphics("./images/single_year.png")
+```
 
 ## Zooniverse project setup
 
@@ -20,5 +29,11 @@ The Jungle Rhythms project was run on the Zooniverse platform. The platform prov
 ## Post-processing
 
 Data was collected from the Zooniverse project builder interface as complex json file (but stored in the R specific `rds` format to save space). For each section shown to multiple citizen scientists we distilled the coordinates (i.e. timing) of phenology events through a number of basic geometry operations (line intersections, coordinate transformations etc). Functions in support of this post-processing are provided by this package and stored in the R folder. The processing workflow of this raw data is stored in the `data-raw` folder (published online in due course).
+
+```{r label="polygons", echo=FALSE, fig.cap="Individual annotations as made by citizen scientists, to be processed in consistent phenoloogy observations."}
+knitr::include_graphics("./images/polygon.png")
+```
+
+
 
 
