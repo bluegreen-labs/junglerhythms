@@ -1,21 +1,24 @@
-#' First function:
-#' Growing timelines of individuals during observation years with no single phenophase event.
-#' We keep the startyear as the first year during which any phenophase event is recorded
-#' and the endyear as the last year during which any phenophase event is recorded.
-#' Years within this timeline without phenophase events observed have been removed as missing.
-#' However, it is not unusual for these years without phenophase events to exist.
-#' Therefore we can still assume these years as observed but without events.
-#' To still be cautious about filling in these years, we only fill years part of 2 years of consecutive years without phenophase events.
+#' In the full dataset, for each individual, obervation years without phenophase events observed
+#' (leaf event, flowering, fruiting, seed dispersal) had been removed as missing.
+#' Thereby, some timelines of individuals do not have consecutive dates
+#' Here, these missing dates are filled with phenological value of NA, within the individual-specific start-end years
+#'
+#' There is an optio to fill small gaps with phenological value NA, based on the length of the missing dates:
+#' for example, it is not unusual for these years without phenophase events to exist.
+#' Therefore we could still assume these years as observed but without events.
+#' To still be cautious about filling in these years, you can select the size of gap of consecutive years without phenophase events
+#' (e.g. 2 years without observed events).
 #' If this is longer, we keep NA
 #'
 #' @param data junglerhythms data file
-#' @param species_name
+#' @param species_name list of species
 #' @param pheno only one phenophase
+#' @param gapfill_missingyears number of consecutive years with assumed observations without occured events that can be filled with zero
 #' @export
-#' @return datasets with filled gapyears
+#' @return datasets with full timelines at the individual level
 
 
-missing_year_gaps <- function(
+missing_years <- function(
   data = data,
   species_name = "Afzelia bipindensis",
   pheno = "leaf_turnover",
@@ -29,10 +32,6 @@ missing_year_gaps <- function(
       filter(species_full %in% species_name[j]) %>%
       filter(phenophase %in% pheno)
 
-# data_subset <- data2 %>%
-#   filter(species_full %in% "Afzelia bipindensis") %>%
-#   filter(phenophase == "leaf_dormancy") %>%
-#   filter(id %in% "2702")
     # convert date
     data_subset$date <- as.Date(paste(data_subset$year,
                                       round((data_subset$week*7.6)-7),sep="-"), "%Y-%j")
@@ -42,7 +41,7 @@ missing_year_gaps <- function(
 
     #---
     # grow dataset to full range:
-    # if consecutive years of missing data is 2 years -> fill with zero -> this needs to be done at ID level first
+    # if consecutive years of missing data <= max number of years years -> fill with zero -> this needs to be done at ID level
     #---
     individuals <- unique(data_subset$id)
     data_grow <- data.frame()

@@ -15,9 +15,8 @@ font_add_google(
   regular.wt = 300,
   bold.wt = 700)
 #----- source required files  -----------------------------------------
-source("analysis/remote_sensing_plot.R")
+source("analysis/manuscript1_leaf_phenology/08_remote_sensing_plot.R")
 source("R/event_length.R")
-source("R/timeline_gap_fill.R")
 source("R/standlevel_phen.R")
 source("R/standlevel_phen_plotlevel.R")
 #----------------------------------------------------------------------
@@ -39,7 +38,8 @@ minimum_siteyears = 10
 #----------------------------------------------------------------------
 #--------   Phenology data --------------------------------------------
 #----------------------------------------------------------------------
-data <- readRDS("data/jungle_rhythms_data_cleaned.rds")
+data <- readRDS("data/jungle_rhythms_data_manuscript_leaf_repro.rds")
+species_list <- unique(data$species_full)
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
@@ -93,15 +93,12 @@ total_basal_area_plot <- census_plot %>%
 # to get stand-level weighted means of phenological pattern
 # based on total species list
 #----------------------------------------------------------------------
-overview_dorm <- read.csv("data/SI_table2_dormancy.csv",
-                          header = TRUE,
-                          sep = ",",
-                          stringsAsFactors = FALSE)
-all_species_list <- overview_dorm$Species
-
 standlevel_full <- standlevel_phen(data = data,
-                                   species_list_dorm = all_species_list,
-                                   species_list_turn = all_species_list)
+                                   census_site = census_site,
+                                   total_basal_area_site = total_basal_area_site,
+                                   species_list_dorm = species_list,
+                                   species_list_turn = species_list,
+                                   minimum_siteyears = minimum_siteyears)
 
 #----------------------------------------------------------------------
 # use function standlevel_phen_plotlevel
@@ -109,10 +106,12 @@ standlevel_full <- standlevel_phen(data = data,
 # to get stand-level weighted means of phenological pattern
 # of plot-level phenological patterns
 #----------------------------------------------------------------------
-
 standlevel_full_plots <- standlevel_phen_plotlevel(data = data,
-                                                   species_list_dorm = all_species_list,
-                                                   species_list_turn = all_species_list)
+                                                   census_plot = census_plot,
+                                                   total_basal_area_plot = total_basal_area_plot,
+                                                   species_list_dorm = species_list,
+                                                   species_list_turn = species_list,
+                                                   minimum_siteyears = minimum_siteyears)
 
 standlevel_range <- standlevel_full_plots %>%
   group_by(week) %>%
@@ -133,7 +132,7 @@ p_combined_all <- ggplot() +
   annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 2.15, alpha = .1) + # jan - febr
   annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 2.15, alpha = .1) + # jun - jul
   annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 2.15, alpha = .1) + # dec
-  annotate("text", x = 37.3, y = 1.55, label = "129 species\n91.2% BA", family = "Lato", color = "#22211d", hjust = 0) +
+  annotate("text", x = 37.6, y = 1.55, label = "129 species\n91.2% BA", family = "Lato", color = "#22211d", hjust = 0) +
 
   # dormancy
   geom_ribbon(data = standlevel_range,
@@ -156,9 +155,8 @@ p_combined_all <- ggplot() +
              col="#018571",
              shape = 1,
              stroke = 1.3) +
-
-scale_colour_manual(values = c("line1" = "#8c510a", "line2" = "#018571"),
-                    labels = c(" dormacy   "," turnover   ")) +
+  scale_colour_manual(values = c("line1" = "#8c510a", "line2" = "#018571"),
+                      labels = c(" senescence   "," turnover   ")) +
   scale_x_continuous(limits = c(1,49),
                      breaks = seq(1,48,4),
                      labels = month.abb) +
@@ -177,14 +175,14 @@ scale_colour_manual(values = c("line1" = "#8c510a", "line2" = "#018571"),
         axis.text.x = element_blank(),
         axis.title.x = element_blank(),
         axis.title.y = element_text(vjust = 3),
-        legend.position = c(0.85,0.9),
+        legend.position = c(0.82,0.9),
         legend.title = element_blank(),
         legend.key = element_rect(colour = "transparent", fill = "transparent"),
         legend.background = element_rect(fill = "transparent", colour = NA),
         legend.text = element_text(size = 11),
         plot.margin = unit(c(0,0,0,0.5),"cm")
   )
-p_combined_all
+# p_combined_all
 
 p_precip <- ggplot(climate) +
   annotate("rect", xmin = 0.5, xmax = 2.5, ymin = 0, ymax = 330, alpha = .1) + # jan - febr
@@ -311,6 +309,8 @@ p_tmax$widths <-p_combined_all$widths
 
 p_all <- grid.arrange(p_combined_all, p_modis, p_tmax, p_sun, p_precip, heights = c(4,4,1.2,1.2,4))#c(4,4,1,1,4))
 
+ggsave("manuscript/leaf_phenology/figures/fig4.png", p_all,
+       device = "png", width = 4.5, height = 8.5)
 
 # #-----------------------------------------------------------------------
 # #-----------------------------------------------------------------------

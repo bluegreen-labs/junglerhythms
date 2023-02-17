@@ -2,10 +2,10 @@
 #' If missing years within a timeline, then only the longest consecutive timeline is kept.
 #'
 #' @param data junglerhythms data file
-#' @param species_name
+#' @param species_name list of species
 #' @param pheno only one phenophase
 #' @export
-#' @return datasets with filled gapyears
+#' @return dataframe timelines at species-level, no gaps
 
 
 consecutive_timeline_sp <- function(
@@ -21,7 +21,6 @@ consecutive_timeline_sp <- function(
       filter(species_full %in% species_name[j]) %>%
       filter(phenophase %in% pheno)
 
-
     #-------------------
     # SPECIES LEVEL
     # average by date
@@ -29,7 +28,7 @@ consecutive_timeline_sp <- function(
     data_sp <- data_subset %>%
       group_by(date) %>%
       dplyr::summarise(mean_value = mean(value,na.rm=T))
-                       # scaled_value = ifelse(any(value > 0), 1, 0))
+
     data_sp$mean_value[is.nan(data_sp$mean_value)] <- NA
     data_sp$scaled_value <- ifelse(data_sp$mean_value > 0, 1,
                                    ifelse(data_sp$mean_value == 0, 0, NA))

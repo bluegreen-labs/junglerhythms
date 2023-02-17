@@ -1,6 +1,6 @@
 #----- reset your R session. -----------------------------------------
 rm(list=ls())
-# graphics.off()
+graphics.off()
 #----- load required packages ----------------------------------------
 library(tidyverse)
 library(ggplot2)
@@ -16,9 +16,8 @@ font_add_google(
   regular.wt = 300,
   bold.wt = 700)
 #----- source required files  -----------------------------------------
-source("analysis/remote_sensing_plot.R")
+source("analysis/manuscript1_leaf_phenology/08_remote_sensing_plot.R")
 source("R/event_length.R")
-source("R/timeline_gap_fill.R")
 source("R/standlevel_phen.R")
 source("R/standlevel_phen_plotlevel.R")
 #----------------------------------------------------------------------
@@ -40,7 +39,7 @@ minimum_siteyears = 10
 #----------------------------------------------------------------------
 #--------   Phenology data --------------------------------------------
 #----------------------------------------------------------------------
-data <- readRDS("data/jungle_rhythms_data_cleaned.rds")
+data <- readRDS("data/jungle_rhythms_data_manuscript_leaf_repro.rds")
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
@@ -93,111 +92,129 @@ total_basal_area_plot <- census_plot %>%
 # to get stand-level weighted means of phenological pattern
 # based on subsetted species lists
 #----------------------------------------------------------------------
-
 overview_dorm <- read.csv("data/SI_table2_dormancy.csv",
                           header = TRUE,
                           sep = ",",
                           stringsAsFactors = FALSE)
-overview_dorm$dorm_groups <- ifelse(overview_dorm$dorm_groups == "", NA, overview_dorm$dorm_groups)
-
+# overview_dorm$groups <- ifelse(overview_dorm$groups == "", NA, overview_dorm$groups)
+overview_dorm$groups <- ifelse(overview_dorm$total_nr_events == 0, "no_dormancy", overview_dorm$groups)
 # annual with different climate groups
 dorm_ann1 <- overview_dorm %>%
-  filter(cyclicity_dormancy == "annual") %>%
-  filter(dorm_groups == "group1")
+  filter(cycle_category %in% c("annual","sub-annual")) %>%
+  filter(groups == "group1")
 dorm_ann2 <- overview_dorm %>%
-  filter(cyclicity_dormancy == "annual") %>%
-  filter(dorm_groups == "group2")
+  filter(cycle_category %in% c("annual","sub-annual")) %>%
+  filter(groups == "group2")
 dorm_ann_nogroup <- overview_dorm %>%
-  filter(cyclicity_dormancy == "annual") %>%
-  filter(!dorm_groups %in% c("group1","group2"))
+  filter(cycle_category %in% c("annual","sub-annual")) %>%
+  filter(!groups %in% c("group1","group2","no_dormancy"))
 # annual with different climate groups
 dorm_group1 <- overview_dorm %>%
-  filter(!cyclicity_dormancy %in% c("annual")) %>%
-  filter(dorm_groups == "group1")
+  filter(!cycle_category %in% c("annual","sub-annual")) %>%
+  filter(groups == "group1")
 dorm_group2 <- overview_dorm %>%
-  filter(!cyclicity_dormancy %in% c("annual")) %>%
-  filter(dorm_groups == "group2")
+  filter(!cycle_category %in% c("annual","sub-annual")) %>%
+  filter(groups == "group2")
 dorm_rest <- overview_dorm %>%
-  filter(!cyclicity_dormancy %in% c("annual")) %>%
-  filter(!dorm_groups %in% c("group1","group2"))
+  filter(!cycle_category %in% c("annual","sub-annual")) %>%
+  filter(!groups %in% c("group1","group2","no_dormancy"))
 
 
-overview_turn <- read.csv("data/SI_table2_turnover.csv",
+overview_turn <- read.csv("data/SI_table3_turnover.csv",
                           header = TRUE,
                           sep = ",",
                           stringsAsFactors = FALSE)
-overview_turn$turn_groups <- ifelse(overview_turn$turn_groups == "", NA, overview_turn$turn_groups)
+# overview_turn$turn_groups <- ifelse(overview_turn$turn_groups == "", NA, overview_turn$turn_groups)
+overview_turn$groups <- ifelse(overview_turn$total_nr_events == 0, "no_turnover", overview_turn$groups)
 
 # annual with different climate groups
 turn_ann1 <- overview_turn %>%
-  filter(cyclicity_turnover == "annual") %>%
-  filter(turn_groups == "group1")
+  filter(cycle_category %in% c("annual","sub-annual")) %>%
+  filter(groups == "group1")
 turn_ann2 <- overview_turn %>%
-  filter(cyclicity_turnover == "annual") %>%
-  filter(turn_groups == "group2")
+  filter(cycle_category %in% c("annual","sub-annual")) %>%
+  filter(groups == "group2")
 turn_ann_nogroup <- overview_turn %>%
-  filter(cyclicity_turnover == "annual") %>%
-  filter(!turn_groups %in% c("group1","group2"))
+  filter(cycle_category %in% c("annual","sub-annual")) %>%
+  filter(!groups %in% c("group1","group2","no_turnover"))
 # annual with different climate groups
 turn_group1 <- overview_turn %>%
-  filter(!cyclicity_turnover %in% c("annual")) %>%
-  filter(turn_groups == "group1")
+  filter(!cycle_category %in% c("annual","sub-annual")) %>%
+  filter(groups == "group1")
 turn_group2 <- overview_turn %>%
-  filter(!cyclicity_turnover %in% c("annual")) %>%
-  filter(turn_groups == "group2")
+  filter(!cycle_category %in% c("annual","sub-annual")) %>%
+  filter(groups == "group2")
 turn_rest <- overview_turn %>%
-  filter(!cyclicity_turnover %in% c("annual")) %>%
-  filter(!turn_groups %in% c("group1","group2"))
+  filter(!cycle_category %in% c("annual","sub-annual")) %>%
+  filter(!groups %in% c("group1","group2","no_turnover"))
 
-dorm_ann1 <- dorm_ann1$Species
-dorm_ann2 <- dorm_ann2$Species
-dorm_ann_nogroup <- dorm_ann_nogroup$Species
-dorm_group1 <- dorm_group1$Species
-dorm_group2 <- dorm_group2$Species
-dorm_rest <- dorm_rest$Species
+dorm_ann1 <- dorm_ann1$species_full
+dorm_ann2 <- dorm_ann2$species_full
+dorm_ann_nogroup <- dorm_ann_nogroup$species_full
+dorm_group1 <- dorm_group1$species_full
+dorm_group2 <- dorm_group2$species_full
+dorm_rest <- dorm_rest$species_full
 
-turn_ann1 <- turn_ann1$Species
-turn_ann2 <- turn_ann2$Species
-turn_ann_nogroup <- turn_ann_nogroup$Species
-turn_group1 <- turn_group1$Species
-turn_group2 <- turn_group2$Species
-turn_rest <- turn_rest$Species
+turn_ann1 <- turn_ann1$species_full
+turn_ann2 <- turn_ann2$species_full
+turn_ann_nogroup <- turn_ann_nogroup$species_full
+turn_group1 <- turn_group1$species_full
+turn_group2 <- turn_group2$species_full
+turn_rest <- turn_rest$species_full
 
 #----------------------------------------------------------------------
 # annual, group 1
 standlevel_ann_group1 <- standlevel_phen(data = data,
+                                         census_site = census_site,
+                                         total_basal_area_site = total_basal_area_site,
                                          species_list_dorm = dorm_ann1,
-                                         species_list_turn = turn_ann1)
+                                         species_list_turn = turn_ann1,
+                                         minimum_siteyears = minimum_siteyears)
 standlevel_ann_group1$cycl <- "annual"
 standlevel_ann_group1$groups <- "group1"
 # annual, group 2
 standlevel_ann_group2 <- standlevel_phen(data = data,
+                                         census_site = census_site,
+                                         total_basal_area_site = total_basal_area_site,
                                          species_list_dorm = dorm_ann2,
-                                         species_list_turn = turn_ann2)
+                                         species_list_turn = turn_ann2,
+                                         minimum_siteyears = minimum_siteyears)
 standlevel_ann_group2$cycl <- "annual"
 standlevel_ann_group2$groups <- "group2"
 # annual, no_class
 standlevel_ann_nogroup <- standlevel_phen(data = data,
+                                          census_site = census_site,
+                                          total_basal_area_site = total_basal_area_site,
                                           species_list_dorm = dorm_ann_nogroup,
-                                          species_list_turn = turn_ann_nogroup)
+                                          species_list_turn = turn_ann_nogroup,
+                                          minimum_siteyears = minimum_siteyears)
 standlevel_ann_nogroup$cycl <- "annual"
 standlevel_ann_nogroup$groups <- "no_class"
 # no cyc, group 1
 standlevel_group1 <- standlevel_phen(data = data,
+                                     census_site = census_site,
+                                     total_basal_area_site = total_basal_area_site,
                                      species_list_dorm = dorm_group1,
-                                     species_list_turn = turn_group1)
+                                     species_list_turn = turn_group1,
+                                     minimum_siteyears = minimum_siteyears)
 standlevel_group1$cycl <- "no"
 standlevel_group1$groups <- "group1"
 # no cyc, group 2
 standlevel_group2 <- standlevel_phen(data = data,
+                                     census_site = census_site,
+                                     total_basal_area_site = total_basal_area_site,
                                      species_list_dorm = dorm_group2,
-                                     species_list_turn = turn_group2)
+                                     species_list_turn = turn_group2,
+                                     minimum_siteyears = minimum_siteyears)
 standlevel_group2$cycl <- "no"
 standlevel_group2$groups <- "group2"
 # no cyc, no_class
 standlevel_noclim <- standlevel_phen(data = data,
+                                     census_site = census_site,
+                                     total_basal_area_site = total_basal_area_site,
                                       species_list_dorm = dorm_rest,
-                                      species_list_turn = turn_rest)
+                                      species_list_turn = turn_rest,
+                                     minimum_siteyears = minimum_siteyears)
 standlevel_noclim$cycl <- "no"
 standlevel_noclim$groups <- "no_class"
 
@@ -216,8 +233,11 @@ standlevel_subsets <- rbind(standlevel_ann_group1,
 #----------------------------------------------------------------------
 # annual, group 1
 standlevel_ann_group1_plot <- standlevel_phen_plotlevel(data = data,
+                                                        census_plot = census_plot,
+                                                        total_basal_area_plot = total_basal_area_plot,
                                                         species_list_dorm = dorm_ann1,
-                                                        species_list_turn = turn_ann1)
+                                                        species_list_turn = turn_ann1,
+                                                        minimum_siteyears = minimum_siteyears)
 
 standlevel_ann_group1_range <- standlevel_ann_group1_plot %>%
   group_by(week) %>%
@@ -229,8 +249,11 @@ standlevel_ann_group1_range$cycl <- "annual"
 standlevel_ann_group1_range$groups <- "group1"
 # annual, group2
 standlevel_ann_group2_plot <- standlevel_phen_plotlevel(data = data,
+                                                        census_plot = census_plot,
+                                                        total_basal_area_plot = total_basal_area_plot,
                                                         species_list_dorm = dorm_ann2,
-                                                        species_list_turn = turn_ann2)
+                                                        species_list_turn = turn_ann2,
+                                                        minimum_siteyears = minimum_siteyears)
 
 standlevel_ann_group2_range <- standlevel_ann_group2_plot %>%
   group_by(week) %>%
@@ -244,8 +267,11 @@ standlevel_ann_group2_range$turn_min <- ifelse(is.na(standlevel_ann_group2_range
 standlevel_ann_group2_range$dorm_min <- ifelse(is.na(standlevel_ann_group2_range$dorm_min), 0, standlevel_ann_group2_range$dorm_min)
 # annual, no_class
 standlevel_ann_nogroup_plot <- standlevel_phen_plotlevel(data = data,
+                                                         census_plot = census_plot,
+                                                         total_basal_area_plot = total_basal_area_plot,
                                                          species_list_dorm = dorm_ann_nogroup,
-                                                         species_list_turn = turn_ann_nogroup)
+                                                         species_list_turn = turn_ann_nogroup,
+                                                         minimum_siteyears = minimum_siteyears)
 
 standlevel_ann_nogroup_range <- standlevel_ann_nogroup_plot %>%
   group_by(week) %>%
@@ -257,8 +283,11 @@ standlevel_ann_nogroup_range$cycl <- "annual"
 standlevel_ann_nogroup_range$groups <- "no_class"
 # no cyc, group 1
 standlevel_group1_plot <- standlevel_phen_plotlevel(data = data,
+                                                    census_plot = census_plot,
+                                                    total_basal_area_plot = total_basal_area_plot,
                                                     species_list_dorm = dorm_group1,
-                                                    species_list_turn = turn_group1)
+                                                    species_list_turn = turn_group1,
+                                                    minimum_siteyears = minimum_siteyears)
 
 standlevel_group1_range <- standlevel_group1_plot %>%
   group_by(week) %>%
@@ -270,8 +299,11 @@ standlevel_group1_range$cycl <- "no"
 standlevel_group1_range$groups <- "group1"
 # no cyc, group 2
 standlevel_group2_plot <- standlevel_phen_plotlevel(data = data,
+                                                    census_plot = census_plot,
+                                                    total_basal_area_plot = total_basal_area_plot,
                                                     species_list_dorm = dorm_group2,
-                                                    species_list_turn = turn_group2)
+                                                    species_list_turn = turn_group2,
+                                                    minimum_siteyears = minimum_siteyears)
 
 standlevel_group2_range <- standlevel_group2_plot %>%
   group_by(week) %>%
@@ -283,8 +315,11 @@ standlevel_group2_range$cycl <- "no"
 standlevel_group2_range$groups <- "group2"
 # no cyc, no_class
 standlevel_noclim_plot <- standlevel_phen_plotlevel(data = data,
+                                                    census_plot = census_plot,
+                                                    total_basal_area_plot = total_basal_area_plot,
                                                     species_list_dorm = dorm_rest,
-                                                    species_list_turn = turn_rest)
+                                                    species_list_turn = turn_rest,
+                                                    minimum_siteyears = minimum_siteyears)
 
 standlevel_noclim_range <- standlevel_noclim_plot %>%
   group_by(week) %>%
@@ -312,13 +347,13 @@ ranges_subsets <- rbind(standlevel_ann_group1_range,
 # # percentage ba
 # census_site$perc_ba <- census_site$basal_area_site / total_basal_area_site *100
 # test <- census_site %>%
-#   filter(species_full %in% turn_rest) %>%
+#   filter(species_full %in% dorm_rest) %>% # dorm_ann1, dorm_ann2, dorm_group1, dorm_ann_nogroup, dorm_rest
 #   arrange(desc(perc_ba)) %>%
 #   mutate(cumsum = cumsum(perc_ba))
 # test
 # # area under curve
-# AUC(standlevel_rest$week, standlevel_rest$ss_turn, method="step") #trapezoid
-# AUC(standlevel_rest$week, standlevel_rest$ss, method="step")
+# AUC(standlevel_noclim$week, standlevel_noclim$ss_turn, method="step") # standlevel_ann_group1, standlevel_group1, standlevel_ann_nogroup, standlevel_noclim
+# AUC(standlevel_noclim$week, standlevel_noclim$ss_dorm, method="step")
 
 #----------------------------------------------------------------------
 #----------------------------------------------------------------------
@@ -326,11 +361,13 @@ ranges_subsets <- rbind(standlevel_ann_group1_range,
 # manuscript - figure 5
 #----------------------------------------------------------------------
 #----------------------------------------------------------------------
+cycl.names <- c("annual" = "(sub-)annual", "no" = "non-annual")
+group.names <- c("group1" = "class 1\nin-phase: - prep; + sun / tmax", "group2" = "class 2\nlag: - sun / tmax","no_class" = "no class")
 
 p1 <- ggplot(data = standlevel_subsets) +
-  annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 1.61, alpha = .1) + # jan - febr
-  annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 1.61, alpha = .1) + # jun - jul
-  annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 1.61, alpha = .1) + # dec
+  annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 1.93, alpha = .1) + # jan - febr #1.61
+  annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 1.93, alpha = .1) + # jun - jul
+  annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 1.93, alpha = .1) + # dec
   # turnover
   geom_ribbon(data = ranges_subsets,
               aes(x = week, ymin = turn_min, ymax = turn_max), fill="#018571", alpha=0.3) +
@@ -350,11 +387,11 @@ p1 <- ggplot(data = standlevel_subsets) +
              size=2) +
 
   scale_colour_manual(values = c("line1" = "#8c510a", "line2" = "#018571"),
-                      labels = c(" dormacy   "," turnover   ")) +
+                      labels = c(" senescence   "," turnover   ")) +
   scale_x_continuous(limits = c(1,49),
                      breaks = seq(1,48,4),
                      labels = month.abb) +
-  scale_y_continuous(limits = c(0,1.61),
+  scale_y_continuous(limits = c(0,1.93),
                      breaks = c(0,0.5,1,1.5)) +
   labs(y = "% of canopy in phenophase",
        x = "") +
@@ -366,7 +403,7 @@ p1 <- ggplot(data = standlevel_subsets) +
         panel.grid.minor.y = element_blank(),
         panel.background = element_blank(),
         plot.background = element_rect(fill = 'white', colour = 'white'),
-        strip.text = element_text(size = 11),
+        strip.text = element_text(size = 10),
         strip.background = element_rect(fill="grey80"), #, linetype="solid", color="grey60",
         axis.line.x = element_blank(),
         axis.text.x = element_blank(),
@@ -374,42 +411,46 @@ p1 <- ggplot(data = standlevel_subsets) +
         axis.ticks.x = element_blank(),
         axis.ticks.y = element_blank(),
         axis.title.y = element_text(vjust = 3),
-        legend.position = c(0.1,0.95),
+        legend.position = c(0.9,0.87),
         legend.title = element_blank(),
         legend.key = element_rect(colour = "transparent", fill = "transparent"),
         legend.background = element_rect(fill = "transparent", colour = NA)
         # legend.text = element_text(size = 11)
         # plot.margin = unit(c(0,0,0,0.5),"cm")
   ) +
-  facet_grid(groups ~ cycl)
-# p1
+  facet_grid(groups ~ cycl,
+             labeller = labeller(cycl = cycl.names,
+                                 groups = group.names))
+p1
 
+
+# annual = annual + sub-annual
 ann_text1 <- data.frame(week = 21,
-                        ss_text = 1.4, #0.9
+                        ss_text = 1.7,
                         groups = c("group1","group1","group2","group2","no_class","no_class"),
                         cycl = c("annual","no","annual","no","annual","no"),
-                        notes = c("D: 6 sp, 1.7% BA, 10.5% AUC\nT: 7 sp, 4.2% BA, 19.2% AUC",
-                                  "D: 5 sp, 2.0% BA, 6.8% AUC\nT: 11 sp, 7.6% BA, 22.7% AUC",
-                                  "D: 2 sp, 2.0% BA, 21.2% AUC\nT: 2 sp, 0.1% BA, 0.2% AUC",
-                                  "D: 10 sp, 4.8% BA, 20.9% AUC\nT: 11 sp, 2.9% BA, 8.7% AUC",
-                                  "D: 0 sp\nT: 5 sp, 1.7% BA, 7.9% AUC",
-                                  "D: 106 sp, 80.7% BA, 40.5% AUC\nT: 93 sp, 74.0% BA, 41.4% AUC"))
-ann_segm <- data.frame(x = c(19.5, 23),
-                       y = c(0.35, 0.88),
-                       xend = c(23, 25.5),
-                       yend = c(0.88, 0.88),
+                        notes = c("D: 8 sp, 1.9% BA, 11.0% TC\nT: 10 sp, 11.3% BA, 36.6% TC",
+                                  "D: 3 sp, 1.8% BA, 6.3% TC\nT: 8 sp, 1.7% BA, 5.2% TC",
+                                  "D: 7 sp, 3.3% BA, 24.6% TC\nT: 3 sp, 0.3% BA, 1.7% TC",
+                                  "D: 5 sp, 3.5% BA, 17.5% TC\nT: 10 sp, 2.6% BA, 7.3% TC",
+                                  "D: 4 sp, 0.25% BA, 2.0% TC\nT: 8 sp, 2.1% BA, 10.2% TC",
+                                  "D: 54 sp, 57.7% BA, 38.6% TC\nT: 51 sp, 52.4% BA, 39.0% TC"))
+ann_segm <- data.frame(x = c(19.5, 24),
+                       y = c(0.35, 1.1),
+                       xend = c(24, 26.5),
+                       yend = c(1.1, 1.1),
                        groups = c("group1","group1"),
-                       cycl = c("no","no"))
+                       cycl = c("annual","annual"))
 ann_segm2 <- data.frame(x = c(13, 11),
                        y = c(1.2, 1.2),
                        xend = c(18.5, 13),
                        yend = c(0.7, 1.2),
                        groups = c("no_class","no_class"),
                        cycl = c("no","no"))
-ann_text2 <- data.frame(week = c(26.5, 1),
-                        ss_text = c(0.78, 1.1),
+ann_text2 <- data.frame(week = c(27.5, 1),
+                        ss_text = c(0.98, 1.1),
                         groups = c("group1","no_class"),
-                        cycl = c("no","no"),
+                        cycl = c("annual","no"),
                         notes = c("P. macrocarpus\n6.6% BA\nperiodically sub-annual",
                                   "S. zenkeri\n16.3% BA\nsingular event"))
 
@@ -489,4 +530,80 @@ p_modis1$widths <-p2$widths
 
 
 p_fig5 <- grid.arrange(p2, p_modis1, heights = c(3,1))
+
+ggsave("manuscript/leaf_phenology/figures/fig5.png", p_fig5,
+       device = "png", width = 8.5, height = 9.5)
+
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+# correlations between standlevel events and climate
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+
+# head(standlevel_subsets)
+#
+# standlevel_subsets$Month <- ifelse(standlevel_subsets$week %in% c(1,2,3,4),1,
+#                          ifelse(standlevel_subsets$week %in% c(5,6,7,8),2,
+#                                 ifelse(standlevel_subsets$week %in% c(9,10,11,12),3,
+#                                        ifelse(standlevel_subsets$week %in% c(13,14,15,16),4,
+#                                               ifelse(standlevel_subsets$week %in% c(17,18,19,20),5,
+#                                                      ifelse(standlevel_subsets$week %in% c(21,22,23,24),6,
+#                                                             ifelse(standlevel_subsets$week %in% c(25,26,27,28),7,
+#                                                                    ifelse(standlevel_subsets$week %in% c(29,30,31,32),8,
+#                                                                           ifelse(standlevel_subsets$week %in% c(33,34,35,36),9,
+#                                                                                  ifelse(standlevel_subsets$week %in% c(37,38,39,40),10,
+#                                                                                         ifelse(standlevel_subsets$week %in% c(41,42,43,44),11,
+#                                                                                                ifelse(standlevel_subsets$week %in% c(45,46,47,48),12,
+#                                                                                                       NA))))))))))))
+#
+# standlevel_subsets_month <- standlevel_subsets %>%
+#   group_by(Month, cycl, groups) %>%
+#   summarise(dormancy_stand = mean(ss_dorm, na.rm = T),
+#             turnover_stand = mean(ss_turn))
+#
+# climate.corr <- merge(climate, standlevel_subsets_month, by = c("Month"), all.x = TRUE)
+#
+# climate.corr <- climate.corr %>%
+#   filter(cycl == "no",
+#          groups == "group2")
+#
+#
+# # # turnover
+# # cor.test(climate.corr$insol_JR, climate.corr$turnover_stand, method = 'pearson')
+# # cor.test(climate.corr$prec_JR, climate.corr$turnover_stand, method = 'pearson')
+# # cor.test(climate.corr$tmax_JR, climate.corr$turnover_stand, method = 'pearson')
+# #
+# #
+# # # dormancy
+# # cor.test(climate.corr$insol_JR, climate.corr$dormancy_stand, method = 'pearson')
+# # cor.test(climate.corr$prec_JR, climate.corr$dormancy_stand, method = 'pearson')
+# # cor.test(climate.corr$tmax_JR, climate.corr$dormancy_stand, method = 'pearson')
+#
+# # # MODIS
+# # VI_s$date <- as.Date(VI_s$doy, origin="2010-12-31")
+# # VI_s$Month <- format(as.Date(VI_s$date), "%m")
+# # modis <- VI_s %>%
+# #   group_by(Month)%>%
+# #   dplyr::summarise(EVIm = mean(EVI))
+# # modis$Month <- as.numeric(modis$Month)
+#
+# climate.corr <- merge(climate.corr, modis, by = c("Month"), all.x = TRUE)
+#
+# # cor.test(climate.corr$EVIm, climate.corr$prec_all, method = 'pearson')
+# # cor.test(climate.corr$EVIm, climate.corr$insol_all, method = 'pearson')
+# # cor.test(climate.corr$EVIm, climate.corr$PAR_Ygb_Hauser, method = 'pearson')
+# # cor.test(climate.corr$EVIm, climate.corr$tmax_JR, method = 'pearson')
+#
+# cor.test(climate.corr$EVIm, climate.corr$dormancy_stand, method = 'pearson')
+# cor.test(climate.corr$EVIm, climate.corr$turnover_stand, method = 'pearson')
+
+
+
 

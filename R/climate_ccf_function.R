@@ -1,12 +1,12 @@
-#' coherence analysis (co-fourier analysis) with climate data
+#' cross-correlations species pheno data with climate data
 #'
-#' @param data timelines of consecutive years, already at species level
-#' @param climate
-#' @param climate.variable precip, sun or temp
-#' @param species_name
-#' @param pheno
+#' @param data junglerhythms data file
+#' @param climate yangambi climate data
+#' @param climate.variable precip, sun or temp (one variable at a time)
+#' @param species_name list of species
+#' @param pheno only one phenophase
 #' @export
-#' @return significant correlation values and timing
+#' @return dataframe significant correlation values and timing
 
 
 
@@ -21,8 +21,8 @@ climate_ccf <- function(
   colnames(ccf_output_clim)[1] <- "species_full"
   colnames(ccf_output_clim)[2:14] <- c("t-6","t-5","t-4","t-3","t-2","t-1","t","t+1","t+2","t+3","t+4","t+5","t+6")
   colnames(ccf_output_clim)[15] <- "ci"
-  colnames(ccf_output_clim)[16] <- paste("corr", pheno, climate.variable, sep = "_")
-  colnames(ccf_output_clim)[17] <- paste("corr", pheno, climate.variable, "timing", sep = "_")
+  colnames(ccf_output_clim)[16] <- paste("corr", climate.variable, sep = "_")
+  colnames(ccf_output_clim)[17] <- paste("corr", climate.variable, "timing", sep = "_")
 
   for (j in 1:length(species_name)){
     data_subset <- data %>%
@@ -39,7 +39,7 @@ climate_ccf <- function(
 
     # average by year_month
     data_sp_monthly <- data_subset %>%
-      group_by(total_nr_events_leaf_turnover, total_nr_events_leaf_dormancy,
+      group_by(total_nr_events,
                year, date_monthly) %>%
       dplyr::summarise(monthly_value = mean(scaled_value)) %>%
       dplyr::arrange(date_monthly)
@@ -66,12 +66,7 @@ climate_ccf <- function(
     }
 
     # nr of events
-    if(pheno == "leaf_turnover"){
-      nr_events <- max(data_sp_monthly$total_nr_events_leaf_turnover)
-    } else if(pheno == "leaf_dormancy"){
-      nr_events <- max(data_sp_monthly$total_nr_events_leaf_dormancy)
-    }
-
+    nr_events <- max(data_sp_monthly$total_nr_events)
 
     ci <- 0.95
     # cross-correlation + confidence interval
@@ -91,34 +86,6 @@ climate_ccf <- function(
 
   }
 
-  # if(climate.variable == "precip"){
-  #   ccf_output_clim$corr <- ifelse(abs(ccf_output_clim[,8]) > ccf_output_clim$ci, ccf_output_clim[,8], # 0
-  #                                  ifelse(abs(ccf_output_clim[,7]) > ccf_output_clim$ci, ccf_output_clim[,7], # t-1
-  #                                         ifelse(abs(ccf_output_clim[,6]) > ccf_output_clim$ci, ccf_output_clim[,6], # t-2
-  #                                                ifelse(abs(ccf_output_clim[,5]) > ccf_output_clim$ci, ccf_output_clim[,5], # t-3
-  #                                                       NA))))
-  #   ccf_output_clim$corr.timing <- ifelse(abs(ccf_output_clim[,8]) > ccf_output_clim$ci, "0", # 0
-  #                                         ifelse(abs(ccf_output_clim[,7]) > ccf_output_clim$ci, "-1", # t-1
-  #                                                ifelse(abs(ccf_output_clim[,6]) > ccf_output_clim$ci, "-2", # t-2
-  #                                                       ifelse(abs(ccf_output_clim[,5]) > ccf_output_clim$ci, "-3", # t-3
-  #                                                              NA))))
-  # } else if(climate.variable %in% c("sun", "temp")){
-  #   ccf_output_clim$corr <- ifelse(abs(ccf_output_clim[,8]) > ccf_output_clim$ci, ccf_output_clim[,8], # 0
-  #                                  ifelse(abs(ccf_output_clim[,7]) > ccf_output_clim$ci, ccf_output_clim[,7], # t-1
-  #                                         ifelse(abs(ccf_output_clim[,6]) > ccf_output_clim$ci, ccf_output_clim[,6], # t-2
-  #                                                ifelse(abs(ccf_output_clim[,5]) > ccf_output_clim$ci, ccf_output_clim[,5], # t-3
-  #                                                       ifelse(abs(ccf_output_clim[,4]) > ccf_output_clim$ci, ccf_output_clim[,4], # t-4
-  #                                                              ifelse(abs(ccf_output_clim[,3]) > ccf_output_clim$ci, ccf_output_clim[,3], # t-5
-  #                                                                     NA))))))
-  #   ccf_output_clim$corr.timing <- ifelse(abs(ccf_output_clim[,8]) > ccf_output_clim$ci, "0", # 0
-  #                                         ifelse(abs(ccf_output_clim[,7]) > ccf_output_clim$ci, "-1", # t-1
-  #                                                ifelse(abs(ccf_output_clim[,6]) > ccf_output_clim$ci, "-2", # t-2
-  #                                                       ifelse(abs(ccf_output_clim[,5]) > ccf_output_clim$ci, "-3", # t-3
-  #                                                              ifelse(abs(ccf_output_clim[,4]) > ccf_output_clim$ci, "-4", # t-4
-  #                                                                     ifelse(abs(ccf_output_clim[,3]) > ccf_output_clim$ci, "-5", # t-5
-  #                                                                            NA))))))
-  # }
-
   ccf_output_clim$corr <- ifelse(abs(ccf_output_clim[,8]) > ccf_output_clim$ci, ccf_output_clim[,8], # 0
                                  ifelse(abs(ccf_output_clim[,7]) > ccf_output_clim$ci, ccf_output_clim[,7], # t-1
                                         ifelse(abs(ccf_output_clim[,6]) > ccf_output_clim$ci, ccf_output_clim[,6], # t-2
@@ -130,18 +97,14 @@ climate_ccf <- function(
                                                       ifelse(abs(ccf_output_clim[,5]) > ccf_output_clim$ci, "-3", # t-3
                                                              NA))))
 
-
-
   ccf_output_clim <- ccf_output_clim %>%
     dplyr::select(species_full,
                   corr,
                   corr.timing)
-  # newname <- paste("corr", pheno, climate.variable, sep = "_")
-  # ccf_output_clim <- ccf_output_clim %>%
-  #   dplyr::rename(newname = corr.timing)
 
-  colnames(ccf_output_clim)[2] <- paste("corr", pheno, climate.variable, sep = "_")
-  colnames(ccf_output_clim)[3] <- paste("corr", pheno, climate.variable, "timing", sep = "_")
+  colnames(ccf_output_clim)[2] <- paste("corr", climate.variable, sep = "_")
+  colnames(ccf_output_clim)[3] <- paste("corr", climate.variable, "timing", sep = "_")
+  ccf_output_clim$phenophase <- pheno
 
   return(ccf_output_clim)
 

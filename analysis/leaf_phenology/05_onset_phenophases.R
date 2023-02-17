@@ -15,7 +15,6 @@ font_add_google(
   bold.wt = 700)
 #----- source required functions --------------------------------------
 source("R/event_length.R")
-source("R/timeline_gap_fill.R")
 #----------------------------------------------------------------------
 
 # Suppress summarise info
@@ -26,43 +25,37 @@ options(dplyr.summarise.inform = FALSE)
 #----------------------------------------------------------------------
 #--------   Phenology data --------------------------------------------
 #----------------------------------------------------------------------
-data <- readRDS("data/jungle_rhythms_data_cleaned.rds")
+data <- readRDS("data/jungle_rhythms_data_manuscript_leaf_repro.rds")
+species_list <- unique(data$species_full)
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
-#-------- get the species list ----------------------------------------
+#-------- get some metadata on the species ----------------------------
+#-------- will be used in the figure
+#----------- intra-species variability to sort
+#----------- fourier-based cyclicity as point shape
 #----------------------------------------------------------------------
-overview <- read.csv("data/species_meta_data_phase2.csv",
+overview <- read.csv("data/summ_species_pheno_characteristics.csv",
                      header = TRUE,
                      sep = ",",
                      stringsAsFactors = FALSE)
+fourier_dorm <- read.csv("data/fourier_leaf_dormancy.csv",
+                         header = TRUE,
+                         sep = ",",
+                         stringsAsFactors = FALSE)
+fourier_turn <- read.csv("data/fourier_leaf_turnover.csv",
+                         header = TRUE,
+                         sep = ",",
+                         stringsAsFactors = FALSE)
+fourier <- rbind(fourier_dorm, fourier_turn)
+overview <- merge(overview, fourier, by = c("species_full","phenophase"), all.x = TRUE)
 
 overview <- overview %>%
   select(species_full,
          deciduousness,
-         basal_area_site,
-         sd_intrasp_onset_leaf_dormancy_weeks,
-         sd_intrasp_onset_leaf_turnover_weeks)
-
-#----------------------------------------------------------------------
-#-- for this species list at ID level: --------------------------------
-#-- get full range timelines ------------------------------------------
-#----------------------------------------------------------------------
-species_list <- overview$species_full
-timelines_dorm <- missing_year_gaps(data = data,
-                                    species_name = species_list,
-                                    pheno = "leaf_dormancy",
-                                    gapfill_missingyears = 0)
-timelines_turn <- missing_year_gaps(data = data,
-                                    species_name = species_list,
-                                    pheno = "leaf_turnover",
-                                    gapfill_missingyears = 0)
-data_timeline <- rbind(timelines_dorm, timelines_turn)
-#----------------------------------------------------------------------
-rm(timelines_dorm, timelines_turn)
-#----------------------------------------------------------------------
-data_timeline <- merge(data_timeline, overview, by = "species_full", all.x = TRUE)
-
+         phenophase,
+         sd_intrasp_onset_weeks,
+         cycle_category)
 
 #--------------------------------------------------------------------------
 #--------------------------------------------------------------------------
@@ -73,10 +66,10 @@ data_timeline <- merge(data_timeline, overview, by = "species_full", all.x = TRU
 #--------------------------------------------------------------------------
 #--------------------------------------------------------------------------
 # use function event_length to get the starting week of an event
-transition_dates_turnover <- event_length(data = data_timeline,
+transition_dates_turnover <- event_length(data = data,
                                           species_name = species_list,
                                           pheno = "leaf_turnover")
-transition_dates_dormancy <- event_length(data = data_timeline,
+transition_dates_dormancy <- event_length(data = data,
                                           species_name = species_list,
                                           pheno = "leaf_dormancy")
 transition_dates <- rbind(transition_dates_turnover, transition_dates_dormancy)
@@ -91,8 +84,6 @@ transition_dates <- transition_dates %>%
 onset <- transition_dates %>%
   group_by(species_full, phenophase) %>%
   dplyr::summarise(
-    mean_degree = mean.circular(
-      circular(degree_start, units = "degrees")),
     median_degree = median.circular(
       circular(degree_start, units = "degrees")),
     lower = mle.vonmises.bootstrap.ci(
@@ -107,7 +98,7 @@ onset <- transition_dates %>%
 #--------------------------------------------------------------------------
 # merge with overview
 # sd_intrasp will be used
-onset <- merge(onset, overview, by = "species_full", all.x = TRUE)
+onset <- merge(onset, overview, by = c("species_full","phenophase"), all.x = TRUE)
 # median onset in degrees are given from -180 to 180
 # lower - upper if going over zero also from -180 to 180; if not, between 0 and 360
 # -> rescale all between 0 and 360 degrees
@@ -115,39 +106,36 @@ onset$median_rescaled <- ifelse(onset$median_degree < 0, onset$median_degree +36
 onset$upper_rescaled <- ifelse (onset$upper < 0, onset$upper + 360, onset$upper)
 onset$lower_rescaled <- ifelse (onset$lower < 0, onset$lower + 360, onset$lower)
 # give year-round uncertainty to species with NA sd_intrasp
-onset$lower_rescaled <- ifelse(onset$phenophase == "leaf_turnover" & is.na(onset$sd_intrasp_onset_leaf_turnover_weeks), 0, onset$lower_rescaled)
-onset$upper_rescaled <- ifelse(onset$phenophase == "leaf_turnover" & is.na(onset$sd_intrasp_onset_leaf_turnover_weeks), 360, onset$upper_rescaled)
-onset$lower_rescaled <- ifelse(onset$phenophase == "leaf_dormancy" & is.na(onset$sd_intrasp_onset_leaf_dormancy_weeks), 0, onset$lower_rescaled)
-onset$upper_rescaled <- ifelse(onset$phenophase == "leaf_dormancy" & is.na(onset$sd_intrasp_onset_leaf_dormancy_weeks), 360, onset$upper_rescaled)
+onset$lower_rescaled <- ifelse(is.na(onset$sd_intrasp_onset_weeks), 0, onset$lower_rescaled)
+onset$upper_rescaled <- ifelse(is.na(onset$sd_intrasp_onset_weeks), 360, onset$upper_rescaled)
 #------------------------------------------------------------------------
 # to sort by intra-species variability
 # set y value by sorted SD number
 # needs to be done for evergreen/deciduous and turnover/dormancy seperately
-onset$sd_intrasp_onset_leaf_dormancy_weeks <- ifelse(is.na(onset$sd_intrasp_onset_leaf_dormancy_weeks),52, onset$sd_intrasp_onset_leaf_dormancy_weeks)
-onset$sd_intrasp_onset_leaf_turnover_weeks <- ifelse(is.na(onset$sd_intrasp_onset_leaf_turnover_weeks),52, onset$sd_intrasp_onset_leaf_turnover_weeks)
+onset$sd_intrasp_onset_weeks <- ifelse(is.na(onset$sd_intrasp_onset_weeks),52, onset$sd_intrasp_onset_weeks)
 
 onset_evergreen_turn <- onset %>%
   filter(grepl("evergreen",deciduousness),
          phenophase == "leaf_turnover") %>%
-  arrange(desc(sd_intrasp_onset_leaf_turnover_weeks)) %>%
+  arrange(desc(sd_intrasp_onset_weeks)) %>%
   mutate(y_value = ((1:length(species_full)/length(species_full))), # divided by length(species_full) so all on scale 0-1
          deciduousness = "1evergreen")
 onset_evergreen_dorm <- onset %>%
   filter(grepl("evergreen",deciduousness),
          phenophase == "leaf_dormancy") %>%
-  arrange(desc(sd_intrasp_onset_leaf_dormancy_weeks)) %>%
+  arrange(desc(sd_intrasp_onset_weeks)) %>%
   mutate(y_value = ((1:length(species_full)/length(species_full))),
          deciduousness = "1evergreen")
 onset_deciduous_turn <- onset %>%
   filter(grepl("deciduous",deciduousness),
          phenophase == "leaf_turnover") %>%
-  arrange(desc(sd_intrasp_onset_leaf_turnover_weeks)) %>%
+  arrange(desc(sd_intrasp_onset_weeks)) %>%
   mutate(y_value = ((1:length(species_full)/length(species_full))),
          deciduousness = "deciduous")
 onset_deciduous_dorm <- onset %>%
   filter(grepl("deciduous",deciduousness),
          phenophase == "leaf_dormancy") %>%
-  arrange(desc(sd_intrasp_onset_leaf_dormancy_weeks)) %>%
+  arrange(desc(sd_intrasp_onset_weeks)) %>%
   mutate(y_value = ((1:length(species_full)/length(species_full))),
          deciduousness = "deciduous")
 onset <- rbind(onset_evergreen_turn, onset_evergreen_dorm, onset_deciduous_turn, onset_deciduous_dorm)
@@ -168,9 +156,12 @@ onset_CIonesegments <- onset %>%
 #----------------------------------------------------------------------
 #----------------------------------------------------------------------
 dec_labels <- c("1evergreen" = "evergreen", "deciduous" = "deciduous")
-pheno_labels <- c("leaf_turnover" = "turnover", "leaf_dormancy" = "dormancy")
+pheno_labels <- c("leaf_turnover" = "turnover", "leaf_dormancy" = "senescence")
+# those with (sub-)annual cycle will get different shape
+onset$cycle_category <- ifelse(is.na(onset$cycle_category), "no_col",
+                               ifelse(onset$cycle_category %in% c("supra-annual"), "no_col", onset$cycle_category))
 
-p1 <- ggplot() +
+p_onset <- ggplot() +
   annotate("rect", xmin = 330, xmax = 360, ymin = -0.25, ymax = 1, alpha = .2) + #Dec
   annotate("rect", xmin = 0, xmax = 60, ymin = -0.25, ymax = 1, alpha = .2) + # jan - feb
   annotate("rect", xmin = 150, xmax = 210, ymin = -0.25, ymax = 1, alpha = .2) + # jun-jul
@@ -199,8 +190,9 @@ p1 <- ggplot() +
                    yend = y_value),
                color = "grey60") +
   geom_point(data = onset,
-             aes(x = median_rescaled, y = y_value, shape = phenophase)) +
-  scale_shape_manual(values = c(19,1)) +
+             aes(x = median_rescaled, y = y_value, shape = cycle_category),
+             stroke = 0.8) +
+  scale_shape_manual(values = c(19,1,4)) +
 
   scale_x_continuous(limits = c(0,360),
                      breaks = seq(0,359,30),
@@ -229,4 +221,7 @@ p1 <- ggplot() +
              switch = "y",
              labeller = labeller(deciduousness = dec_labels, phenophase = pheno_labels))
 
-p1
+p_onset
+
+ggsave("manuscript/leaf_phenology/figures/fig2.png", p_onset,
+       device = "png", width = 8, height = 8)
