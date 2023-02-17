@@ -4,14 +4,18 @@
 \alias{event_length}
 \title{Calculates event length and timing}
 \usage{
-event_length(df)
+event_length(
+  data = data,
+  species_name = "Afzelia bipindensis",
+  pheno = "leaf_turnover"
+)
 }
 \arguments{
-\item{year}{year vector}
+\item{data}{junglerhythms data file}
 
-\item{week}{week vector}
+\item{species_name}{list of species}
 
-\item{value}{vector with observations}
+\item{pheno}{only one phenophase}
 }
 \value{
 timing of when an event (value) switches between no event (0)
@@ -20,5 +24,9 @@ and a observation of an event (1)
 \description{
 This sub-routine will take vectors from a data frame
 for a single individual and phenophase and returns the timing of
-phenophases and the length of the .
+phenophases and the length of the phenophase
+}
+\details{
+df already needs to be a continuous timeline
+call function a ID level
 }

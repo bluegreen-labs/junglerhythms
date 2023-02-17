@@ -6,9 +6,12 @@
 output file (CSV) and cleans up the data
 by dropping early values (trials) etc}
 \usage{
-format_zoo_data(file = NULL,
-  image_file = "data/jungle_rhythms_subsets.rds", date = "2015-12-10",
-  path = NULL)
+format_zoo_data(
+  file = NULL,
+  image_file = "data/jungle_rhythms_subsets.rds",
+  date = "2015-12-10",
+  path = NULL
+)
 }
 \arguments{
 \item{image_file}{file with image subset details (filename, dimensions)}

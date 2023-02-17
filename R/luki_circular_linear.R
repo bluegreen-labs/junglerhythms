@@ -5,11 +5,6 @@
 #' @export
 #' @return ggplot object
 
-library(tidyverse)
-library(viridis)
-library(gridExtra)
-library(ggplot2)
-
 luki_circular_linear_plot <- function(
   data,
   species_name = "Millettia laurentii",

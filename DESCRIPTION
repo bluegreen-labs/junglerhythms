@@ -26,7 +26,6 @@ Imports:
     jsonlite,
     raster,
     tidyverse,
-    ggplot2,
     gridExtra,
     viridis,
     ggthemes
@@ -34,4 +33,4 @@ Suggests:
     here
 License: AGPLv3
 Encoding: UTF-8
-RoxygenNote: 6.1.1
+RoxygenNote: 7.2.3

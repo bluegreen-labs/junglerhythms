@@ -5,8 +5,7 @@
 \title{Calculate line intersection when
 provided four coordinaes defining two lines}
 \usage{
-line_intersection(coord1 = NULL, coord2 = NULL, coord3 = NULL,
-  coord4 = NULL)
+line_intersection(coord1 = NULL, coord2 = NULL, coord3 = NULL, coord4 = NULL)
 }
 \arguments{
 \item{coord1:}{first coordinate line 1}

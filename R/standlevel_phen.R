@@ -3,7 +3,7 @@
 #'
 #' @param data junglerhythms data file
 #' @param census_site yangambi census data at site level
-#' @param total_basal_area_site
+#' @param total_basal_area_site total basal area of a site
 #' @param species_name list of species
 #' @param pheno only one phenophase
 #' @param minimum_siteyears species not included if fewer observation-years overall (across all individuals)

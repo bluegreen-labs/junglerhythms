@@ -4,9 +4,13 @@
 \alias{summarize_annotations}
 \title{Summarize annotations into weekly values}
 \usage{
-summarize_annotations(df = "data/jungle_rhythms_daily_annotations.rds",
+summarize_annotations(
+  df = "data/jungle_rhythms_daily_annotations.rds",
   image_index = "data/phenology_archives_species_long_format_20190319.csv",
-  plot = TRUE, internal = FALSE, output_path = "./data/")
+  plot = TRUE,
+  internal = FALSE,
+  output_path = "./data/"
+)
 }
 \arguments{
 \item{df}{junglerhythms raw annotation file}

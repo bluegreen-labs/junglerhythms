@@ -10,10 +10,6 @@
 #' @export
 #' @return ggplot object
 
-library(tidyverse)
-library(gridExtra)
-library(ggplot2)
-
 circular_linear_plot <- function(
   data = data,
   species_name = "Millettia laurentii",
@@ -21,6 +17,7 @@ circular_linear_plot <- function(
   leg_pos = c(1,0.1),
   title_name = "(a) evergreen"
 ){
+
   #------------------------------------------------------------------------
   # data - circular plots
   #------------------------------------------------------------------------
