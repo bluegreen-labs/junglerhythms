@@ -2,11 +2,13 @@
 
 This repository provides the basis for the Jungle Rhythms project's context, pre- and post-processing. However, this repository can also serve as a template for other data recovery project. You can cite the code in this repository like this:
 
-> REFERENCE
+> Hufkens K. and Kearsley (2023). The Jungle Rhythms workflow: recovering historical tropical tree phenology data - a citizen science project https://doi.org/10.5281/zenodo.XYZ
+
+REFERENCE
 
 ## Introduction
 
-Jungle Rhythms strived to transcribe old observations of tree life cycle events (flowering, leaf shedding, fruit dispersion), which are key to understanding a tree's functioning. The African rainforest, the second largest on Earth, covers ~630 million ha and stores up to 66 Pg of carbon. It is presently a persistent carbon sink, offsetting large amounts of human CO2 emissions. Drought events in tropical rainforests have the potential to alter forest structure. However, due to data scarcity, little is known on how droughts affect the structure and function of African rainforests. The Jungle Rhythms data provides us with key information on how sensitive tree species are to drought, and how this sensitivity might alter the structure and function of the forest as drought regimes change.
+Jungle Rhythms transcribed old observations of tree life cycle events (flowering, leaf shedding, fruit dispersion), which are key to understanding a tree's functioning. The African rainforest, the second largest on Earth, covers ~630 million ha and stores up to 66 Pg of carbon. The forest is presently a persistent carbon sink, offsetting large amounts of human CO2 emissions. Drought events in tropical rainforests have the potential to alter forest structure. However, due to data scarcity, little is known on how droughts affect the structure and function of African rainforests. The Jungle Rhythms data provides us with key information on how sensitive tree species are to drought, and how this sensitivity might alter the structure and function of the forest as drought regimes change.
 
 ### Historical observations
 
