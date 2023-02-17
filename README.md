@@ -1,3 +1,6 @@
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7650295.svg)](https://doi.org/10.5281/zenodo.7650295)
+
 # The Jungle Rhythms workflow
 
 This repository provides the basis for the Jungle Rhythms project's context, pre- and post-processing. However, this repository can also serve as a template for other data recovery project. You can cite the code in this repository like this:
