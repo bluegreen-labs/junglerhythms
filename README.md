@@ -37,6 +37,10 @@ library("junglerhythms")
 
 For general information we refer to the vignettes on the [documenation site](https://khufkens.github.io/junglerhythms/articles/).
 
+# Licensing
+
+Data shared before a public release (a formal data descriptor paper) remain the copyright of BlueGreen Labs, but will be published under an Open Database License (ODbL) copyleft license in due course. Until this point reuse is not permitted without written permission of the authors. The authors will enforce this policy. Code shared is distributed under an AGPLv3 license while all images and text are covered by a CC-BY license.
+
 # Acknowledgements
 
 This project was started as a personal by Koen Hufkens and [BlueGreen Labs](https://bluegreenlabs.org), but over the years has been supported by the National Science Foundation’s Macro-system Biology Program (awards EF-1065029 and EF-1702697), the Belgian Science Policy office COBECORE project (BELSPO; grant BR/175/A3/COBECORE) and the Marie Skłodowska-Curie Action (H2020 grant 797668).
