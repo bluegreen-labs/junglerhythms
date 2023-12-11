@@ -16,7 +16,7 @@ font_add_google(
   regular.wt = 300,
   bold.wt = 700)
 #----- source required files  -----------------------------------------
-source("analysis/manuscript1_leaf_phenology/08_remote_sensing_plot.R")
+source("analysis/leaf_phenology/08_remote_sensing_plot.R")
 source("R/event_length.R")
 source("R/standlevel_phen.R")
 source("R/standlevel_phen_plotlevel.R")
@@ -429,12 +429,12 @@ ann_text1 <- data.frame(week = 21,
                         ss_text = 1.7,
                         groups = c("group1","group1","group2","group2","no_class","no_class"),
                         cycl = c("annual","no","annual","no","annual","no"),
-                        notes = c("D: 8 sp, 1.9% BA, 11.0% TC\nT: 10 sp, 11.3% BA, 36.6% TC",
-                                  "D: 3 sp, 1.8% BA, 6.3% TC\nT: 8 sp, 1.7% BA, 5.2% TC",
-                                  "D: 7 sp, 3.3% BA, 24.6% TC\nT: 3 sp, 0.3% BA, 1.7% TC",
-                                  "D: 5 sp, 3.5% BA, 17.5% TC\nT: 10 sp, 2.6% BA, 7.3% TC",
-                                  "D: 4 sp, 0.25% BA, 2.0% TC\nT: 8 sp, 2.1% BA, 10.2% TC",
-                                  "D: 54 sp, 57.7% BA, 38.6% TC\nT: 51 sp, 52.4% BA, 39.0% TC"))
+                        notes = c("S: 8 sp, 1.9% BA, 11.0% TC\nT: 10 sp, 11.3% BA, 36.6% TC",
+                                  "S: 3 sp, 1.8% BA, 6.3% TC\nT: 8 sp, 1.7% BA, 5.2% TC",
+                                  "S: 7 sp, 3.3% BA, 24.6% TC\nT: 3 sp, 0.3% BA, 1.7% TC",
+                                  "S: 5 sp, 3.5% BA, 17.5% TC\nT: 10 sp, 2.6% BA, 7.3% TC",
+                                  "S: 4 sp, 0.25% BA, 2.0% TC\nT: 8 sp, 2.1% BA, 10.2% TC",
+                                  "S: 54 sp, 57.7% BA, 38.6% TC\nT: 51 sp, 52.4% BA, 39.0% TC"))
 ann_segm <- data.frame(x = c(19.5, 24),
                        y = c(0.35, 1.1),
                        xend = c(24, 26.5),
@@ -451,7 +451,7 @@ ann_text2 <- data.frame(week = c(27.5, 1),
                         ss_text = c(0.98, 1.1),
                         groups = c("group1","no_class"),
                         cycl = c("annual","no"),
-                        notes = c("P. macrocarpus\n6.6% BA\nperiodically sub-annual",
+                        notes = c("P. macrocarpus\n6.6% BA\nintermittent sub-annual",
                                   "S. zenkeri\n16.3% BA\nsingular event"))
 
 p2 <- p1 +
