@@ -94,77 +94,77 @@ standlevel_phen <- function(
   #-----------------------------------------------------------------------
 
 
-  #-----------------------------------------------------------------------
-  #------------ Leaf flushing  -------------------------------------------
-  #-----------------------------------------------------------------------
-  if(!is_empty(species_list_dorm)) {
-    #------
-    # onset of flushing is first calculated as first week end of dormancy events
-    # full timeline for flushing is first created for each individual
-    #------
-    # just to avoid confusion, work with new name
-    timelines_flush <- timelines_dorm
-    # new column 'flushing_date' to merge with later on
-    timelines_flush$flushing_date <- paste(timelines_flush$year, timelines_flush$week, sep = "-")
-
-    # function event_length gets
-    # for each individual of the requested species
-    # start/end year&week of each event
-    flushing_timing <- event_length(data = timelines_flush,
-                                    species_name = species_list_dorm,
-                                    pheno = "leaf_dormancy")
-    # individuals without events give NA in event_length, so remove
-    flushing_timing <- flushing_timing %>%
-      filter(!is.na(year_start))
-
-    # date of onset flushing = week after end dormancy event
-    flushing_timing$flushing_date <- paste(flushing_timing$year_end, flushing_timing$week_end +1, sep = "-")
-
-    flushing_timing <- flushing_timing %>%
-      select(species_full,
-             id,
-             flushing_date)
-    flushing_timing$flushing_value <- 1
-
-    # merge using flushing_date for each id/species
-    # flushing_value is
-    data_flush <- merge(timelines_flush, flushing_timing, by = c("species_full","id","flushing_date"), all.x = TRUE)
-    data_flush$flushing_value <- ifelse(is.na(data_flush$flushing_value),"0", data_flush$flushing_value)
-    # if value for dormancy was NA, year was not observed (full timelines were needed for using 'event_length')
-    # so remove year for flushing
-    data_flush$flushing_value <- ifelse(is.na(data_flush$value),NA, data_flush$flushing_value)
-    data_flush$flushing_value <- as.numeric(data_flush$flushing_value)
-
-    #------
-    ## now continue the same as done for turnover and dormancy
-    #------
-    data_flush <- data_flush %>%
-      group_by(species_full, week) %>%
-      dplyr::summarise(mean_week = mean(flushing_value, na.rm = TRUE),
-                       total_week = length(flushing_value))
-    data_flush <- data_flush %>%
-      filter(total_week >= minimum_siteyears)
-
-    data_flush <- inner_join(data_flush, census_site, by = c("species_full"))
-
-    final_flush <- data_flush %>%
-      group_by(week) %>%
-      dplyr::summarise(ss_flush = sum(mean_week*basal_area_site, na.rm = TRUE)/total_basal_area_site *100)
-  } else {
-    final_flush <- data.frame(week = c(1:48),
-                           ss_flush = NA)
-  }
-
-  #-----------------------------------------------------------------------
+  # #-----------------------------------------------------------------------
+  # #------------ Leaf flushing  -------------------------------------------
+  # #-----------------------------------------------------------------------
+  # if(!is_empty(species_list_dorm)) {
+  #   #------
+  #   # onset of flushing is first calculated as first week end of dormancy events
+  #   # full timeline for flushing is first created for each individual
+  #   #------
+  #   # just to avoid confusion, work with new name
+  #   timelines_flush <- timelines_dorm
+  #   # new column 'flushing_date' to merge with later on
+  #   timelines_flush$flushing_date <- paste(timelines_flush$year, timelines_flush$week, sep = "-")
+  #
+  #   # function event_length gets
+  #   # for each individual of the requested species
+  #   # start/end year&week of each event
+  #   flushing_timing <- event_length(data = timelines_flush,
+  #                                   species_name = species_list_dorm,
+  #                                   pheno = "leaf_dormancy")
+  #   # individuals without events give NA in event_length, so remove
+  #   flushing_timing <- flushing_timing %>%
+  #     filter(!is.na(year_start))
+  #
+  #   # date of onset flushing = week after end dormancy event
+  #   flushing_timing$flushing_date <- paste(flushing_timing$year_end, flushing_timing$week_end +1, sep = "-")
+  #
+  #   flushing_timing <- flushing_timing %>%
+  #     select(species_full,
+  #            id,
+  #            flushing_date)
+  #   flushing_timing$flushing_value <- 1
+  #
+  #   # merge using flushing_date for each id/species
+  #   # flushing_value is
+  #   data_flush <- merge(timelines_flush, flushing_timing, by = c("species_full","id","flushing_date"), all.x = TRUE)
+  #   data_flush$flushing_value <- ifelse(is.na(data_flush$flushing_value),"0", data_flush$flushing_value)
+  #   # if value for dormancy was NA, year was not observed (full timelines were needed for using 'event_length')
+  #   # so remove year for flushing
+  #   data_flush$flushing_value <- ifelse(is.na(data_flush$value),NA, data_flush$flushing_value)
+  #   data_flush$flushing_value <- as.numeric(data_flush$flushing_value)
+  #
+  #   #------
+  #   ## now continue the same as done for turnover and dormancy
+  #   #------
+  #   data_flush <- data_flush %>%
+  #     group_by(species_full, week) %>%
+  #     dplyr::summarise(mean_week = mean(flushing_value, na.rm = TRUE),
+  #                      total_week = length(flushing_value))
+  #   data_flush <- data_flush %>%
+  #     filter(total_week >= minimum_siteyears)
+  #
+  #   data_flush <- inner_join(data_flush, census_site, by = c("species_full"))
+  #
+  #   final_flush <- data_flush %>%
+  #     group_by(week) %>%
+  #     dplyr::summarise(ss_flush = sum(mean_week*basal_area_site, na.rm = TRUE)/total_basal_area_site *100)
+  # } else {
+  #   final_flush <- data.frame(week = c(1:48),
+  #                          ss_flush = NA)
+  # }
+  #
+  # #-----------------------------------------------------------------------
 
 
   #-----------------------------------------------------------------------
   #------  output dataframe  ---------------------------------------------
   #-----------------------------------------------------------------------
   combined <- merge(final_LT, final_LD, by = c("week"), all.x = TRUE)
-  combined <- merge(combined, final_flush, by = c("week"), all.x = TRUE)
-  # both dormancy and turnover represent main period of senescence
-  combined$ss_senescence <- combined$ss_turn + combined$ss_dorm
+  # combined <- merge(combined, final_flush, by = c("week"), all.x = TRUE)
+  # # both dormancy and turnover represent main period of senescence
+  # combined$ss_senescence <- combined$ss_turn + combined$ss_dorm
 
   return(combined)
 }

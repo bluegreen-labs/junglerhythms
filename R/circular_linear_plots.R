@@ -4,17 +4,17 @@
 #'
 #' @param data junglerhythms data file
 #' @param species_name list of species
-#' @param leg_gradient color gradient of the circular plots can be adapted
 #' @param leg_position legend position (might need to change depending on how many species called)
 #' @param title_name title of the plot
 #' @export
 #' @return ggplot object
 
+library(ggnewscale)
+
 circular_linear_plot <- function(
   data = data,
   species_name = "Millettia laurentii",
-  leg_gradient = c(0,0.2,1),
-  leg_pos = c(1,0.1),
+  leg_pos = c(1,0.2),
   title_name = "(a) evergreen"
 ){
 
@@ -41,6 +41,12 @@ circular_linear_plot <- function(
   data_subset_circ$pos[data_subset_circ$phenophase == "leaf_dormancy"] <- 2
   data_subset_circ$pos[data_subset_circ$phenophase == "leaf_turnover"] <- 1.5
   data_subset_circ <- na.omit(data_subset_circ)
+
+  # separate dormancy and turnover, to get different scale colors in the fig
+  data_subset_circ_turn <- data_subset_circ %>%
+    filter(phenophase %in% 'leaf_turnover')
+  data_subset_circ_dorm <- data_subset_circ %>%
+    filter(phenophase %in% 'leaf_dormancy')
 
   #------------------------------------------------------------------------
   # data leaf dormancy - linear plots
@@ -84,26 +90,37 @@ circular_linear_plot <- function(
   #------------------------------------------------------------------------
   # circular plot
   #------------------------------------------------------------------------
-  p_circ <- ggplot(data = data_subset_circ,
-              aes(
-                x = week,
-                xend = week + 1,
-                y = pos,
-                yend = pos,
-                colour = percent_value
-              )) +
-    scale_colour_distiller(palette = "YlOrBr",
-                           direction = 1,
-                           name = "mean annual \n% individuals\nwith events",
-                           values = leg_gradient) +
+  p_circ <- ggplot() +
     annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 2.4, alpha = .2) + #jan - feb
     annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 2.4, alpha = .2) + # jun-jul
     annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 2.4, alpha = .2) + # dec
-    annotate("text", x = 1, y = 0.8, label = "LD", col = "grey50") +
-    annotate("text", x = 25, y = 0.8, label = "SD", col = "grey50") +
-    annotate("text", x = 37, y = 0.8, label = "LW", col = "grey50") +
-    annotate("text", x = 13, y = 0.8, label = "SW", col = "grey50") +
-    geom_segment(size = 4) +
+    annotate("text", x = 1, y = 0.8, label = "LD", col = "grey50", size = 3.5) +
+    annotate("text", x = 25, y = 0.8, label = "SD", col = "grey50", size = 3.5) +
+    annotate("text", x = 37, y = 0.8, label = "LW", col = "grey50", size = 3.5) +
+    annotate("text", x = 13, y = 0.8, label = "SW", col = "grey50", size = 3.5) +
+    geom_segment(data = data_subset_circ_dorm,
+                 aes(
+                   x = week,
+                   xend = week + 1,
+                   y = pos,
+                   yend = pos,
+                   colour = percent_value
+                 ),
+                 size = 4) +
+    scale_colour_gradientn(colours = c("#ffffcc", "#DFC27D" ,"#BF812D", "#8C510A", "#543005",'#662506'),
+                           name = "Senescence:\nmean annual \n% individuals\nwith events") +
+    new_scale_color() +
+    geom_segment(data = data_subset_circ_turn,
+                 aes(
+                   x = week,
+                   xend = week + 1,
+                   y = pos,
+                   yend = pos,
+                   colour = percent_value
+                 ),
+                 size = 4) +
+    scale_colour_gradientn(colours = c("#ffffcc", "#66c2a4", "#41ae76", "#238b45", "#006d2c", "#00441b"),
+                           name = "Turnover:\nmean annual \n% individuals\nwith events") +
     scale_x_continuous(limits = c(1,49),
                        breaks = seq(1,48,4),
                        labels = month.abb) +
@@ -171,8 +188,7 @@ circular_linear_plot <- function(
 circular_plot <- function(
   data = data,
   species_name = "Millettia laurentii",
-  leg_gradient = c(0,0.2,1),
-  leg_pos = c(1,0.1),
+  leg_pos = c(1,0.2),
   title_name = "(a) evergreen"
 ){
   #------------------------------------------------------------------------
@@ -197,21 +213,16 @@ circular_plot <- function(
   data_subset_circ$pos[data_subset_circ$phenophase == "leaf_turnover"] <- 1.5
   data_subset_circ <- na.omit(data_subset_circ)
 
+  # separate dormancy and turnover, to get different scale colors in the fig
+  data_subset_circ_turn <- data_subset_circ %>%
+    filter(phenophase %in% 'leaf_turnover')
+  data_subset_circ_dorm <- data_subset_circ %>%
+    filter(phenophase %in% 'leaf_dormancy')
+
   #------------------------------------------------------------------------
   # circular plot
   #------------------------------------------------------------------------
-  p_circ <- ggplot(data = data_subset_circ,
-                   aes(
-                     x = week,
-                     xend = week + 1,
-                     y = pos,
-                     yend = pos,
-                     colour = percent_value
-                   )) +
-    scale_colour_distiller(palette = "YlOrBr",
-                           direction = 1,
-                           name = "mean annual \n% individuals\nwith events",
-                           values = leg_gradient) +
+  p_circ <- ggplot() +
     annotate("rect", xmin = 1, xmax = 9, ymin = 0, ymax = 2.4, alpha = .2) + #jan - feb
     annotate("rect", xmin = 21, xmax = 29, ymin = 0, ymax = 2.4, alpha = .2) + # jun-jul
     annotate("rect", xmin = 45, xmax = 49, ymin = 0, ymax = 2.4, alpha = .2) + # dec
@@ -219,7 +230,29 @@ circular_plot <- function(
     annotate("text", x = 25, y = 0.8, label = "SD", col = "grey50", size = 3.5) +
     annotate("text", x = 37, y = 0.8, label = "LW", col = "grey50", size = 3.5) +
     annotate("text", x = 13, y = 0.8, label = "SW", col = "grey50", size = 3.5) +
-    geom_segment(size = 4) +
+    geom_segment(data = data_subset_circ_dorm,
+                 aes(
+                   x = week,
+                   xend = week + 1,
+                   y = pos,
+                   yend = pos,
+                   colour = percent_value
+                 ),
+                 size = 4) +
+    scale_colour_gradientn(colours = c("#ffffcc", "#DFC27D" ,"#BF812D", "#8C510A", "#543005",'#662506'),
+                           name = "Senescence:\nmean annual \n% individuals\nwith events") +
+    new_scale_color() +
+    geom_segment(data = data_subset_circ_turn,
+                 aes(
+                   x = week,
+                   xend = week + 1,
+                   y = pos,
+                   yend = pos,
+                   colour = percent_value
+                 ),
+                 size = 4) +
+    scale_colour_gradientn(colours = c("#ffffcc", "#66c2a4", "#41ae76", "#238b45", "#006d2c", "#00441b"),
+                           name = "Turnover:\nmean annual \n% individuals\nwith events") +
     scale_x_continuous(limits = c(1,49),
                        breaks = seq(1,48,4),
                        labels = month.abb) +

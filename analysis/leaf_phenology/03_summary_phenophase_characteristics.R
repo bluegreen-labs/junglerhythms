@@ -176,7 +176,7 @@ rm(onset_ind, transition_dates)
 #-------- read in trait data from Steven Janssens ---------------------
 #-------- get species-specific basal area at plot and site level ------
 #----------------------------------------------------------------------
-traits <- read.csv("data/Dataset_traits_African_trees.csv",
+traits <- read.csv("data-raw/Dataset_traits_African_trees.csv",
                    header = TRUE,
                    sep = ",",
                    stringsAsFactors = FALSE)

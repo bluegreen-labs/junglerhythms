@@ -454,15 +454,14 @@ p_all <- ggplot(corr_summary,
                                          labels = c("negative correlations", "positive correlations"))) +
   scale_x_discrete(limits = rev(levels(as.factor(corr_summary$variable)))) +
   coord_flip() +
-  # scale_fill_manual(values = c("no-lag-pos" = "#018571",
-  #                              "no-lag-neg" = "#018571",
-  #                              "lag-pos" = "#80cdc1",
-  #                              "lag-neg" = "#80cdc1",
-  #                              "few-events" = "grey90",
-  #                              "few-events-neg" = "grey90",
-  #                              "h-no-corr" = "#dfc27d",
-  #                              "h-no-corr-neg" = "#dfc27d")) +
-  scale_fill_manual(values = c("grey90", "grey90","#dfc27d", "#dfc27d", "#80cdc1", "#80cdc1", "#018571","#018571"),
+  scale_fill_manual(values = c("no-lag-pos" = "#018571",
+                               "no-lag-neg" = "#018571",
+                               "lag-pos" = "#80cdc1",
+                               "lag-neg" = "#80cdc1",
+                               "few-events" = "grey90",
+                               "few-events-neg" = "grey90",
+                               "h-no-corr" = "#dfc27d",
+                               "h-no-corr-neg" = "#dfc27d"),
                     breaks = c("no-lag-neg","lag-neg","h-no-corr-neg","few-events-neg"),
                     labels = c(" in-phase   "," lag   "," no correlation   "," too few events   ")) +
   geom_hline(yintercept = 0, color =c("grey60"), size = 0.5) +
