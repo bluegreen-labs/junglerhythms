@@ -12,7 +12,7 @@ source("R/timeline_gap_fill.R")
 #----------------------------------------------------------------------
 df <- readRDS("data/jungle_rhythms_weekly_annotations.rds")
 
-metadata <- read.csv("data/phenology_archives_species_long_format_20200324.csv",
+metadata <- read.csv("data-raw/phenology_archives_species_long_format_20200324.csv",
                      header = TRUE, sep = ",")
 
 

@@ -1,9 +1,9 @@
-#' stand-level annual phenological signal
-#' species-specific annual signals are weighted by their basal area
+#' plot-level annual phenological signal
+#' species-specific annual signals are weighted by their basal area at the plot level
 #'
 #' @param data junglerhythms data file
-#' @param census_site yangambi census data at site level
-#' @param total_basal_area_site total basal area of a site
+#' @param census_plot yangambi census data at plot level
+#' @param total_basal_area_plot total basal area of a plot
 #' @param species_name list of species
 #' @param pheno only one phenophase
 #' @param minimum_siteyears species not included if fewer observation-years overall (across all individuals)
@@ -11,14 +11,15 @@
 #' @return dataframe
 
 
-standlevel_phen <- function(
-  data = data,
-  census_site = census_site,
-  total_basal_area_site = total_basal_area_site,
-  species_list_dorm = dorm_sp1,
-  species_list_turn = turn_sp1,
-  minimum_siteyears = minimum_siteyears
-  ){
+standlevel_phen_plotlevel <- function(
+    data = data,
+    census_plot = census_plot,
+    total_basal_area_plot = total_basal_area_plot,
+    species_list_dorm = dorm_sp1,
+    species_list_turn = turn_sp1,
+    minimum_siteyears = minimum_siteyears
+){
+
 
   #-----------------------------------------------------------------------
   #-- each phenophase is done seperately
@@ -34,12 +35,10 @@ standlevel_phen <- function(
       filter(phenophase == "leaf_turnover",
              species_full %in% species_list_turn,
              !is.na(value))
-
     # for each species, get summaries of each week (makes full year per species)
     data_LT <- timelines_turn %>%
       group_by(species_full, week) %>%
       dplyr::summarise(mean_week = mean(value),
-                       # count_week = sum(value),
                        total_week = length(value))
 
     # filter out species with too few total observation years across individuals
@@ -48,21 +47,22 @@ standlevel_phen <- function(
       filter(total_week >= minimum_siteyears)
 
     # add species-level basal area (across the 5-ha plots)
-    data_LT <- inner_join(data_LT, census_site, by = c("species_full"))
+    data_LT_plot <- inner_join(data_LT, census_plot, by = c("species_full"))
 
-    # weighted mean for standlevel phenological pattern
-    final_LT <- data_LT %>%
-      group_by(week) %>%
-      dplyr::summarise(ss_turn = sum(mean_week*basal_area_site, na.rm = TRUE)/total_basal_area_site *100)
-    # ss2 = wtd.mean(mean_week, basal_area_site, na.rm = TRUE)*100,
-    # weighted_sd = sqrt(wtd.var(mean_week, basal_area_site, na.rm = TRUE))*100,
-    # weighted_CI = ss2 + 1.96*weighted_sd)
+
+    final_LT_plot <- data_LT_plot %>%
+      group_by(Plot, week) %>%
+      dplyr::summarise(ss = sum(mean_week*basal_area_plot, na.rm = TRUE))
+    final_LT_plot <- inner_join(final_LT_plot, total_basal_area_plot, by = c("Plot"))
+    final_LT_plot <- final_LT_plot %>%
+      mutate(ss_turn = ss/total_basal_area_plot*100)
+    final_LT_plot <- final_LT_plot %>%
+      dplyr::select(Plot, week, ss_turn)
   } else {
-    final_LT <- data.frame(week = c(1:48),
-                           ss_turn = NA)
+    final_LT_plot <- data.frame(Plot = rep(c("Inventory 20","Inventory 21","Inventory 23"),48),
+                                week = rep(c(1:48),2),
+                                ss_turn = NA)
   }
-
-
   #-----------------------------------------------------------------------
 
   #-----------------------------------------------------------------------
@@ -81,16 +81,21 @@ standlevel_phen <- function(
     data_LD <- data_LD %>%
       filter(total_week >= minimum_siteyears)
 
-    data_LD <- inner_join(data_LD, census_site, by = c("species_full"))
+    data_LD_plot <- inner_join(data_LD, census_plot, by = c("species_full"))
 
-    final_LD <- data_LD %>%
-      group_by(week) %>%
-      dplyr::summarise(ss_dorm = sum(mean_week*basal_area_site, na.rm = TRUE)/total_basal_area_site *100)
+    final_LD_plot <- data_LD_plot %>%
+      group_by(Plot, week) %>%
+      dplyr::summarise(ss = sum(mean_week*basal_area_plot, na.rm = TRUE))
+    final_LD_plot <- inner_join(final_LD_plot, total_basal_area_plot, by = c("Plot"))
+    final_LD_plot <- final_LD_plot %>%
+      mutate(ss_dorm = ss/total_basal_area_plot*100)
+    final_LD_plot <- final_LD_plot %>%
+      dplyr::select(Plot, week, ss_dorm)
   } else {
-    final_LD <- data.frame(week = c(1:48),
-                           ss_dorm = NA)
+    final_LD_plot <- data.frame(Plot = rep(c("Inventory 20","Inventory 21","Inventory 23"),48),
+                                week = rep(c(1:48),2),
+                                ss_dorm = NA)
   }
-
   #-----------------------------------------------------------------------
 
 
@@ -142,29 +147,43 @@ standlevel_phen <- function(
   #     group_by(species_full, week) %>%
   #     dplyr::summarise(mean_week = mean(flushing_value, na.rm = TRUE),
   #                      total_week = length(flushing_value))
+  #
   #   data_flush <- data_flush %>%
   #     filter(total_week >= minimum_siteyears)
   #
-  #   data_flush <- inner_join(data_flush, census_site, by = c("species_full"))
+  #   data_flush_plot <- inner_join(data_flush, census_plot, by = c("species_full"))
   #
-  #   final_flush <- data_flush %>%
-  #     group_by(week) %>%
-  #     dplyr::summarise(ss_flush = sum(mean_week*basal_area_site, na.rm = TRUE)/total_basal_area_site *100)
+  #   final_flush_plot <- data_flush_plot %>%
+  #     group_by(Plot, week) %>%
+  #     dplyr::summarise(ss = sum(mean_week*basal_area_plot, na.rm = TRUE))
+  #   final_flush_plot <- inner_join(final_flush_plot, total_basal_area_plot, by = c("Plot"))
+  #   final_flush_plot <- final_flush_plot %>%
+  #     mutate(ss_flush = ss/total_basal_area_plot*100)
+  #   final_flush_plot <- final_flush_plot %>%
+  #     dplyr::select(Plot, week, ss_flush)
   # } else {
-  #   final_flush <- data.frame(week = c(1:48),
-  #                          ss_flush = NA)
+  #   final_flush_plot <- data.frame(Plot = rep(c("Inventory 20","Inventory 23"),48),
+  #                                  week = rep(c(1:48),2),
+  #                                  ss_flush = NA)
   # }
-  #
   # #-----------------------------------------------------------------------
-
 
   #-----------------------------------------------------------------------
   #------  output dataframe  ---------------------------------------------
   #-----------------------------------------------------------------------
-  combined <- merge(final_LT, final_LD, by = c("week"), all.x = TRUE)
-  # combined <- merge(combined, final_flush, by = c("week"), all.x = TRUE)
+  # # add full_range to make sure all plots are included, even if a species is not present in the plot
+  # combined <-  data.frame(Plot = rep(c("Inventory 20","Inventory 23"),48),
+  #                         week = rep(c(1:48),2),
+  #                         full_range = NA)
+  # combined <- merge(combined, final_LT_plot, by = c("Plot","week"), all.x = TRUE)
+  # combined <- merge(combined, final_LD_plot, by = c("Plot","week"), all.x = TRUE)
+  # combined <- merge(combined, final_flush_plot, by = c("Plot","week"), all.x = TRUE)
   # # both dormancy and turnover represent main period of senescence
   # combined$ss_senescence <- combined$ss_turn + combined$ss_dorm
+  # combined <- combined %>%
+  #   dplyr::select(!full_range)
+
+  combined <- left_join(final_LD_plot,final_LT_plot)
 
   return(combined)
 }
