@@ -46,9 +46,6 @@
     <loc>/reference/format_zoo_data.html</loc>
   </url>
   <url>
-    <loc>/reference/hello.html</loc>
-  </url>
-  <url>
     <loc>/reference/index.html</loc>
   </url>
   <url>
@@ -73,6 +70,9 @@
     <loc>/reference/panel_plot.html</loc>
   </url>
   <url>
+    <loc>/reference/peak_detection.html</loc>
+  </url>
+  <url>
     <loc>/reference/plot_raw_annotations.html</loc>
   </url>
   <url>
@@ -83,9 +83,6 @@
   </url>
   <url>
     <loc>/reference/row_locations.html</loc>
-  </url>
-  <url>
-    <loc>/reference/spans_lookup.html</loc>
   </url>
   <url>
     <loc>/reference/standlevel_phen.html</loc>
