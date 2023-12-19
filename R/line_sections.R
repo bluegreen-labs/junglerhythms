@@ -20,9 +20,11 @@
 #' @return returns a matrix of line section locations
 #' (empty 0 if nothing returned)
 
-line_sections <- function(subset,
-                                  bb,
-                                  img_y){
+line_sections <- function(
+    subset,
+    bb,
+    img_y
+  ){
 
   # Create an output matrix containing the values
   # of observations during the year, in this case

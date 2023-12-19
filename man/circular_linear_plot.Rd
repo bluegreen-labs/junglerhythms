@@ -9,8 +9,7 @@ Circular plots show annual means}
 circular_linear_plot(
   data = data,
   species_name = "Millettia laurentii",
-  leg_gradient = c(0, 0.2, 1),
-  leg_pos = c(1, 0.1),
+  leg_pos = c(1, 0.2),
   title_name = "(a) evergreen"
 )
 }
@@ -18,8 +17,6 @@ circular_linear_plot(
 \item{data}{junglerhythms data file}
 
 \item{species_name}{list of species}
-
-\item{leg_gradient}{color gradient of the circular plots can be adapted}
 
 \item{title_name}{title of the plot}
 

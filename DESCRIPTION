@@ -1,7 +1,7 @@
 Package: junglerhythms
 Type: Package
 Title: Process and screen raw Zooniverse's Jungle Rhythms data
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: c(person(
                family = "Hufkens",
                given = "Koen",
@@ -28,9 +28,12 @@ Imports:
     tidyverse,
     gridExtra,
     viridis,
+    ggnewscale,
     ggthemes
 Suggests:
-    here
+    here,
+    knitr
 License: AGPLv3
 Encoding: UTF-8
 RoxygenNote: 7.2.3
+VignetteBuilder: knitr

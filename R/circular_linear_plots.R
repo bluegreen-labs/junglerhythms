@@ -9,8 +9,6 @@
 #' @export
 #' @return ggplot object
 
-library(ggnewscale)
-
 circular_linear_plot <- function(
   data = data,
   species_name = "Millettia laurentii",

@@ -1,9 +1,27 @@
-^\.travis\.yml$
-^.*\.Rproj$
-^\.Rproj\.user$
-README.Rmd
-_config.yml
-cran-comments.md
-CONDUCT.md
-LICENSE
+# docs and unit tests
+^\.github$
+^_pkgdown\.yml$
+^pkgdown$
+^docs$
+^analysis$
+^manuscript$
 ^data$
+^data-raw$
+^vignettes_add$
+
+# R-markdown files in the root folder.
+^LICENSE.*$
+^CONDUCT\.md$
+^NEWS\.md$
+^README\.md$
+^contact\.md$
+^cran-comments\.md$
+^review-notes\.md$
+
+# R Stuff
+^.*\.Rproj$
+^.*\.Renviron$
+^\.Rproj\.user$
+^\.httr-oauth$
+^.*-logo\..*$
+^codemeta\.json$
